@@ -14,8 +14,8 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
   {
     id: 'welcome_verify',
     title: 'Welcome Email',
-    subject: 'Welcome to YieldCanary!',
-    previewText: 'Get ready to see every high-yield ETF with no illusions.',
+    subject: 'Welcome to YieldCanary - See Through the ETF Marketing Hype',
+    previewText: 'Your account is ready. Time to see the real numbers behind every high-yield ETF.',
     body: `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -49,65 +49,93 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       text-align: center;
     }
     .header h1 {
-      font-size: 28px;
+      font-size: 32px;
       font-weight: 700;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       letter-spacing: -0.5px;
     }
     .header p {
-      font-size: 14px;
-      opacity: 0.9;
+      font-size: 16px;
+      opacity: 0.95;
+      font-weight: 500;
     }
     .content {
       padding: 40px 30px;
     }
     .greeting {
-      font-size: 16px;
-      color: #1f2937;
-      margin-bottom: 20px;
-    }
-    .main-message {
       font-size: 18px;
       color: #1f2937;
-      font-weight: 500;
-      margin-bottom: 30px;
+      margin-bottom: 24px;
+      font-weight: 600;
+    }
+    .intro-text {
+      font-size: 16px;
+      color: #374151;
+      margin-bottom: 24px;
       line-height: 1.8;
+    }
+    .what-section {
+      background-color: #f9fafb;
+      border-left: 4px solid #2563eb;
+      padding: 20px 24px;
+      margin: 30px 0;
+      border-radius: 4px;
+    }
+    .what-section h2 {
+      font-size: 18px;
+      color: #1f2937;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .what-section p {
+      font-size: 15px;
+      color: #4b5563;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+    .what-section ul {
+      margin: 16px 0 0 20px;
+    }
+    .what-section li {
+      margin-bottom: 10px;
+      color: #1f2937;
+      font-size: 15px;
+    }
+    .what-section strong {
+      color: #2563eb;
     }
     .cta-button {
       display: inline-block;
       background-color: #2563eb;
       color: #ffffff;
-      padding: 14px 32px;
+      padding: 16px 40px;
       border-radius: 6px;
       text-decoration: none;
       font-weight: 600;
       font-size: 16px;
       margin: 30px 0;
       transition: background-color 0.3s;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
     }
     .cta-button:hover {
       background-color: #1d4ed8;
     }
-    .features {
-      font-size: 14px;
-      color: #6b7280;
-      margin-top: 20px;
-      line-height: 1.8;
-    }
-    .features ul {
-      margin: 20px 0 20px 20px;
-      color: #1f2937;
-    }
-    .features li {
-      margin-bottom: 8px;
-    }
-    .features strong {
-      color: #1f2937;
-    }
-    .divider {
-      border: none;
+    .why-section {
+      margin-top: 30px;
+      padding-top: 30px;
       border-top: 1px solid #e5e7eb;
-      margin: 40px 0;
+    }
+    .why-section h3 {
+      font-size: 16px;
+      color: #1f2937;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+    .why-section p {
+      font-size: 15px;
+      color: #4b5563;
+      line-height: 1.7;
+      margin-bottom: 12px;
     }
     .footer {
       background-color: #f9fafb;
@@ -141,10 +169,10 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
         padding: 30px 20px;
       }
       .header h1 {
-        font-size: 24px;
+        font-size: 26px;
       }
-      .main-message {
-        font-size: 16px;
+      .what-section {
+        padding: 16px 20px;
       }
     }
   </style>
@@ -152,30 +180,47 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
 <body>
   <div class="container">
     <div class="header">
-      <h1>YieldCanary</h1>
-      <p>High-Yield ETF Intelligence</p>
+      <h1>🐦 YieldCanary</h1>
+      <p>Cut Through the ETF Marketing Hype</p>
     </div>
     
     <div class="content">
-      <p class="greeting">Welcome, <strong>{{first_name|friend}}</strong>! 👋</p>
+      <p class="greeting">Welcome, {{first_name|friend}}! 👋</p>
       
-      <p class="main-message">
-        Your account is ready. You now have access to see every high-yield ETF with no illusions — no blur, no hidden metrics, just the truth.
+      <p class="intro-text">
+        Thanks for joining YieldCanary. Your account is active and ready to use. 
+        We built this platform to give you the real story behind high-yield ETFs — no marketing fluff, no hidden metrics.
       </p>
+      
+      <div class="what-section">
+        <h2>What is YieldCanary?</h2>
+        <p>
+          YieldCanary is an ETF analytics dashboard that reveals the truth behind income investments. 
+          We track over 100 high-yield ETFs and show you metrics the fund companies do not want you to see:
+        </p>
+        <ul>
+          <li><strong>Death Clock</strong> - How long until this ETF burns through your principal with unsustainable distributions</li>
+          <li><strong>True Income Yield</strong> - The real yield after stripping out return of capital (ROC)</li>
+          <li><strong>Take-Home Cash Return</strong> - Your actual return after taxes, the number that matters for retirement planning</li>
+        </ul>
+        <p style="margin-top: 16px;">
+          Most ETF marketing shows you inflated yields. We show you reality.
+        </p>
+      </div>
       
       <p style="text-align: center;">
-        <a href="https://yieldcanary.com" class="cta-button">Go to Dashboard</a>
+        <a href="https://yieldcanary.com" class="cta-button">Explore the Dashboard →</a>
       </p>
       
-      <div class="features">
-        <p>You now have full access to:</p>
-        <ul>
-          <li><strong>Death Clock</strong> on every ETF</li>
-          <li><strong>True Income Yield</strong> after ROC</li>
-          <li><strong>Take-Home Cash Return</strong> after taxes</li>
-        </ul>
+      <div class="why-section">
+        <h3>Why we built this</h3>
         <p>
-          Get started exploring the dashboard. If you have any questions or need help, just reply to this email.
+          Income ETFs have exploded in popularity, but most investors do not realize they are paying 12%+ yields 
+          funded by selling off their own principal. That is not income — that is liquidation with extra steps.
+        </p>
+        <p>
+          YieldCanary gives you the data to make smarter decisions. Browse the full ETF list, compare true yields, 
+          and spot the funds that are actually generating sustainable income versus those burning through assets.
         </p>
       </div>
     </div>
@@ -184,10 +229,10 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
     
     <div class="footer">
       <p class="footer-text">
-        Questions? Reply to this email and we'll help.
+        Have questions? Just reply to this email — I read every message.
       </p>
       <p class="signature">
-        Let's find some dead canaries,<br>
+        Happy hunting,<br>
         <span class="founder">Ryan Fish</span><br>
         Founder, YieldCanary
       </p>
