@@ -349,23 +349,23 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
       </div>
 
       {/* Mobile Card View - Visible on md and below */}
-      <div className="md:hidden space-y-3">
+      <div className="md:hidden space-y-2">
         {sortedETFs.map((etf) => {
           const unlocked = isUnlocked(etf.ticker);
           return (
-            <div key={etf.id} className="border border-border rounded-lg p-4 bg-card hover:bg-muted/50 transition-colors">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
+            <div key={etf.id} className="border border-border rounded-lg p-3 bg-card hover:bg-muted/50 transition-colors">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-foreground text-base">{etf.ticker}</span>
+                    <span className="font-mono font-bold text-foreground text-sm">{etf.ticker}</span>
                     <CanaryStatusBadge status={etf.canaryStatus} />
                   </div>
-                  <p className="text-xs text-muted-foreground truncate mt-1">{etf.name}</p>
+                  <p className="text-[11px] text-muted-foreground truncate mt-0.5">{etf.name}</p>
                 </div>
                 {isPaid && (
                   <button
                     onClick={() => toggleWatchlist(etf.ticker)}
-                    className="p-1 hover:bg-secondary rounded transition-colors"
+                    className="p-1 hover:bg-secondary rounded transition-colors ml-2"
                   >
                     <Star 
                       className={`h-4 w-4 ${
@@ -379,9 +379,9 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
               </div>
 
               {/* Key metrics grid */}
-              <div className="grid grid-cols-2 gap-2 mb-3">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-2">
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Death Clock</p>
+                  <p className="text-[10px] text-muted-foreground">Death Clock</p>
                   <BlurredCell 
                     value={etf.deathClock}
                     isUnlocked={unlocked}
@@ -389,11 +389,11 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
                   />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Price</p>
+                  <p className="text-[10px] text-muted-foreground">Price</p>
                   <p className="font-mono text-sm font-semibold">${etf.latestAdjClose ? etf.latestAdjClose.toFixed(2) : '0.00'}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">True Yield</p>
+                  <p className="text-[10px] text-muted-foreground">True Yield</p>
                   <BlurredCell 
                     value={formatPercent(etf.trueIncomeYield)}
                     isUnlocked={unlocked}
@@ -401,7 +401,7 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
                   />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Take-Home 1Y</p>
+                  <p className="text-[10px] text-muted-foreground">Take-Home 1Y</p>
                   <BlurredCell 
                     value={formatPercent(etf.takeHomeCashReturn1Y)}
                     isUnlocked={unlocked}
@@ -411,21 +411,21 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
               </div>
 
               {/* Secondary metrics */}
-              <div className="text-xs text-muted-foreground border-t border-border pt-2 space-y-1">
-                <div className="flex justify-between">
-                  <span>ROC %:</span>
+              <div className="text-[11px] text-muted-foreground border-t border-border pt-2 flex gap-4 flex-wrap">
+                <div className="flex gap-1">
+                  <span>ROC:</span>
                   <BlurredCell 
                     value={`${etf.rocPercent}%`}
                     isUnlocked={unlocked}
                     onUpgradeClick={onUpgrade}
                   />
                 </div>
-                <div className="flex justify-between">
+                <div className="flex gap-1">
                   <span>AUM:</span>
                   <span className="font-mono">{formatCurrency(etf.aum)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Expense:</span>
+                <div className="flex gap-1">
+                  <span>Exp:</span>
                   <span className="font-mono">{etf.expenseRatio ? (etf.expenseRatio * 100).toFixed(2) : '0.00'}%</span>
                 </div>
               </div>

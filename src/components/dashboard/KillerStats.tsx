@@ -29,23 +29,23 @@ export function KillerStats({ etfs }: KillerStatsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-2 xs:gap-3 sm:gap-4">
+    <div className="grid grid-cols-3 gap-2 sm:gap-4">
       {stats.map((stat, index) => (
         <div
           key={stat.label}
-          className="rounded-lg xs:rounded-xl border border-border bg-background p-2.5 xs:p-3 sm:p-4 animate-fade-in"
+          className="rounded-lg border border-border bg-background p-2 sm:p-4 animate-fade-in"
           style={{ animationDelay: `${index * 0.1}s` }}
         >
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start justify-between gap-1 sm:gap-2">
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider truncate">
+              <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider truncate">
                 {stat.label}
               </p>
-              <p className="text-lg xs:text-xl sm:text-2xl lg:text-3xl font-bold font-mono mt-0.5 xs:mt-1 text-foreground break-words">
+              <p className="text-lg sm:text-2xl lg:text-3xl font-bold font-mono mt-0.5 text-foreground">
                 {stat.value}
               </p>
             </div>
-            <stat.icon className="h-4 xs:h-5 w-4 xs:w-5 text-muted-foreground flex-shrink-0" />
+            <stat.icon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
           </div>
         </div>
       ))}
