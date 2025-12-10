@@ -1,0 +1,44 @@
+name: Weekly ETF Data Update
+
+on:
+  schedule:
+    # Run every Monday at 6:00 AM UTC (1:00 AM EST, after markets close)
+    - cron: '0 6 * * 1'
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+jobs:
+  update-etf-data:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./data ingestion
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: 'data ingestion/requirements.txt'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run full ETF data refresh
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+        run: python ingest_etf_data.py full
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Weekly ETF Data Refresh" >> $GITHUB_STEP_SUMMARY
+          echo "- **Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Mode:** full (ETFs + weekly_data)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

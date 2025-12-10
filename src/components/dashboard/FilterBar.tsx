@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import { CanaryStatus } from '@/types/etf';
 import { Filter, X } from 'lucide-react';
 
@@ -23,39 +22,47 @@ export function FilterBar({
       </div>
 
       {/* Status Filter Buttons */}
-      <div className="flex items-center gap-0.5 xs:gap-1 p-0.5 xs:p-1 bg-secondary rounded-lg border border-border flex-wrap">
-        <Button
-          variant={statusFilter === 'all' ? 'default' : 'ghost'}
-          size="sm"
-          className="h-6 xs:h-7 px-2 xs:px-3 text-xs xs:text-sm"
+      <div className="flex items-center gap-0.5 xs:gap-1 p-0.5 xs:p-1 bg-secondary rounded-lg flex-wrap">
+        <button
+          className={`h-6 xs:h-7 px-2 xs:px-3 text-xs xs:text-sm rounded-md font-medium transition-colors focus:outline-none ${
+            statusFilter === 'all'
+              ? 'bg-green-500 text-white'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
           onClick={() => onStatusFilterChange('all')}
         >
           All
-        </Button>
-        <Button
-          variant={statusFilter === 'Healthy' ? 'default' : 'ghost'}
-          size="sm"
-          className="h-6 xs:h-7 px-2 xs:px-3 text-xs xs:text-sm"
+        </button>
+        <button
+          className={`h-6 xs:h-7 px-2 xs:px-3 text-xs xs:text-sm rounded-md font-medium transition-colors focus:outline-none ${
+            statusFilter === 'Healthy'
+              ? 'bg-green-500 text-white'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
           onClick={() => onStatusFilterChange('Healthy')}
         >
           Healthy
-        </Button>
-        <Button
-          variant={statusFilter === 'Dying' ? 'default' : 'ghost'}
-          size="sm"
-          className="h-6 xs:h-7 px-2 xs:px-3 text-xs xs:text-sm"
+        </button>
+        <button
+          className={`h-6 xs:h-7 px-2 xs:px-3 text-xs xs:text-sm rounded-md font-medium transition-colors focus:outline-none ${
+            statusFilter === 'Dying'
+              ? 'bg-green-500 text-white'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
           onClick={() => onStatusFilterChange('Dying')}
         >
           Dying
-        </Button>
-        <Button
-          variant={statusFilter === 'Dead' ? 'default' : 'ghost'}
-          size="sm"
-          className="h-6 xs:h-7 px-2 xs:px-3 text-xs xs:text-sm"
+        </button>
+        <button
+          className={`h-6 xs:h-7 px-2 xs:px-3 text-xs xs:text-sm rounded-md font-medium transition-colors focus:outline-none ${
+            statusFilter === 'Dead'
+              ? 'bg-green-500 text-white'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
           onClick={() => onStatusFilterChange('Dead')}
         >
           Dead
-        </Button>
+        </button>
       </div>
       {/* Clear Filters */}
       {hasActiveFilters && (

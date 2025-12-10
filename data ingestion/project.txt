@@ -1,0 +1,433 @@
+Project Overview
+
+Build a Softr + Airtable webapp called YieldCanary that instantly shows users which income ETFs are healthy vs
+quietly dying. The dashboard must highlight the 5 killer numbers (see page 5).
+Core promise: users open the dashboard and see which ETFs are healthy vs quietly dying from return-of-capital
+(ROC).
+
+Airtable – 4 Tables
+
+Table 1: ETFs (Master – one row per ETF)
+
+Please include these columns as well: AUM (assets under management) and Expense Ratio.
+
+Field Name       Type               Formula / Notes
+
+Ticker           Primary field      JEPI, SPYI, QYLD, etc.
+
+Name             Single line text
+
+Inception Date Date                 One-time manual entry
+
+Latest Adj
+                 Lookup             MAX of Weekly Data → Adj Close
+Close
+
+                                    MAX of Weekly Data → Date (tells you exactly which week is the “latest” price and
+Latest Date      Lookup
+                                    dividend data that every single calculation on the row is using).
+
+                                    Weekly Data → Dividend where Date ≥ TODAY()-365 → SUM(values) / Latest Adj Close
+Headline Yield                      **Headline Yield (TTM) MUST be a ROLLUP, NEVER pulled from Yahoo, Alpha
+               Rollup
+(TTM)                               Vantage, or any external API. Needs to be a Rollup of the actual Dividend column
+                                    from the Weekly Data table.
+
+                 Number (0–         From 19a-1 table (latest). This is the % of the distribution that is ROC (your own
+ROC % (latest)
+                 100)               money back).
+
+                                    MUST show the exact date of the most recent 19a-1 notice that gave us the current
+ROC Date         Date
+                                    ROC %.
+
+True Income
+                 Formula            ROUND({Headline Yield} × (1 - {ROC %}/100), 4)
+Yield
+
+                                    IF({ROC %} > 0, ROUND(50/{ROC %},1) & “ years”, "∞") Answers the question: If this
+Death Clock
+                 Formula            ETF keeps giving me the same % of my own money back every year (the ROC %),
+(years left)
+                                    how many years until half my original investment is gone?
+
+Canary Status Formula               IF({ROC %} ≥ 40, "Dead", IF({ROC %} ≥ 20, "Dying", "Healthy"))
+
+                                    Healthy → green, Dying → yellow, Dead → red – need to format this so that the colors
+Canary Health Single select
+                                    really stand out.
+The “Return” Columns (1 Year, YTD, and Since Inception versions of each)
+
+All columns here must be stored and displayed as percentages to 2 decimal places.
+
+1 Year Formulas:
+
+Field Name          Type          Exact Formula (copy-paste for 1-Year version – repeat for YTD & Inception)
+
+Total Return
+                    Formula       ROUND( ({Latest Adj Close} / {Price 1Y Ago}) - 1 , 4 )
+(industry standard)
+
+Spent-the-
+                                  ROUND( ( ({Latest Adj Close} - {Price 1Y Ago}) + {Dividends Last 12Mo} ) / {Price
+Dividends Return    Formula
+                                  1Y Ago} , 4 )
+(pre-tax)
+
+Take-Home Return
+                                  ROUND( ( ({Latest Adj Close} × (1 - {Users::Tax Rate}/100)) + ({Dividends Last
+(after-tax       Formula
+                                  12Mo} × (1 - {Users::Tax Rate}/100)) ) / {Price 1Y Ago} - 1 , 4 )
+reinvested)
+
+Take-Home Cash                    ROUND( ( ({Latest Adj Close} - {Price 1Y Ago}) + ({Dividends Last 12Mo} × (1 -
+                    Formula
+Return                            {Users::Tax Rate}/100)) ) / {Price 1Y Ago} , 4 ) ← MUST HAVE
+
+
+
+YTD Formulas:
+
+Field Name          Type          Exact Formula (copy-paste for 1-Year version – repeat for YTD & Inception)
+
+Total Return
+                    Formula       ROUND( ({Latest Adj Close} / {Price YTD Start}) - 1 , 4 )
+(industry standard)
+
+Spent-the-
+                                  ROUND( ( ({Latest Adj Close} - {Price YTD Start}) + {Dividends YTD} ) / {Price YTD
+Dividends Return    Formula
+                                  Start} , 4 )
+(pre-tax)
+
+Take-Home Return
+                                  ROUND( ( ({Latest Adj Close} × (1 - {Users::Tax Rate}/100)) + ({Dividends YTD} ×
+(after-tax       Formula
+                                  (1 - {Users::Tax Rate}/100)) ) / {Price YTD Start} - 1 , 4 )
+reinvested)
+
+Take-Home Cash                    ROUND( ( ({Latest Adj Close} - {Price YTD Start}) + ({Dividends YTD} × (1 -
+                    Formula
+Return                            {Users::Tax Rate}/100)) ) / {Price YTD Start} , 4 )
+Since Inception Formulas:
+
+Field Name              Type              Exact Formula (copy-paste for 1-Year version – repeat for YTD & Inception)
+
+Total Return
+                    Formula               ROUND( ({Latest Adj Close} / {Price at Inception}) - 1 , 4 )
+(industry standard)
+
+Spent-the-
+                                          ROUND( ( ({Latest Adj Close} - {Price at Inception}) + {Dividends Since
+Dividends Return        Formula
+                                          Inception} ) / {Price at Inception} , 4 )
+(pre-tax)
+
+Take-Home Return
+                                          ROUND( ( ({Latest Adj Close} × (1 - {Users::Tax Rate}/100)) + ({Dividends Since
+(after-tax       Formula
+                                          Inception} × (1 - {Users::Tax Rate}/100)) ) / {Price at Inception} - 1 , 4 )
+reinvested)
+
+Take-Home Cash                            ROUND( ( ({Latest Adj Close} - {Price at Inception}) + ({Dividends Since
+                        Formula
+Return                                    Inception} × (1 - {Users::Tax Rate}/100)) ) / {Price at Inception} , 4 )
+
+
+
+Required helper fields (create these first)
+
+Helper Field                  Type            Exact Rollup / Formula
+
+                                              Weekly Data → Adj Close (Date ≥ TODAY()-372 & Date ≤ TODAY()-350 →
+Price 1Y Ago                  Rollup
+                                              MAX(values)
+
+                                              Weekly Data → Adj CloseYEAR(Date) = YEAR(TODAY()) & WEEK(Date) = 1 →
+Price YTD Start               Rollup
+                                              MAX(values)
+
+Price at Inception            Rollup          Weekly Data → Adj CloseDate = {Inception Date} → MAX(values)
+
+                                              This column already exists (this is the exact rollup we use for Headline
+Dividends Last 12Mo           Rollup
+                                              Yield).
+
+Dividends YTD                 Rollup          Weekly Data → DividendYEAR(Date) = YEAR(TODAY()) → SUM(values)
+
+Dividends Since
+                              Rollup          Weekly Data → DividendDate ≥ {Inception Date} → SUM(values)
+Inception
+
+The latest adj close column already exists above.
+
+
+
+Table 2: Weekly Data (raw import)
+Field          Type                  Source
+
+Date           Date                  Weekly dump
+
+Ticker         Link to ETFs
+
+Adj Close      Number                Weekly dump
+                                  Weekly dump (0 if
+Dividend         Number
+                                  none)
+
+Table 3: 19a-1 Notices (ROC)
+
+Field            Type             Source
+
+Ticker           Link to ETFs
+
+                                  Latest
+ROC %            Number
+                                  value
+
+Notice Date      Date
+
+Parse the data from the monthly filing source (if there’s a consistent pattern). Or set up a lightweight scraping
+workflow that only runs monthly to avoid rate-limit issues.
+
+
+
+Table 4: Users
+
+Field Name           Type                                            Notes
+
+Email                Email
+
+Tax Rate (%)         Number Default 0% – user can edit in profile
+
+
+
+Automations (must be fully automatic after setup)
+
+    1. Weekly import – every Monday → update Weekly Data table
+
+    2. Monthly ROC update
+
+    3. Alerts – when Canary Status changes → email + optional SMS (user turns on/off in profile)
+
+
+
+Softr Pages & Features
+
+Page           Access           Must-Have Features
+
+Homepage       Public           Already built
+
+Sign-up /
+               Public           Email
+Login
+
+Pricing        Public           Already built
+
+Stripe         Required         Monthly + annual (already built in Softr)
+
+Free
+               Free users       More info on this at the bottom of the page.
+Dashboard
+                               Full sortable table: default sort = Take-Home Cash Return descending. Columns
+Paid
+                Paid only      highlighted from the section below. Search, filters, export CSV, personal watchlist,
+Dashboard
+                               alerts setup.
+
+The 5 Killer Numbers That Must Be Front-and-Center (biggest text / colors) on the paid dashboard, make
+these impossible to miss.
+
+Column                      Color / Icon               Why it’s there
+
+Canary Status/Health Green / Yellow / Red              Instant health check
+
+Death Clock                                            Years until the ETF hits zero
+                                + big number
+
+True Income Yield                                      Real yield after ROC
+
+
+Total Return (1Y)                                      Robot return (reinvested)
+
+Take-Home Cash                                         Money that actually lands in your pocket after taxes when you
+Return                          ← biggest & boldest    spend the dividends
+
+These five columns are the entire reason YieldCanary exists – make them huge and obvious.
+
+
+
+Deliverables:
+
+   •   Working Airtable base (I own it)
+
+   •   All automations transferred to my accounts
+
+   •   Softr site build – I can add my custom domain later
+
+   •   Stripe tested and working (this is already set up now within Softr)
+
+   •   Handover documentation
+
+   •   Test 1: Weekly dump → all yields update in <10 seconds
+
+   •   Test 2: Upload ROC CSV or new 19a-1 triggers → True Income, Death Clock, and Take-Home Cash Return
+       instantly change
+
+   •   Test 3: Free user sees blur, paid user sees full table with the 5 main columns highlighted
+
+
+
+All work is 100% work-for-hire. You assign all rights to me and agree not to build or launch a competing public
+YieldCanary tool.
+Other notes from earlier conversation:
+
+This tool will operate on a freemium model like we discussed. I’d like to have the ability to add or take away ETF
+tickers and the tool works seamlessly.
+
+FREE TIER RULES
+
+– All ETFs are visible and searchable.
+
+– Canary Health (green/yellow/red circle) is visible on every single row.
+
+– The following columns are blurred/masked on ALL rows for free users: See below.
+
+– Exception: Fully unblur EVERY column for these 4 ETFs only: TSLY, QYLD, XYLD, and MSTY. I’ll out these first on
+the list (these are the “scary examples” that make people upgrade instantly).
+
+– Blur overlay text: “Upgrade to see the real numbers”
+
+Build this in such a way that we can do phase 2 of the project in the future, which is giving users the ability to
+link their portfolio to the tool.
+
+
+
+Free vs Paid Dashboard Columns
+
+Column                                        Free users see this             Paid users see this
+
+Ticker                                        Fully visible                   Fully visible
+
+Name                                          Fully visible                   Fully visible
+
+Canary Status                                 Fully visible on every row      Fully visible + light row tint
+
+Latest Adj Close                              Fully visible                   Fully visible
+
+Latest Date                                   Fully visible                   Fully visible
+
+Headline Yield (TTM)                          Fully visible                   Fully visible
+
+Death Clock                                   Blurred (show “?? years” + lock) Full number + color
+
+True Income Yield                             Blurred (show “?.?? %” + lock) Full number
+
+Take-Home Cash Return 1Y                      Blurred + big lock overlay      Full purple bold + money-bag emoji
+
+Take-Home Cash Return YTD                     Blurred + big lock overlay      Full purple bold + money-bag emoji
+
+Take-Home Cash Return Since Inception         Blurred + big lock overlay      Full purple bold + money-bag emoji
+
+Total Return 1Y                               Blurred                         Visible
+
+Total Return YTD                              Blurred                         Visible
+Total Return Since Inception                  Blurred                           Visible
+
+Spent-the-Dividends Return 1Y                 Blurred                           Visible
+
+Spent-the-Dividends Return YTD                Blurred                           Visible
+
+Spent-the-Dividends Return Since Inception Blurred                              Visible
+
+ROC %                                         Hidden (or “?? %”)                Visible
+
+ROC Date                                      Hidden                            Visible
+
+Export CSV button                             Hidden                            Visible
+
+Personal watchlist                            Hidden                            Visible
+
+Alerts setup                                  Hidden                            Visible
+
+Tax Rate setting                              Hidden                            Visible (in profile)
+
+
+
+Special free-user exception
+Fully unblur every column above for these 4 ETFs only, which will be first on the list:
+TSLY • QYLD • XYLD • MSTY
+
+
+
+ETF List
+
+Are we able to include a column in the ETF Airtable that says which company the ETF is issued from? This would be
+nice for the user to be able to sort on.
+
+Fully Unlocked for Free Users (Top 4 – the "scare samples")
+TSLY (YieldMax TSLA Option Income Strategy ETF)
+QYLD (Global X NASDAQ 100 Covered Call ETF)
+XYLD (Global X S&P 500 Covered Call ETF)
+MSTY (YieldMax MSTR Option Income Strategy ETF)
+
+YieldMax ETFs (High-Yield Single-Stock Covered Calls – 25)
+NVDY (NVIDIA)
+CONY (Coinbase)
+AMZY (Amazon)
+APLY (Apple)
+FBY (Meta)
+MSFO (Microsoft)
+GOOY (Alphabet)
+TSMY (Tesla – Short)
+PLTY (Palantir)
+MRNY (Marathon Digital)
+AIYY (C3.ai)
+XYYY (XYZ)
+YMAX (YieldMax Universe Fund of Option Income ETFs)
+YMAG (YieldMax Magnificent 7 Fund of Option Income ETFs)
+ULTY (YieldMax Ultra Option Income Strategy ETF)
+LFGY (YieldMax Crypto Industry & Tech Portfolio Option Income ETF)
+GPTY (YieldMax AI & Tech Portfolio Option Income ETF)
+SDTY (YieldMax S&P 500 0DTE Covered Call Strategy ETF)
+QDTY (YieldMax Nasdaq 100 0DTE Covered Call Strategy ETF)
+RDTY (YieldMax Russell 2000 0DTE Covered Call Strategy ETF)
+CHPY (YieldMax China Tech Option Income ETF)
+YBIT (YieldMax Bitcoin Option Income Strategy ETF)
+YETH (YieldMax Ethereum Option Income Strategy ETF)
+MSTW (YieldMax MSTR Option Income ETF)
+BABO (YieldMax Baidu Option Income Strategy ETF)
+
+
+
+Roundhill Investments ETFs (Thematic Income – 15)
+QDTE (Nasdaq 100 0DTE Covered Call Strategy ETF)
+XDTE (S&P 500 0DTE Covered Call Strategy ETF)
+RDTE (Russell 2000 0DTE Covered Call Strategy ETF)
+YBTC (Bitcoin Covered Call Strategy ETF)
+YETH (Ethereum Covered Call Strategy ETF)
+YMAX (Universe Fund of Option Income ETFs)
+YMAG (Magnificent 7 Fund of Option Income ETFs)
+ABNY (Airbnb Option Income ETF)
+AMDY (AMD Option Income ETF)
+ARMY (ARM Option Income ETF)
+ASMY (ASML Option Income ETF)
+AVGY (Broadcom Option Income ETF)
+BABY (Baidu Option Income ETF)
+COSTY (Costco Option Income ETF)
+CRWDY (CrowdStrike Option Income ETF)
+
+
+
+Defiance ETFs (Leveraged & Income – 10)
+JEDI (Drone & Modern Warfare ETF)
+TRIL (Trillion Dollar Club Index ETF)
+YBMN (Defiance BMNR Option Income ETF)
+QLDY (Nasdaq 100 LightningSpread Income ETF)
+SPYT (S&P 500 Income Target ETF)
+GLDY (Gold Enhanced Options Income ETF)
+USOY (Oil Enhanced Options Income ETF)
+QQQY (Nasdaq 100 Enhanced Options & 0DTE Income ETF)
+IWMY (Russell 2000 Enhanced Options & 0DTE Income ETF)
+WDTE (S&P 500 Enhanced Options & 0DTE Income ETF)
+

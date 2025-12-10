@@ -1,4 +1,4 @@
-import { Skull, Heart, AlertTriangle, TrendingUp, Banknote } from 'lucide-react';
+import { Skull, Heart, AlertTriangle } from 'lucide-react';
 import { ETF } from '@/types/etf';
 
 interface KillerStatsProps {
@@ -9,9 +9,6 @@ export function KillerStats({ etfs }: KillerStatsProps) {
   const healthyCount = etfs.filter((e) => e.canaryStatus === 'Healthy').length;
   const dyingCount = etfs.filter((e) => e.canaryStatus === 'Dying').length;
   const deadCount = etfs.filter((e) => e.canaryStatus === 'Dead').length;
-  
-  const avgTrueYield = etfs.reduce((sum, e) => sum + e.trueIncomeYield, 0) / etfs.length;
-  const avgTakeHome = etfs.reduce((sum, e) => sum + e.takeHomeCashReturn1Y, 0) / etfs.length;
 
   const stats = [
     {
@@ -29,20 +26,10 @@ export function KillerStats({ etfs }: KillerStatsProps) {
       value: deadCount,
       icon: Skull,
     },
-    {
-      label: 'Avg True Yield',
-      value: `${(avgTrueYield * 100).toFixed(1)}%`,
-      icon: TrendingUp,
-    },
-    {
-      label: 'Avg Take-Home',
-      value: `${(avgTakeHome * 100).toFixed(1)}%`,
-      icon: Banknote,
-    },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 xs:gap-3 sm:gap-4">
+    <div className="grid grid-cols-3 gap-2 xs:gap-3 sm:gap-4">
       {stats.map((stat, index) => (
         <div
           key={stat.label}
