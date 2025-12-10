@@ -22,7 +22,7 @@ export function FilterBar({
       </div>
 
       {/* Status Filter Buttons */}
-      <div className="flex items-center gap-0.5 xs:gap-1 p-0.5 xs:p-1 bg-secondary rounded-lg flex-wrap">
+      <div className="flex items-center gap-1 xs:gap-2 flex-wrap">
         <button
           className={`h-6 xs:h-7 px-2 xs:px-3 text-xs xs:text-sm rounded-md font-medium transition-colors focus:outline-none ${
             statusFilter === 'all'
@@ -66,15 +66,13 @@ export function FilterBar({
       </div>
       {/* Clear Filters */}
       {hasActiveFilters && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 xs:h-7 px-1.5 xs:px-2 text-xs xs:text-sm text-muted-foreground hover:text-foreground"
+        <button
+          className="h-6 xs:h-7 px-1.5 xs:px-2 text-xs xs:text-sm text-muted-foreground hover:text-foreground rounded-md transition-colors focus:outline-none flex items-center"
           onClick={onClearFilters}
         >
           <X className="h-3 w-3 mr-0.5 xs:mr-1 flex-shrink-0" />
           <span className="hidden xs:inline">Clear</span>
-        </Button>
+        </button>
       )}
     </div>
   );

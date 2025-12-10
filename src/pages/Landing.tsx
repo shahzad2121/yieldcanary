@@ -436,7 +436,7 @@ const Landing = () => {
               <span className="text-sm xs:text-base font-bold text-foreground">YieldCanary</span>
             </div>
             <p className="text-xs xs:text-sm text-muted-foreground text-center sm:text-right">
-              © 2024 YieldCanary. All rights reserved.
+              © 2026 YieldCanary. All rights reserved.
             </p>
           </div>
         </footer>

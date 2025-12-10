@@ -115,7 +115,7 @@ export function Dashboard() {
             Data updated daily. ROC data from 19a-1 filings.
           </p>
           <p className="text-xs text-muted-foreground mt-1 sm:mt-2">
-            © 2024 YieldCanary. Not financial advice.
+            © 2026 YieldCanary. Not financial advice.
           </p>
         </footer>
       </main>
