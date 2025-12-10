@@ -41,19 +41,53 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ETF Ticker List from project spec
 ETF_TICKERS = [
-    # Fully Unlocked for Free Users (Top 4)
+    # Fully Unlocked for Free Users (Top 4) – appear only here
     "TSLY", "QYLD", "XYLD", "MSTY",
-    # YieldMax ETFs
+
+    # YieldMax ETFs (all option-income single-stock + basket funds)
     "NVDY", "CONY", "AMZY", "APLY", "FBY", "MSFO", "GOOY", "TSMY", "PLTY", "MRNY",
     "AIYY", "YMAX", "YMAG", "ULTY", "LFGY", "GPTY", "SDTY", "QDTY", "RDTY", "CHPY",
-    "YBIT", "YETH", "MSTW", "BABO",
-    # Roundhill Investments ETFs
-    "QDTE", "XDTE", "RDTE", "YBTC", "ABNY", "AMDY", "ARMY", "ASMY", "AVGY", "BABY",
-    "COSTY", "CRWDY",
-    # Defiance ETFs
-    "JEDI", "TRIL", "YBMN", "QLDY", "SPYT", "GLDY", "USOY", "QQQY", "IWMY", "WDTE"
-]
+    "YBIT", "YETH", "MSTW", "BABO", "ABNY", "AMDY", "BIGY", "BRKC", "CRCO", "CRSH",
+    "CVNY", "DIPS", "DISO", "DRAY", "FEAT", "FIAT", "FIVY", "GDXY", "GMEY", "HIYY",
+    "HOOY", "JPMO", "MARO", "MSST", "NFLY", "NVIT", "OARK", "PYPY", "RBLY", "RDYY",
+    "RNTY", "SLTY", "SMCY", "SNOY", "SOXY", "WNTR", "XOMO", "XYZY", "YQQQ",
 
+    # Roundhill Investments ETFs (high-yield / option-income)
+    "QDTE", "XDTE", "RDTE", "YBTC", "ARMY", "ASMY", "AVGY", "BABY", "COSTY", "CRWDY",
+    "MAGS", "CHAT", "WPAY", "HOOW", "METV", "PLTW", "MAGY", "TSLW", "WEEK", "NVDW",
+    "COIW", "MAGX", "XPAY", "GOOW", "AVGW", "AMDW", "METW", "AAPW", "OZEM", "AMZW",
+    "BRKW", "MSFW", "HUMN", "NFLW", "ARMW", "UBEW", "BABW", "COSW", "NERD", "MAGC",
+    "XDIV", "MEME", "GDXW", "GLDW", "WEED", "TSYW", "UX", "UNHW",
+
+    # Defiance ETFs (high-yield / option-income)
+    "JEDI", "TRIL", "YBMN", "QLDY", "SPYT", "GLDY", "USOY", "QQQY", "IWMY", "WDTE",
+    "QTUM", "SIXG", "AIPO", "XMAG", "MSTX", "ORCX", "SMCX", "OKLL", "HIMZ", "IONX",
+    "IRE", "AVGX", "NVOX", "SOFX", "RKLX", "RGTX", "LLYX", "SOUX", "RIOX", "HOOX",
+    "QPUX", "QSU", "MPL", "DKNX", "OSCX", "ANEL", "VSTL", "CVNX", "LMNX", "JPX",
+    "AVXX", "XPM", "BU", "RGTZ", "PLTZ", "IONZ", "SMST", "QBTZ", "SMCZ", "VIXI",
+    "LLYZ", "BMNZ", "HOOZ", "DAMD", "STSM", "RKLZ", "OKLS", "QQYI", "MST", "QQQT",
+    "HIMY", "AMDU", "ETHI", "HOOI", "PLT", "SMCC",
+
+    # NEOS ETFs (high-yield option-income)
+    "SPYI", "QQQI", "IWMI", "BTCI", "IYRI", "QQQH", "SPYH", "NEHI", "IAUI", "HYBI",
+    "BNDI", "CSHI", "TLTI", "NIHI", "NLSI",
+
+    # REX Shares ETFs (high-yield / leveraged option-income)
+    "NVII", "TSII", "COII", "MSII", "AIPI", "FEPI", "DRNZ", "ARM", "ARMU", "DJTU",
+    "RBLU", "GMEU", "SNOU", "SMUP", "BULU", "SOLX", "AFRU", "AXUP", "KTUP",
+
+    # Kurv ETFs (yield-premium / option-income)
+    "KYLD", "KQQQ", "KGLD", "KSLV", "AMZP", "AAPY", "GOOP", "MSFY", "NFLP", "TSLP",
+
+    # ZEGA ETFs
+    "ZHDG",
+
+    # JPMorgan Equity Premium Income
+    "JEPI", "JEPQ",
+
+    # Global X covered-call classics (added the rest of the family)
+    "RYLD", "DJD", "QYLG", "XYLG", "RYLG"
+]
 
 class FMPClient:
     """Financial Modeling Prep API Client - Using Stable API endpoints"""
