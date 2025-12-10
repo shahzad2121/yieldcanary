@@ -35,6 +35,26 @@ Deno.serve(async (req) => {
       throw new Error("STRIPE_SECRET_KEY not set");
     }
 
+    // Fetch price details from Stripe to determine if it's recurring or one-time
+    const priceRes = await fetch(`https://api.stripe.com/v1/prices/${priceId}`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${stripeSecret}`,
+      },
+    });
+
+    if (!priceRes.ok) {
+      const error = await priceRes.text();
+      console.error("Stripe price fetch error:", error);
+      throw new Error(`Failed to fetch price details: ${error}`);
+    }
+
+    const priceData = await priceRes.json();
+    const isRecurring = priceData.type === "recurring";
+    const mode = isRecurring ? "subscription" : "payment";
+
+    console.log(`[Checkout] Price ${priceId} is ${priceData.type}, using mode: ${mode}`);
+
     // Create Stripe checkout session
     const checkoutRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",
@@ -46,7 +66,7 @@ Deno.serve(async (req) => {
         "payment_method_types[0]": "card",
         "line_items[0][price]": priceId,
         "line_items[0][quantity]": "1",
-        "mode": "payment",
+        "mode": mode,
         "success_url": successUrl || "",
         "cancel_url": cancelUrl || "",
         ...(email ? { "customer_email": email } : {}),
