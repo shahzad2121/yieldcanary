@@ -31,7 +31,7 @@ def print_etfs_summary():
         return
     
     # Print header
-    print(f"{'Ticker':<8} {'Name':<40} {'Price':>10} {'ROC%':>8} {'Health':<10} {'Yield':>10} {'1Y Ret':>10}")
+    print(f"{'Ticker':<8} {'Name':<35} {'Price':>10} {'ROC%':>8} {'Health':<10} {'Yield':>10} {'1Y Ret':>10}")
     print("-" * 100)
     
     # Count by health status
@@ -39,7 +39,7 @@ def print_etfs_summary():
     
     for etf in result.data:
         ticker = etf.get('ticker', '')
-        name = (etf.get('name') or '')[:38]
+        name = (etf.get('name') or '')[:33]
         price = etf.get('latest_adj_close')
         roc = etf.get('roc_latest')
         health = etf.get('canary_health', 'Unknown')
@@ -47,21 +47,22 @@ def print_etfs_summary():
         total_return_1y = etf.get('total_return_1y')
         
         price_str = f"${price:.2f}" if price else "N/A"
-        roc_str = f"{roc:.1f}%" if roc else "N/A"
+        roc_str = f"{roc:.1f}%" if roc is not None else "N/A"
         yield_str = f"{headline_yield*100:.1f}%" if headline_yield else "N/A"
         return_str = f"{total_return_1y*100:.1f}%" if total_return_1y else "N/A"
         
-        print(f"{ticker:<8} {name:<40} {price_str:>10} {roc_str:>8} {health:<10} {yield_str:>10} {return_str:>10}")
+        print(f"{ticker:<8} {name:<35} {price_str:>10} {roc_str:>8} {health:<10} {yield_str:>10} {return_str:>10}")
         
         health_counts[health] = health_counts.get(health, 0) + 1
     
     # Print summary
     print("-" * 100)
     print(f"\nTotal ETFs: {len(result.data)}")
-    print(f"  Healthy: {health_counts.get('Healthy', 0)}")
-    print(f"  Dying:   {health_counts.get('Dying', 0)}")
-    print(f"  Dead:    {health_counts.get('Dead', 0)}")
-    print(f"  Unknown: {health_counts.get('Unknown', 0)}")
+    print(f"\nCanary Health:")
+    print(f"  🟢 Healthy: {health_counts.get('Healthy', 0)}")
+    print(f"  🟡 Dying:   {health_counts.get('Dying', 0)}")
+    print(f"  🔴 Dead:    {health_counts.get('Dead', 0)}")
+    print(f"  ⚪ Unknown: {health_counts.get('Unknown', 0)}")
 
 
 def print_top_performers():

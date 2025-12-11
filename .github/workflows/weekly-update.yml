@@ -5,20 +5,6 @@ on:
     # Run every Monday at 6:00 AM UTC (1:00 AM EST, after markets close)
     - cron: '0 6 * * 1'
   workflow_dispatch:
-    inputs:
-      mode:
-        description: 'Ingestion mode'
-        required: false
-        default: 'full'
-        type: choice
-        options:
-          - full
-          - etfs
-          - roc
-      ticker:
-        description: 'Single ticker (leave empty for all)'
-        required: false
-        default: ''
 
 jobs:
   update-etf-data:
@@ -42,28 +28,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run ETF data refresh
+      - name: Run ETF data bootstrap
         env:
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
-        run: |
-          MODE="${{ github.event.inputs.mode || 'full' }}"
-          TICKER="${{ github.event.inputs.ticker }}"
-          
-          if [ -n "$TICKER" ]; then
-            echo "Running single ticker: $TICKER"
-            python ingest_etf_data.py single "$TICKER"
-          else
-            echo "Running mode: $MODE"
-            python ingest_etf_data.py "$MODE"
-          fi
+        run: python bootstrap_database.py
 
       - name: Summary
         if: always()
         run: |
-          echo "## ETF Data Refresh" >> $GITHUB_STEP_SUMMARY
+          echo "## ETF Data Bootstrap" >> $GITHUB_STEP_SUMMARY
           echo "- **Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
-          echo "- **Mode:** ${{ github.event.inputs.mode || 'full' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Ticker:** ${{ github.event.inputs.ticker || 'all' }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
