@@ -408,6 +408,18 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
                     onUpgradeClick={onUpgrade}
                   />
                 </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground">Headline Yield</p>
+                  <p className="font-mono text-sm">{formatPercent(etf.headlineYieldTTM)}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground">Total Return 1Y</p>
+                  <BlurredCell 
+                    value={formatPercent(etf.totalReturn1Y)}
+                    isUnlocked={unlocked}
+                    onUpgradeClick={onUpgrade}
+                  />
+                </div>
               </div>
 
               {/* Secondary metrics */}

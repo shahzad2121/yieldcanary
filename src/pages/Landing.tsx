@@ -355,23 +355,7 @@ const Landing = () => {
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-              <PricingCard 
-                name="Test Access"
-                description="One-time payment"
-                price="$0.30"
-                period="/ one-time"
-                features={[
-                  "Full access to all metrics",
-                  "True Income Yield & Death Clock",
-                  "Canary Status for all ETFs",
-                  "No recurring charges",
-                ]}
-                buttonText="Test with $0.30"
-                buttonVariant="outline"
-                onCheckout={() => handleCheckout('one_dollar')}
-                isLoading={loading === 'one_dollar'}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               <PricingCard 
                 name="Free"
                 description="For anyone to get started"

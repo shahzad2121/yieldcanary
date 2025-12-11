@@ -31,7 +31,7 @@ export default function Auth() {
           return;
         }
         if (session?.user) {
-          navigate("/");
+          navigate("/dashboard");
         }
       } catch (err) {
         console.error("Error checking session:", err);
@@ -45,7 +45,7 @@ export default function Auth() {
       (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
         if (session?.user) {
-          navigate("/");
+          navigate("/dashboard");
         }
       }
     );

@@ -11,22 +11,30 @@ interface UpgradeModalProps {
   onUpgrade: () => void;
 }
 
-const features = [
-  'Full access to all ETF metrics',
-  'Death Clock & True Income Yield for all ETFs',
-  'Take-Home Cash Returns (after-tax)',
-  'Personal watchlist with alerts',
-  'CSV export functionality',
-  'Tax rate customization',
+const basicFeatures = [
+  'True Income Yield revealed',
+  'ROC % + ROC Health',
+  'Alive / Watch / Dead Canary status',
+  'Death Clock (years left)',
+  'Monthly updates included',
+];
+
+const advancedFeatures = [
+  'Everything in Basic +',
+  'Weekly "Dead Canary Alert" emails',
   'Priority email support',
+  'Early access to new ETFs',
+  'CSV export functionality',
 ];
 
 export function UpgradeModal({ isOpen, onClose, onUpgrade }: UpgradeModalProps) {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<'basic' | 'advanced'>('basic');
+  const [isYearly, setIsYearly] = useState(false);
 
-  const handleUpgradeClick = async () => {
+  const handleUpgradeClick = async (plan: 'basic_monthly' | 'basic_yearly' | 'advanced_monthly' | 'advanced_yearly') => {
     try {
-      setLoading(true);
+      setLoading(plan);
       
       // Get current user email
       const { data: { session } } = await supabase.auth.getSession();
@@ -38,19 +46,25 @@ export function UpgradeModal({ isOpen, onClose, onUpgrade }: UpgradeModalProps) 
         return;
       }
 
-      // Redirect to Stripe checkout for Advanced Monthly plan
-      await redirectToCheckout('advanced_monthly', email);
+      await redirectToCheckout(plan, email);
     } catch (error) {
       console.error('Upgrade failed:', error);
       alert('Failed to start upgrade. Please try again.');
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
+  };
+
+  const getPlanId = () => {
+    if (selectedPlan === 'basic') {
+      return isYearly ? 'basic_yearly' : 'basic_monthly';
+    }
+    return isYearly ? 'advanced_yearly' : 'advanced_monthly';
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md w-[calc(100%-2rem)] max-h-[calc(100vh-2rem)] overflow-y-auto p-4 xs:p-6">
+      <DialogContent className="max-w-lg w-[calc(100%-2rem)] max-h-[calc(100vh-2rem)] overflow-y-auto p-4 xs:p-6">
         <DialogHeader>
           <div className="flex items-center justify-center mb-3 xs:mb-4">
             <div className="h-12 xs:h-16 w-12 xs:w-16 rounded-full bg-secondary border border-border flex items-center justify-center flex-shrink-0">
@@ -65,41 +79,87 @@ export function UpgradeModal({ isOpen, onClose, onUpgrade }: UpgradeModalProps) 
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 xs:space-y-4 py-3 xs:py-4">
-          <ul className="space-y-2 xs:space-y-3">
-            {features.map((feature) => (
-              <li key={feature} className="flex items-start gap-2 xs:gap-3">
-                <div className="h-4 xs:h-5 w-4 xs:w-5 rounded-full bg-secondary border border-border flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Check className="h-2.5 xs:h-3 w-2.5 xs:w-3 text-foreground" />
+        {/* Billing Toggle */}
+        <div className="flex justify-center gap-2 py-2">
+          <Button
+            variant={!isYearly ? 'default' : 'outline'}
+            size="sm"
+            className="rounded-full text-xs px-4"
+            onClick={() => setIsYearly(false)}
+          >
+            Monthly
+          </Button>
+          <Button
+            variant={isYearly ? 'default' : 'outline'}
+            size="sm"
+            className="rounded-full text-xs px-4"
+            onClick={() => setIsYearly(true)}
+          >
+            Yearly (Save 17%)
+          </Button>
+        </div>
+
+        {/* Plan Selection */}
+        <div className="grid grid-cols-2 gap-3 py-2">
+          {/* Basic Plan */}
+          <button
+            onClick={() => setSelectedPlan('basic')}
+            className={`p-3 rounded-lg border-2 text-left transition-all ${
+              selectedPlan === 'basic'
+                ? 'border-green-500 bg-green-500/10'
+                : 'border-border hover:border-muted-foreground'
+            }`}
+          >
+            <p className="font-semibold text-sm">Basic</p>
+            <p className="text-lg font-bold">
+              {isYearly ? '$89' : '$9'}
+              <span className="text-xs font-normal text-muted-foreground">/{isYearly ? 'year' : 'mo'}</span>
+            </p>
+          </button>
+
+          {/* Advanced Plan */}
+          <button
+            onClick={() => setSelectedPlan('advanced')}
+            className={`p-3 rounded-lg border-2 text-left transition-all ${
+              selectedPlan === 'advanced'
+                ? 'border-green-500 bg-green-500/10'
+                : 'border-border hover:border-muted-foreground'
+            }`}
+          >
+            <p className="font-semibold text-sm">Advanced</p>
+            <p className="text-lg font-bold">
+              {isYearly ? '$189' : '$19'}
+              <span className="text-xs font-normal text-muted-foreground">/{isYearly ? 'year' : 'mo'}</span>
+            </p>
+          </button>
+        </div>
+
+        {/* Features List */}
+        <div className="py-2">
+          <ul className="space-y-2">
+            {(selectedPlan === 'basic' ? basicFeatures : advancedFeatures).map((feature) => (
+              <li key={feature} className="flex items-start gap-2">
+                <div className="h-4 w-4 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check className="h-2.5 w-2.5 text-green-500" />
                 </div>
-                <span className="text-xs xs:text-sm text-foreground">{feature}</span>
+                <span className="text-xs text-foreground">{feature}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="space-y-2 xs:space-y-3">
-          <div className="text-center">
-            <div className="flex items-baseline justify-center gap-1">
-              <span className="text-3xl xs:text-4xl font-bold text-foreground">$19</span>
-              <span className="text-xs xs:text-sm text-muted-foreground">/month</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5 xs:mt-1">
-              or $149/year (save 35%)
-            </p>
-          </div>
-
+        <div className="space-y-2">
           <Button 
-            onClick={handleUpgradeClick}
-            disabled={loading}
-            className="w-full h-9 xs:h-10 sm:h-12 text-xs xs:text-sm sm:text-base gap-1.5 xs:gap-2"
+            onClick={() => handleUpgradeClick(getPlanId() as any)}
+            disabled={loading !== null}
+            className="w-full h-10 text-sm gap-2"
           >
-            <Zap className="h-4 xs:h-5 w-4 xs:w-5 flex-shrink-0" />
-            {loading ? 'Processing...' : 'Upgrade Now'}
+            <Zap className="h-4 w-4 flex-shrink-0" />
+            {loading ? 'Processing...' : `Upgrade to ${selectedPlan === 'basic' ? 'Basic' : 'Advanced'}`}
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
-            30-day money-back guarantee • Cancel anytime
+            Cancel anytime • Secure checkout
           </p>
         </div>
       </DialogContent>
