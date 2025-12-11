@@ -3,6 +3,8 @@ ETF & Fund Holdings API
 Globe Flag
 Get a detailed breakdown of the assets held within ETFs and mutual funds using the FMP ETF & Fund Holdings API. Access real-time data on the specific securities and their weights in the portfolio, providing insights into asset composition and fund strategies.
 
+
+
 Endpoint:
 
 https://financialmodelingprep.com/stable/etf/holdings?symbol=SPY
