@@ -14,6 +14,7 @@ Usage:
 
 import os
 import sys
+import time
 import requests
 from datetime import datetime, timedelta
 from typing import Optional
@@ -112,19 +113,69 @@ class FMPClient:
     
     BASE_URL = "https://financialmodelingprep.com/stable"
     
+    # Rate limiting settings
+    REQUESTS_PER_MINUTE = 300  # FMP free tier is 250-300/min, adjust as needed
+    MIN_REQUEST_INTERVAL = 60.0 / REQUESTS_PER_MINUTE  # Minimum seconds between requests
+    MAX_RETRIES = 5
+    INITIAL_BACKOFF = 2.0  # Initial backoff in seconds
+    MAX_BACKOFF = 60.0  # Maximum backoff in seconds
+    
     def __init__(self, api_key: str):
         self.api_key = api_key
+        self._last_request_time = 0.0
+    
+    def _wait_for_rate_limit(self):
+        """Enforce minimum interval between requests"""
+        elapsed = time.time() - self._last_request_time
+        if elapsed < self.MIN_REQUEST_INTERVAL:
+            sleep_time = self.MIN_REQUEST_INTERVAL - elapsed
+            time.sleep(sleep_time)
+        self._last_request_time = time.time()
     
     def _request(self, endpoint: str, params: dict = None) -> list:
-        """Make API request with error handling"""
+        """Make API request with rate limiting, error handling, and exponential backoff"""
         if params is None:
             params = {}
         params['apikey'] = self.api_key
         
         url = f"{self.BASE_URL}/{endpoint}"
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        return response.json()
+        
+        for attempt in range(self.MAX_RETRIES):
+            self._wait_for_rate_limit()
+            
+            try:
+                response = requests.get(url, params=params)
+                
+                # Handle rate limiting (429 Too Many Requests)
+                if response.status_code == 429:
+                    backoff = min(self.INITIAL_BACKOFF * (2 ** attempt), self.MAX_BACKOFF)
+                    print(f"    Rate limited (429). Waiting {backoff:.1f}s before retry {attempt + 1}/{self.MAX_RETRIES}...")
+                    time.sleep(backoff)
+                    continue
+                
+                response.raise_for_status()
+                return response.json()
+                
+            except requests.exceptions.HTTPError as e:
+                if response.status_code == 429:
+                    # Already handled above, but just in case
+                    backoff = min(self.INITIAL_BACKOFF * (2 ** attempt), self.MAX_BACKOFF)
+                    print(f"    Rate limited. Waiting {backoff:.1f}s before retry {attempt + 1}/{self.MAX_RETRIES}...")
+                    time.sleep(backoff)
+                    continue
+                else:
+                    raise
+            except requests.exceptions.RequestException as e:
+                if attempt < self.MAX_RETRIES - 1:
+                    backoff = min(self.INITIAL_BACKOFF * (2 ** attempt), self.MAX_BACKOFF)
+                    print(f"    Request error: {e}. Waiting {backoff:.1f}s before retry {attempt + 1}/{self.MAX_RETRIES}...")
+                    time.sleep(backoff)
+                    continue
+                else:
+                    raise
+        
+        # If we've exhausted all retries
+        raise requests.exceptions.HTTPError(f"Failed after {self.MAX_RETRIES} retries")
     
     def get_etf_profile(self, ticker: str) -> Optional[dict]:
         """Get ETF profile including name, inception date, AUM, expense ratio"""
