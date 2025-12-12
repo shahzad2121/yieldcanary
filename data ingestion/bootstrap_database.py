@@ -649,10 +649,8 @@ def populate_notices_19a1(tickers: list):
                     'effective_date': roc_date or today.strftime('%Y-%m-%d')
                 }
                 
-                supabase.table('notices_19a1').upsert(
-                    notice_record,
-                    on_conflict='ticker_id,notice_date'
-                ).execute()
+                # Use insert instead of upsert (table is cleared at bootstrap start)
+                supabase.table('notices_19a1').insert(notice_record).execute()
                 success += 1
                 
             except Exception as e:

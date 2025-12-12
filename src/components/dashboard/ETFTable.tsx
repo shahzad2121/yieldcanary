@@ -338,7 +338,7 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
                       {formatCurrency(etf.aum)}
                     </TableCell>
                     <TableCell className="font-mono text-muted-foreground text-sm">
-                      {etf.expenseRatio ? (etf.expenseRatio * 100).toFixed(2) : '0.00'}%
+                      {etf.expenseRatio ? etf.expenseRatio.toFixed(2) : '0.00'}%
                     </TableCell>
                   </TableRow>
                 );
@@ -438,7 +438,7 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
                 </div>
                 <div className="flex gap-1">
                   <span>Exp:</span>
-                  <span className="font-mono">{etf.expenseRatio ? (etf.expenseRatio * 100).toFixed(2) : '0.00'}%</span>
+                  <span className="font-mono">{etf.expenseRatio ? etf.expenseRatio.toFixed(2) : '0.00'}%</span>
                 </div>
               </div>
             </div>
