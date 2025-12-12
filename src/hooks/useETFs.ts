@@ -27,6 +27,7 @@ export function useETFs() {
           id: row.id,
           ticker: row.ticker,
           name: row.name,
+          issuer: row.issuer,
           inceptionDate: row.inception_date,
           latestAdjClose: row.latest_adj_close,
           latestDate: row.latest_date,
@@ -38,6 +39,14 @@ export function useETFs() {
           canaryStatus: row.canary_health as 'Healthy' | 'Dying' | 'Dead',
           aum: row.aum,
           expenseRatio: row.expense_ratio,
+          // Add all required price/dividend fields for client-side calculations
+          price1YAgo: row.price_1y_ago,
+          dividendsLast12Mo: row.dividends_last_12mo,
+          priceYTDStart: row.price_ytd_start,
+          dividendsYTD: row.dividends_ytd,
+          priceAtInception: row.price_at_inception,
+          dividendsSinceInception: row.dividends_since_inception,
+          // Existing return columns
           totalReturn1Y: row.total_return_1y,
           totalReturnYTD: row.total_return_ytd,
           totalReturnSinceInception: row.total_return_inception,
