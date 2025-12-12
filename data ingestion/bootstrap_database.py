@@ -229,6 +229,17 @@ def calculate_death_clock(roc_percent: Optional[float]) -> Optional[float]:
     return round(50 / roc_percent, 2)
 
 
+def clamp_numeric(value: Optional[float], max_val: float = 9.9999, min_val: float = -9.9999) -> Optional[float]:
+    """Clamp numeric values to fit database NUMERIC(5,4) constraints.
+    
+    Database columns with precision 5, scale 4 can only store -9.9999 to 9.9999.
+    This handles extreme yields/returns from high-yield ETFs.
+    """
+    if value is None:
+        return None
+    return max(min_val, min(max_val, value))
+
+
 def estimate_roc_from_nav_erosion(
     price_at_inception: Optional[float],
     latest_price: Optional[float],
@@ -373,6 +384,8 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
     expense_ratio = None
     if etf_info:
         aum = etf_info.get('assetsUnderManagement')
+        # FMP returns expenseRatio already as percentage (e.g., 0.0945 = 0.0945%, 0.99 = 0.99%)
+        # Store as-is - no conversion needed
         expense_ratio = etf_info.get('expenseRatio')
     if not aum and profile:
         aum = profile.get('mktCap')
@@ -478,6 +491,22 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
             ((latest_price - price_at_inception) + dividends_since_inception) / price_at_inception, 2
         )
     
+    # Take-Home Return (after-tax reinvested) and Take-Home Cash Return
+    # These depend on user's tax rate. Store with default 0% tax rate (no tax applied).
+    # Formula from project.txt:
+    # Take-Home Return = ((Latest Adj Close × (1 - TaxRate/100)) + (Dividends × (1 - TaxRate/100))) / Price - 1
+    # Take-Home Cash Return = ((Latest Adj Close - Price) + (Dividends × (1 - TaxRate/100))) / Price
+    # With 0% tax, Take-Home Return = same as Spent-Dividends Return - 1 logic
+    # With 0% tax, Take-Home Cash Return = same as Spent-Dividends Return
+    
+    # For now, store None - these are user-specific and computed in frontend with user's tax rate
+    take_home_return_1y = None
+    take_home_return_ytd = None
+    take_home_return_inception = None
+    take_home_cash_return_1y = None
+    take_home_cash_return_ytd = None
+    take_home_cash_return_inception = None
+
     # Round values
     latest_price = round(latest_price, 2) if latest_price else None
     price_1y_ago = round(price_1y_ago, 2) if price_1y_ago else None
@@ -486,7 +515,18 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
     dividends_last_12mo = round(dividends_last_12mo, 2)
     dividends_ytd = round(dividends_ytd, 2)
     dividends_since_inception = round(dividends_since_inception, 2)
-    expense_ratio = round(expense_ratio, 4) if expense_ratio else None
+    expense_ratio = round(expense_ratio, 2) if expense_ratio else None  # Already converted to percentage
+    
+    # Clamp values to fit NUMERIC(5,4) database constraints (-9.9999 to 9.9999)
+    # This handles extreme yields/returns from high-yield ETFs
+    headline_yield_ttm = clamp_numeric(headline_yield_ttm)
+    true_income_yield = clamp_numeric(true_income_yield)
+    total_return_1y = clamp_numeric(total_return_1y)
+    total_return_ytd = clamp_numeric(total_return_ytd)
+    total_return_inception = clamp_numeric(total_return_inception)
+    spent_dividends_return_1y = clamp_numeric(spent_dividends_return_1y)
+    spent_dividends_return_ytd = clamp_numeric(spent_dividends_return_ytd)
+    spent_dividends_return_inception = clamp_numeric(spent_dividends_return_inception)
     
     return {
         'ticker': ticker,
@@ -514,6 +554,13 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
         'spent_dividends_return_1y': spent_dividends_return_1y,
         'spent_dividends_return_ytd': spent_dividends_return_ytd,
         'spent_dividends_return_inception': spent_dividends_return_inception,
+        # Take-Home fields - user-specific, computed in frontend with user's tax rate
+        'take_home_return_1y': take_home_return_1y,
+        'take_home_return_ytd': take_home_return_ytd,
+        'take_home_return_inception': take_home_return_inception,
+        'take_home_cash_return_1y': take_home_cash_return_1y,
+        'take_home_cash_return_ytd': take_home_cash_return_ytd,
+        'take_home_cash_return_inception': take_home_cash_return_inception,
         'updated_at': datetime.now().isoformat()
     }
 
@@ -561,10 +608,65 @@ def get_etf_id_map() -> dict:
     return {row['ticker']: row['id'] for row in result.data} if result.data else {}
 
 
+def populate_notices_19a1(tickers: list):
+    """Populate notices_19a1 table with ROC data from etfs table.
+    
+    Per project.txt Table 3: 19a-1 Notices (ROC) schema:
+    - ticker_id: Link to ETFs
+    - roc_percent: ROC % (latest value)
+    - notice_date: Date of the notice
+    """
+    print("\n" + "="*60)
+    print(f"STEP 4: Populating 19a-1 notices for {len(tickers)} ETFs...")
+    print("="*60)
+    
+    today = datetime.now()
+    
+    # Get ticker -> UUID mapping
+    ticker_id_map = get_etf_id_map()
+    
+    # Get ROC data from etfs table
+    result = supabase.table('etfs').select('ticker, roc_latest, roc_date').execute()
+    
+    success = 0
+    skipped = 0
+    
+    for row in result.data or []:
+        ticker = row.get('ticker')
+        roc_latest = row.get('roc_latest')
+        roc_date = row.get('roc_date')
+        
+        if ticker not in ticker_id_map:
+            continue
+        
+        # Only insert if we have ROC data
+        if roc_latest is not None:
+            try:
+                notice_record = {
+                    'ticker_id': ticker_id_map[ticker],
+                    'roc_percent': roc_latest,
+                    'notice_date': roc_date or today.strftime('%Y-%m-%d'),
+                    'effective_date': roc_date or today.strftime('%Y-%m-%d')
+                }
+                
+                supabase.table('notices_19a1').upsert(
+                    notice_record,
+                    on_conflict='ticker_id,notice_date'
+                ).execute()
+                success += 1
+                
+            except Exception as e:
+                print(f"    Warning: {ticker} notice error: {e}")
+        else:
+            skipped += 1
+    
+    print(f"  ✓ 19a-1 notices: {success} records inserted, {skipped} ETFs skipped (no ROC data)")
+
+
 def populate_weekly_data(tickers: list, fmp: FMPClient):
     """Populate weekly_data table with historical prices and dividends"""
     print("\n" + "="*60)
-    print(f"STEP 4: Populating weekly data for {len(tickers)} ETFs...")
+    print(f"STEP 5: Populating weekly data for {len(tickers)} ETFs...")
     print("="*60)
     
     today = datetime.now()
@@ -705,8 +807,10 @@ def main():
     # Step 3: Populate ETF data (with ROC estimation)
     success, failed, health_counts = populate_etf_data(tickers, fmp)
     
+    # Step 4: Populate 19a-1 notices (ROC data)
+    populate_notices_19a1(tickers)
     
-    # Step 4: Populate weekly data
+    # Step 5: Populate weekly data
     populate_weekly_data(tickers, fmp)
     
     # Print summary

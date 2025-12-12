@@ -1,4 +1,5 @@
 import { Bird, Crown, Search, Bell, Settings, LogOut, ChevronLeft, Moon, Sun } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { useTheme } from '@/hooks/useTheme';
+import { SettingsModal } from './SettingsModal';
 
 interface DashboardHeaderProps {
   isPaid: boolean;
@@ -30,6 +32,7 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -129,7 +132,7 @@ export function DashboardHeader({
                 </p>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-xs sm:text-sm">
+              <DropdownMenuItem onClick={() => setIsSettingsOpen(true)} className="text-xs sm:text-sm">
                 <Settings className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                 Settings
               </DropdownMenuItem>
@@ -155,6 +158,13 @@ export function DashboardHeader({
           />
         </div>
       </div>
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        userEmail={userEmail}
+      />
     </header>
   );
 }

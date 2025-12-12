@@ -231,6 +231,54 @@ export type Database = {
           },
         ]
       }
+      users: {
+        Row: {
+          id: string
+          email: string
+          name: string | null
+          username: string | null
+          is_paid: boolean | null
+          subscription_tier: string | null
+          subscription_start: string | null
+          subscription_end: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          tax_rate: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          name?: string | null
+          username?: string | null
+          is_paid?: boolean | null
+          subscription_tier?: string | null
+          subscription_start?: string | null
+          subscription_end?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tax_rate?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          name?: string | null
+          username?: string | null
+          is_paid?: boolean | null
+          subscription_tier?: string | null
+          subscription_start?: string | null
+          subscription_end?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tax_rate?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

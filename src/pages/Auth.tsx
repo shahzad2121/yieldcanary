@@ -14,6 +14,7 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [taxRate, setTaxRate] = useState("0");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -106,7 +107,7 @@ export default function Auth() {
         }
         console.log("Sign up successful:", data.user?.email);
         
-        // Store username in Supabase users table
+        // Store username and tax_rate in Supabase users table
         if (data.user?.email && username) {
           try {
             // Use upsert to handle duplicate email gracefully
@@ -116,6 +117,7 @@ export default function Auth() {
                 {
                   email: data.user.email,
                   username: username,
+                  tax_rate: parseFloat(taxRate) || 0,
                 },
                 { onConflict: 'email' }
               );
@@ -252,6 +254,24 @@ export default function Auth() {
                 required={!isLogin}
                 className="text-sm h-9 xs:h-10"
               />
+            </div>
+          )}
+
+          {!isLogin && (
+            <div className="space-y-1.5 xs:space-y-2">
+              <Label htmlFor="taxRate" className="text-xs xs:text-sm">Tax Rate (%)</Label>
+              <Input
+                id="taxRate"
+                type="number"
+                placeholder="0"
+                min="0"
+                max="100"
+                step="0.01"
+                value={taxRate}
+                onChange={(e) => setTaxRate(e.target.value)}
+                className="text-sm h-9 xs:h-10"
+              />
+              <p className="text-xs text-muted-foreground">Your tax rate for yield calculations. You can adjust this later.</p>
             </div>
           )}
 
