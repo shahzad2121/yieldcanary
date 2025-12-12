@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useUserTaxRate } from '@/hooks/useUserTaxRate';
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,8 @@ export function SettingsModal({ isOpen, onClose, userEmail }: SettingsModalProps
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const { toast } = useToast();
+  // Use the tax rate hook to get refetch
+  const { refetch } = useUserTaxRate();
 
   // Fetch current tax rate when modal opens
   useEffect(() => {
@@ -64,6 +67,9 @@ export function SettingsModal({ isOpen, onClose, userEmail }: SettingsModalProps
       if (error) {
         throw error;
       }
+
+      // Refetch the tax rate after saving
+      if (refetch) await refetch();
 
       toast({
         title: 'Settings saved',

@@ -1,16 +1,11 @@
-"""
-YieldCanary Database Bootstrap Script
-=====================================
-This script:
-1. Clears all existing data from tables (etfs, weekly_data, notices_19a1)
-2. Adds new tickers to the database
-3. Fetches and populates all ETF data systematically
+def display_take_home_returns_for_all_users(etf_data):
+    """
+    (Deprecated) Take-home return and take-home cash return fields are now calculated in the frontend using the user's tax rate.
+    This function is no longer needed unless for debugging or legacy display purposes.
+    etf_data: dict with keys for price/dividends as in process_etf return
+    """
+    print("[INFO] Take-home return and take-home cash return fields are now calculated in the frontend using the user's tax rate. This function is deprecated.")
 
-Usage:
-    python bootstrap_database.py                    # Use default ticker list
-    python bootstrap_database.py tickers.txt       # Load tickers from file (one per line)
-    python bootstrap_database.py TSLY,NVDY,CONY    # Comma-separated tickers
-"""
 
 import os
 import sys
@@ -542,15 +537,8 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
             ((latest_price - price_at_inception) + dividends_since_inception) / price_at_inception, 2
         )
     
-    # Take-Home Return (after-tax reinvested) and Take-Home Cash Return
-    # These depend on user's tax rate. Store with default 0% tax rate (no tax applied).
-    # Formula from project.txt:
-    # Take-Home Return = ((Latest Adj Close × (1 - TaxRate/100)) + (Dividends × (1 - TaxRate/100))) / Price - 1
-    # Take-Home Cash Return = ((Latest Adj Close - Price) + (Dividends × (1 - TaxRate/100))) / Price
-    # With 0% tax, Take-Home Return = same as Spent-Dividends Return - 1 logic
-    # With 0% tax, Take-Home Cash Return = same as Spent-Dividends Return
-    
-    # For now, store None - these are user-specific and computed in frontend with user's tax rate
+
+    # Take-Home Return and Take-Home Cash Return fields are not calculated here; frontend will handle tax-rate-dependent calculations
     take_home_return_1y = None
     take_home_return_ytd = None
     take_home_return_inception = None
