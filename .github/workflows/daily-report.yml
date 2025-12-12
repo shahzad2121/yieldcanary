@@ -1,5 +1,4 @@
 name: Daily ETF Report
-
 on:
   schedule:
     # Run every day at 7:00 AM UTC
