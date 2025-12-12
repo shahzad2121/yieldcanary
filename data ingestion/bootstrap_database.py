@@ -1,9 +1,5 @@
 def display_take_home_returns_for_all_users(etf_data):
-    """
-    (Deprecated) Take-home return and take-home cash return fields are now calculated in the frontend using the user's tax rate.
-    This function is no longer needed unless for debugging or legacy display purposes.
-    etf_data: dict with keys for price/dividends as in process_etf return
-    """
+
     print("[INFO] Take-home return and take-home cash return fields are now calculated in the frontend using the user's tax rate. This function is deprecated.")
 
 
