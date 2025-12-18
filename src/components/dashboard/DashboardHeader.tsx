@@ -1,4 +1,4 @@
-import { Bird, Crown, Search, Bell, Settings, LogOut, ChevronLeft, Moon, Sun } from 'lucide-react';
+import { Bird, Crown, Search, Bell, Settings, LogOut, ChevronLeft, Moon, Sun, Star } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { SettingsModal } from './SettingsModal';
 
 interface DashboardHeaderProps {
+  plan: 'free' | 'basic';
   isPaid: boolean;
   userEmail?: string;
   onUpgrade: () => void;
@@ -24,6 +25,7 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({
+  plan,
   isPaid,
   userEmail = 'user@example.com',
   onUpgrade,
@@ -92,7 +94,7 @@ export function DashboardHeader({
           </button>
 
           {/* Upgrade Button - Hidden on smallest screens */}
-          {!isPaid && (
+          {plan === 'free' && (
             <Button
               onClick={onUpgrade}
               variant="outline"
@@ -103,7 +105,7 @@ export function DashboardHeader({
             </Button>
           )}
 
-          {isPaid && (
+          {/* {isPaid && (
             <Button 
               variant="ghost" 
               size="icon" 
@@ -111,7 +113,7 @@ export function DashboardHeader({
             >
               <Bell className="h-4 w-4" />
             </Button>
-          )}
+          )} */}
 
           {/* User Avatar Dropdown */}
           <DropdownMenu>
@@ -128,10 +130,17 @@ export function DashboardHeader({
               <div className="px-2 py-1.5">
                 <p className="text-xs sm:text-sm font-medium break-words">{userEmail}</p>
                 <p className="text-xs text-muted-foreground">
-                  {isPaid ? 'Pro Member' : 'Free Tier'}
+                  {plan === 'free' ? 'Free Tier' : 'Pro Member'}
                 </p>
               </div>
               <DropdownMenuSeparator />
+              {plan !== 'free' && (
+                <DropdownMenuItem onClick={() => navigate('/watchlist')} className="text-xs sm:text-sm">
+                  <Star className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  Watchlist
+                </DropdownMenuItem>
+              )}
+              {plan !== 'free' && <DropdownMenuSeparator />}
               <DropdownMenuItem onClick={() => setIsSettingsOpen(true)} className="text-xs sm:text-sm">
                 <Settings className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                 Settings

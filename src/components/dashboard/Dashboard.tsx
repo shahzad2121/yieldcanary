@@ -17,7 +17,11 @@ export function Dashboard() {
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
 
-  const isPaid = subscriptionUser?.is_paid || false;
+  // Plan derivation: for now we distinguish only between 'free' and 'basic'
+  type Plan = 'free' | 'basic';
+  const subscriptionTier = subscriptionUser?.subscription_tier ?? null;
+  const plan: Plan = subscriptionTier === 'basic' ? 'basic' : 'free';
+  const isPaid = plan !== 'free';
 
   // Get user email from session
   useEffect(() => {
@@ -74,6 +78,7 @@ export function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader
+        plan={plan}
         isPaid={isPaid}
         userEmail={userEmail}
         searchQuery={searchQuery}
@@ -105,6 +110,7 @@ export function Dashboard() {
         {/* ETF Table */}
         <ETFTable
           etfs={filteredETFs}
+          plan={plan}
           isPaid={isPaid}
           onUpgrade={() => setIsUpgradeModalOpen(true)}
         />

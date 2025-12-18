@@ -22,6 +22,7 @@ import { ETF, FREE_UNLOCKED_TICKERS } from '@/types/etf';
 import { CanaryStatusBadge } from './CanaryStatusBadge';
 import { BlurredCell } from './BlurredCell';
 import { useUserTaxRate } from '@/hooks/useUserTaxRate';
+import { useWatchlist } from '@/hooks/useWatchlist';
 import {
   calcTakeHomeReturn1Y,
   calcTakeHomeReturnYTD,
@@ -33,6 +34,7 @@ import {
 
 interface ETFTableProps {
   etfs: ETF[];
+  plan: 'free' | 'basic';
   isPaid: boolean;
   onUpgrade: () => void;
 }
@@ -40,10 +42,17 @@ interface ETFTableProps {
 type SortKey = keyof ETF;
 type SortDirection = 'asc' | 'desc';
 
-export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
+export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('takeHomeCashReturn1Y');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
+
+  // Persistent watchlist (starred ETFs) for the current user
+  const {
+    watchlistTickers,
+    isInWatchlist,
+    addToWatchlist,
+    removeFromWatchlist,
+  } = useWatchlist();
 
   // Get user tax rate
   const { taxRate } = useUserTaxRate();
@@ -141,13 +150,17 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
   });
 
   const toggleWatchlist = (ticker: string) => {
-    const newWatchlist = new Set(watchlist);
-    if (newWatchlist.has(ticker)) {
-      newWatchlist.delete(ticker);
-    } else {
-      newWatchlist.add(ticker);
+    // Only paid users can maintain a watchlist
+    if (!isPaid) {
+      onUpgrade();
+      return;
     }
-    setWatchlist(newWatchlist);
+
+    if (isInWatchlist(ticker)) {
+      removeFromWatchlist(ticker);
+    } else {
+      addToWatchlist(ticker);
+    }
   };
 
   const isUnlocked = (ticker: string) => isPaid || FREE_UNLOCKED_TICKERS.includes(ticker);
@@ -312,7 +325,7 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
                           onClick={() => toggleWatchlist(etf.ticker)}
                           className="p-1 hover:bg-secondary rounded transition-colors"
                         >
-                          <Star className={`h-4 w-4 ${watchlist.has(etf.ticker) ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} />
+                          <Star className={`h-4 w-4 ${isInWatchlist(etf.ticker) ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} />
                         </button>
                       </TableCell>
                     )}
@@ -355,7 +368,7 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
                     onClick={() => toggleWatchlist(etf.ticker)}
                     className="p-1 hover:bg-secondary rounded transition-colors ml-2"
                   >
-                    <Star className={`h-4 w-4 ${watchlist.has(etf.ticker) ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} />
+                    <Star className={`h-4 w-4 ${isInWatchlist(etf.ticker) ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} />
                   </button>
                 )}
               </div>
@@ -409,7 +422,7 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
       </div>
 
       {/* Free tier CTA */}
-      {!isPaid && (
+      {plan === 'free' && (
         <div className="text-center py-6 border border-dashed border-primary/30 rounded-xl bg-primary/5">
           <p className="text-muted-foreground mb-3">
             Upgrade to unlock all ETF data, watchlists, alerts, and CSV export

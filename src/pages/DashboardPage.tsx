@@ -45,7 +45,10 @@ const DashboardPage = () => {
           content="Monitor your income ETFs. See true yield, death clock, and canary status for all high-yield funds." 
         />
       </Helmet>
+      {/* Sidebar layout temporarily disabled */}
+      {/* <DashboardLayout> */}
       <Dashboard />
+      {/* </DashboardLayout> */}
     </>
   );
 };

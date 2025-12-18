@@ -271,10 +271,11 @@ def calculate_death_clock(roc_percent: Optional[float]) -> Optional[float]:
     return round(50 / roc_percent, 2)
 
 
-def clamp_numeric(value: Optional[float], max_val: float = 9.9999, min_val: float = -9.9999) -> Optional[float]:
-    """Clamp numeric values to fit database NUMERIC(5,4) constraints.
+def clamp_numeric(value: Optional[float], max_val: float = 999.9999, min_val: float = -999.9999) -> Optional[float]:
+    """Clamp numeric values to fit database NUMERIC(10,6) constraints for percentage values.
     
-    Database columns with precision 5, scale 4 can only store -9.9999 to 9.9999.
+    Database columns with precision 10, scale 6 can store up to 9999.999999.
+    Default clamp values are set for percentage format (e.g., 13.0 for 13%).
     This handles extreme yields/returns from high-yield ETFs.
     """
     if value is None:
@@ -474,10 +475,10 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
     if effective_inception_date:
         dividends_since_inception = calculate_dividends_in_range(dividends, effective_inception_date, today)
     
-    # Calculate headline yield
+    # Calculate headline yield (multiply by 100 to store as percentage)
     headline_yield_ttm = None
     if latest_price and latest_price > 0:
-        headline_yield_ttm = round(dividends_last_12mo / latest_price, 2)
+        headline_yield_ttm = round((dividends_last_12mo / latest_price) * 100, 2)
     
     # Estimate ROC from NAV erosion
     roc_latest = None
@@ -494,7 +495,7 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
         if roc_latest is not None:
             roc_date = today.strftime('%Y-%m-%d')
     
-    # Calculate derived metrics
+    # Calculate derived metrics (headline_yield_ttm is now percentage, roc_latest is percentage)
     true_income_yield = None
     if headline_yield_ttm is not None and roc_latest is not None:
         true_income_yield = round(headline_yield_ttm * (1 - roc_latest / 100), 2)
@@ -502,35 +503,36 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
     death_clock_years = calculate_death_clock(roc_latest)
     canary_health = determine_canary_health(roc_latest)
     
-    # Calculate returns
+    # Calculate returns (multiply by 100 to store as percentage)
     total_return_1y = None
     if latest_price and price_1y_ago and price_1y_ago > 0:
-        total_return_1y = round((latest_price / price_1y_ago) - 1, 2)
+        total_return_1y = round(((latest_price / price_1y_ago) - 1) * 100, 2)
     
     total_return_ytd = None
     if latest_price and price_ytd_start and price_ytd_start > 0:
-        total_return_ytd = round((latest_price / price_ytd_start) - 1, 2)
+        total_return_ytd = round(((latest_price / price_ytd_start) - 1) * 100, 2)
     
     total_return_inception = None
     if latest_price and price_at_inception and price_at_inception > 0:
-        total_return_inception = round((latest_price / price_at_inception) - 1, 2)
+        total_return_inception = round(((latest_price / price_at_inception) - 1) * 100, 2)
     
+    # Calculate spent dividends returns (multiply by 100 to store as percentage)
     spent_dividends_return_1y = None
     if latest_price and price_1y_ago and price_1y_ago > 0:
         spent_dividends_return_1y = round(
-            ((latest_price - price_1y_ago) + dividends_last_12mo) / price_1y_ago, 2
+            (((latest_price - price_1y_ago) + dividends_last_12mo) / price_1y_ago) * 100, 2
         )
     
     spent_dividends_return_ytd = None
     if latest_price and price_ytd_start and price_ytd_start > 0:
         spent_dividends_return_ytd = round(
-            ((latest_price - price_ytd_start) + dividends_ytd) / price_ytd_start, 2
+            (((latest_price - price_ytd_start) + dividends_ytd) / price_ytd_start) * 100, 2
         )
     
     spent_dividends_return_inception = None
     if latest_price and price_at_inception and price_at_inception > 0:
         spent_dividends_return_inception = round(
-            ((latest_price - price_at_inception) + dividends_since_inception) / price_at_inception, 2
+            (((latest_price - price_at_inception) + dividends_since_inception) / price_at_inception) * 100, 2
         )
     
 
@@ -701,30 +703,30 @@ def populate_weekly_data(tickers: list, fmp: FMPClient):
     print("\n" + "="*60)
     print(f"STEP 5: Populating weekly data for {len(tickers)} ETFs...")
     print("="*60)
-    
+
     today = datetime.now()
     one_year_ago = (today - timedelta(days=365)).strftime('%Y-%m-%d')
-    
+
     # Get ticker -> UUID mapping
     ticker_id_map = get_etf_id_map()
-    
+
     success = 0
     total_records = 0
-    
+
     for i, ticker in enumerate(tickers, 1):
         try:
             ticker_id = ticker_id_map.get(ticker)
             if not ticker_id:
                 print(f"    Warning: No ID found for {ticker}, skipping weekly data")
                 continue
-            
+
             # Get prices and dividends
             prices = fmp.get_historical_prices(ticker, from_date=one_year_ago)
             dividends = fmp.get_dividends(ticker)
-            
+
             # Create dividend lookup by date
             div_by_date = {d['date']: d.get('adjDividend', 0) or d.get('dividend', 0) for d in dividends}
-            
+
             records = []
             for price in prices:
                 date = price.get('date')
@@ -737,7 +739,7 @@ def populate_weekly_data(tickers: list, fmp: FMPClient):
                         'close_price': round(close, 2),
                         'dividend': round(div_by_date.get(date, 0), 4) if div_by_date.get(date, 0) else None
                     })
-            
+
             # Batch insert
             if records:
                 # Insert in batches of 100
@@ -747,17 +749,104 @@ def populate_weekly_data(tickers: list, fmp: FMPClient):
                         batch, 
                         on_conflict='ticker_id,date'
                     ).execute()
-                
+
                 total_records += len(records)
-            
+
             success += 1
             if i % 20 == 0:
                 print(f"    Progress: {i}/{len(tickers)} ETFs processed...")
-                
+
         except Exception as e:
             print(f"    Warning: {ticker} weekly data error: {e}")
-    
+
     print(f"  ✓ Weekly data: {success} ETFs, {total_records} total records")
+
+
+def recalculate_headline_yield_from_weekly_data():
+    """
+    Recalculate headline_yield_ttm for all ETFs using the weekly_data table.
+    
+    Formula (per client):
+      Headline Yield = SUM(dividends last 365 days) / latest adjusted price
+    
+    This step runs after weekly_data has been populated so it uses the
+    canonical dividend history stored in Supabase rather than the raw
+    FMP API response used earlier in process_etf().
+    """
+    print("\n" + "="*60)
+    print("STEP 6: Recalculating Headline Yield (TTM) from weekly_data...")
+    print("="*60)
+
+    today = datetime.now().date()
+    one_year_ago = today - timedelta(days=365)
+    start_str = one_year_ago.strftime('%Y-%m-%d')
+    end_str = today.strftime('%Y-%m-%d')
+
+    # Get mapping of ticker -> id once
+    ticker_id_map = get_etf_id_map()
+
+    if not ticker_id_map:
+        print("  ✗ No ETFs found in database, skipping headline yield recalculation.")
+        return
+
+    updated = 0
+    skipped = 0
+
+    for ticker, ticker_id in ticker_id_map.items():
+        try:
+            # Fetch all weekly rows for the last 365 days, newest first
+            result = (
+                supabase
+                .table('weekly_data')
+                .select('adj_close, date, dividend')
+                .eq('ticker_id', ticker_id)
+                .gte('date', start_str)
+                .lte('date', end_str)
+                .order('date', desc=True)
+                .execute()
+            )
+
+            rows = result.data or []
+            if not rows:
+                skipped += 1
+                continue
+
+            # Latest price is the adj_close from the most recent row
+            latest_row = rows[0]
+            latest_price = latest_row.get('adj_close')
+
+            if not latest_price or latest_price <= 0:
+                skipped += 1
+                continue
+
+            # Sum all non-null dividends in the period
+            total_dividends = 0.0
+            for row in rows:
+                div = row.get('dividend')
+                if div is not None:
+                    total_dividends += float(div)
+
+            # If there were no dividends, keep existing headline_yield_ttm
+            if total_dividends <= 0:
+                skipped += 1
+                continue
+
+            # Multiply by 100 to store as percentage
+            headline_yield_ttm = round((total_dividends / float(latest_price)) * 100, 6)
+            headline_yield_ttm = clamp_numeric(headline_yield_ttm)
+
+            supabase.table('etfs').update(
+                {'headline_yield_ttm': headline_yield_ttm}
+            ).eq('id', ticker_id).execute()
+
+            updated += 1
+        except Exception as e:
+            print(f"    Warning: Failed to recalc headline yield for {ticker}: {e}")
+            skipped += 1
+
+    print(f"  ✓ Headline yield updated for {updated} ETFs")
+    if skipped:
+        print(f"  ○ Skipped {skipped} ETFs (no dividends or price data)")
 
 
 def load_tickers_from_file(filepath: str) -> list:
@@ -842,9 +931,13 @@ def main():
     
     # Step 4: Populate 19a-1 notices (ROC data)
     populate_notices_19a1(tickers)
-    
+
     # Step 5: Populate weekly data
     populate_weekly_data(tickers, fmp)
+    
+    # Step 6: Recalculate headline yield from weekly_data so it uses
+    # the canonical dividend history stored in Supabase.
+    recalculate_headline_yield_from_weekly_data()
     
     # Print summary
     print_summary(success, failed, health_counts, len(tickers))
