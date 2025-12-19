@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 // 2 minutes for testing; change to 30 * 60 * 1000 in production
-const INACTIVITY_LIMIT_MS = 2 * 60 * 1000; // 2 minutes
-const CHECK_INTERVAL_MS = 60 * 1000; // check every 10 seconds
+const INACTIVITY_LIMIT_MS = 30 * 60 * 1000; // 30 minutes
+const CHECK_INTERVAL_MS = 60 * 1000; // 1 minute
 
 export function useAutoLogout() {
   const navigate = useNavigate();
