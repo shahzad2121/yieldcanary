@@ -165,6 +165,40 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
 
   const isUnlocked = (ticker: string) => isPaid || FREE_UNLOCKED_TICKERS.includes(ticker);
 
+  // Helper function to check if ETF is less than 1 year old
+  const isLessThanOneYear = (inceptionDate: string): boolean => {
+    if (!inceptionDate) return false;
+    const today = new Date();
+    const inception = new Date(inceptionDate);
+    const ageInDays = (today.getTime() - inception.getTime()) / (1000 * 60 * 60 * 24);
+    return ageInDays < 365;
+  };
+
+  // Helper function to format 1Y return with YTD fallback for new ETFs
+  const formatReturn1Y = (
+    etf: typeof etfsWithTakeHome[0],
+    value1Y: number | null,
+    valueYTD: number | null
+  ): string => {
+    const isNew = isLessThanOneYear(etf.inceptionDate);
+    const hasNo1YData = value1Y === null || value1Y === undefined || value1Y === 0;
+    
+    // Rule 1: If ETF is less than 1 year old, ALWAYS show YTD (even if 1Y has a value)
+    if (isNew) {
+      if (valueYTD === null || valueYTD === undefined) return '0.00% (YTD)';
+      return `${valueYTD.toFixed(2)}% (YTD)`;
+    }
+    
+    // Rule 2: If ETF is older but has no 1Y data, show YTD as fallback
+    if (hasNo1YData) {
+      if (valueYTD === null || valueYTD === undefined) return '0.00%';
+      return `${valueYTD.toFixed(2)}% (YTD)`;
+    }
+    
+    // Rule 3: For older ETFs with valid 1Y data, show normal 1Y value
+    return `${value1Y.toFixed(2)}%`;
+  };
+
   const formatPercent = (value: number | null) => {
     if (!value) return '0.00%';
     return `${value.toFixed(2)}%`;
@@ -334,8 +368,8 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
                     <TableCell><CanaryStatusBadge status={etf.canaryStatus} /></TableCell>
                     <TableCell className="text-sm"><BlurredCell value={etf.deathClock} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className="text-sm"><BlurredCell value={formatPercent(etf.trueIncomeYield)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
-                    <TableCell className="text-sm"><BlurredCell value={formatPercent(etf.totalReturn1Y)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
-                    <TableCell className="text-sm"><BlurredCell value={formatPercent(etf.takeHomeCashReturn1Y)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
+                    <TableCell className="text-sm"><BlurredCell value={formatReturn1Y(etf, etf.totalReturn1Y, etf.totalReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
+                    <TableCell className="text-sm"><BlurredCell value={formatReturn1Y(etf, etf.takeHomeCashReturn1Y, etf.takeHomeCashReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className="font-mono text-muted-foreground text-sm">${etf.latestAdjClose ? etf.latestAdjClose.toFixed(2) : '0.00'}</TableCell>
                     <TableCell className="font-mono text-muted-foreground text-sm">{formatPercent(etf.headlineYieldTTM)}</TableCell>
                     <TableCell className="text-sm"><BlurredCell value={`${etf.rocPercent}%`} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
@@ -389,11 +423,11 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">Total Return 1Y</p>
-                  <BlurredCell value={formatPercent(etf.totalReturn1Y)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} />
+                  <BlurredCell value={formatReturn1Y(etf, etf.totalReturn1Y, etf.totalReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} />
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">Take-Home Cash Return</p>
-                  <BlurredCell value={formatPercent(etf.takeHomeCashReturn1Y)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} />
+                  <BlurredCell value={formatReturn1Y(etf, etf.takeHomeCashReturn1Y, etf.takeHomeCashReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} />
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">Headline Yield</p>
