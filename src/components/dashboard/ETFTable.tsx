@@ -22,6 +22,7 @@ import { ETF, FREE_UNLOCKED_TICKERS } from '@/types/etf';
 import { CanaryStatusBadge } from './CanaryStatusBadge';
 import { BlurredCell } from './BlurredCell';
 import { useUserTaxRate } from '@/hooks/useUserTaxRate';
+import { useWatchlist } from '@/hooks/useWatchlist';
 import {
   calcTakeHomeReturn1Y,
   calcTakeHomeReturnYTD,
@@ -33,6 +34,7 @@ import {
 
 interface ETFTableProps {
   etfs: ETF[];
+  plan: 'free' | 'basic';
   isPaid: boolean;
   onUpgrade: () => void;
 }
@@ -40,10 +42,17 @@ interface ETFTableProps {
 type SortKey = keyof ETF;
 type SortDirection = 'asc' | 'desc';
 
-export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
+export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('takeHomeCashReturn1Y');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
+
+  // Persistent watchlist (starred ETFs) for the current user
+  const {
+    watchlistTickers,
+    isInWatchlist,
+    addToWatchlist,
+    removeFromWatchlist,
+  } = useWatchlist();
 
   // Get user tax rate
   const { taxRate } = useUserTaxRate();
@@ -141,16 +150,54 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
   });
 
   const toggleWatchlist = (ticker: string) => {
-    const newWatchlist = new Set(watchlist);
-    if (newWatchlist.has(ticker)) {
-      newWatchlist.delete(ticker);
-    } else {
-      newWatchlist.add(ticker);
+    // Only paid users can maintain a watchlist
+    if (!isPaid) {
+      onUpgrade();
+      return;
     }
-    setWatchlist(newWatchlist);
+
+    if (isInWatchlist(ticker)) {
+      removeFromWatchlist(ticker);
+    } else {
+      addToWatchlist(ticker);
+    }
   };
 
   const isUnlocked = (ticker: string) => isPaid || FREE_UNLOCKED_TICKERS.includes(ticker);
+
+  // Helper function to check if ETF is less than 1 year old
+  const isLessThanOneYear = (inceptionDate: string): boolean => {
+    if (!inceptionDate) return false;
+    const today = new Date();
+    const inception = new Date(inceptionDate);
+    const ageInDays = (today.getTime() - inception.getTime()) / (1000 * 60 * 60 * 24);
+    return ageInDays < 365;
+  };
+
+  // Helper function to format 1Y return with YTD fallback for new ETFs
+  const formatReturn1Y = (
+    etf: typeof etfsWithTakeHome[0],
+    value1Y: number | null,
+    valueYTD: number | null
+  ): string => {
+    const isNew = isLessThanOneYear(etf.inceptionDate);
+    const hasNo1YData = value1Y === null || value1Y === undefined || value1Y === 0;
+    
+    // Rule 1: If ETF is less than 1 year old, ALWAYS show YTD (even if 1Y has a value)
+    if (isNew) {
+      if (valueYTD === null || valueYTD === undefined) return '0.00% (YTD)';
+      return `${valueYTD.toFixed(2)}% (YTD)`;
+    }
+    
+    // Rule 2: If ETF is older but has no 1Y data, show YTD as fallback
+    if (hasNo1YData) {
+      if (valueYTD === null || valueYTD === undefined) return '0.00%';
+      return `${valueYTD.toFixed(2)}% (YTD)`;
+    }
+    
+    // Rule 3: For older ETFs with valid 1Y data, show normal 1Y value
+    return `${value1Y.toFixed(2)}%`;
+  };
 
   const formatPercent = (value: number | null) => {
     if (!value) return '0.00%';
@@ -312,7 +359,7 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
                           onClick={() => toggleWatchlist(etf.ticker)}
                           className="p-1 hover:bg-secondary rounded transition-colors"
                         >
-                          <Star className={`h-4 w-4 ${watchlist.has(etf.ticker) ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} />
+                          <Star className={`h-4 w-4 ${isInWatchlist(etf.ticker) ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} />
                         </button>
                       </TableCell>
                     )}
@@ -321,8 +368,8 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
                     <TableCell><CanaryStatusBadge status={etf.canaryStatus} /></TableCell>
                     <TableCell className="text-sm"><BlurredCell value={etf.deathClock} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className="text-sm"><BlurredCell value={formatPercent(etf.trueIncomeYield)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
-                    <TableCell className="text-sm"><BlurredCell value={formatPercent(etf.totalReturn1Y)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
-                    <TableCell className="text-sm"><BlurredCell value={formatPercent(etf.takeHomeCashReturn1Y)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
+                    <TableCell className="text-sm"><BlurredCell value={formatReturn1Y(etf, etf.totalReturn1Y, etf.totalReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
+                    <TableCell className="text-sm"><BlurredCell value={formatReturn1Y(etf, etf.takeHomeCashReturn1Y, etf.takeHomeCashReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className="font-mono text-muted-foreground text-sm">${etf.latestAdjClose ? etf.latestAdjClose.toFixed(2) : '0.00'}</TableCell>
                     <TableCell className="font-mono text-muted-foreground text-sm">{formatPercent(etf.headlineYieldTTM)}</TableCell>
                     <TableCell className="text-sm"><BlurredCell value={`${etf.rocPercent}%`} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
@@ -355,7 +402,7 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
                     onClick={() => toggleWatchlist(etf.ticker)}
                     className="p-1 hover:bg-secondary rounded transition-colors ml-2"
                   >
-                    <Star className={`h-4 w-4 ${watchlist.has(etf.ticker) ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} />
+                    <Star className={`h-4 w-4 ${isInWatchlist(etf.ticker) ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} />
                   </button>
                 )}
               </div>
@@ -376,11 +423,11 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">Total Return 1Y</p>
-                  <BlurredCell value={formatPercent(etf.totalReturn1Y)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} />
+                  <BlurredCell value={formatReturn1Y(etf, etf.totalReturn1Y, etf.totalReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} />
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">Take-Home Cash Return</p>
-                  <BlurredCell value={formatPercent(etf.takeHomeCashReturn1Y)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} />
+                  <BlurredCell value={formatReturn1Y(etf, etf.takeHomeCashReturn1Y, etf.takeHomeCashReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} />
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">Headline Yield</p>
@@ -409,7 +456,7 @@ export function ETFTable({ etfs, isPaid, onUpgrade }: ETFTableProps) {
       </div>
 
       {/* Free tier CTA */}
-      {!isPaid && (
+      {plan === 'free' && (
         <div className="text-center py-6 border border-dashed border-primary/30 rounded-xl bg-primary/5">
           <p className="text-muted-foreground mb-3">
             Upgrade to unlock all ETF data, watchlists, alerts, and CSV export
