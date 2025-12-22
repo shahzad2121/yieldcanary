@@ -8,6 +8,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTheme } from '@/hooks/useTheme';
 import { sendTransactionalEmail } from '@/lib/sendTransactionalEmail';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Footer } from '@/components/Footer';
+import { MarketingStats } from '@/components/MarketingStats';
+import { DashboardScreenshot } from '@/components/DashboardScreenshot';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -254,6 +257,15 @@ const Landing = () => {
           </div>
         </section>
 
+        {/* Dashboard Screenshot with 3D Pop-out */}
+        <DashboardScreenshot
+          imageSrc="/dashboard.png"
+          alt="YieldCanary Dashboard - See which ETFs are healthy vs dying"
+          enableParticles={true}
+          enableFloating={true}
+          enableScanLine={true}
+        />
+
         {/* Value Proposition */}
         <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-muted/30">
           <div className="max-w-4xl mx-auto text-center">
@@ -293,6 +305,17 @@ const Landing = () => {
             </div>
           </div>
         </section>
+
+        {/* Marketing Stats */}
+        <MarketingStats
+          amount={5000}
+          headline="Users save on average by avoiding yield traps"
+          description="Join thousands of investors who use YieldCanary to identify dying funds before they erode their portfolio value."
+          ctaText="Get Started Free"
+          ctaLink="/auth"
+          enableParticles={true}
+          enableCounter={true}
+        />
 
         {/* Testimonials */}
         <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
@@ -413,17 +436,7 @@ const Landing = () => {
         </section>
 
         {/* Footer */}
-        <footer className="border-t border-border py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-lg xs:text-xl">🐤</span>
-              <span className="text-sm xs:text-base font-bold text-foreground">YieldCanary</span>
-            </div>
-            <p className="text-xs xs:text-sm text-muted-foreground text-center sm:text-right">
-              © 2026 YieldCanary. All rights reserved.
-            </p>
-          </div>
-        </footer>
+        <Footer />
       </div>
     </>
   );

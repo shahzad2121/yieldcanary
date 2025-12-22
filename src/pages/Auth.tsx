@@ -106,13 +106,37 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth`,
+      // Call custom password reset Edge Function that uses Resend
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!supabaseUrl) {
+        throw new Error('VITE_SUPABASE_URL is not set');
+      }
+
+      // Get current session for authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+
+      // Add authorization header if session exists
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/reset-password`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          email,
+          redirectTo: `${window.location.origin}/auth`,
+        }),
       });
 
-      if (error) {
-        console.error("Reset password email error:", error);
-        throw new Error(error.message);
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Failed to send password reset email:', error);
+        throw new Error(error.error || 'Failed to send password reset email');
       }
 
       setSuccessMessage("Password reset email sent. Check your inbox for the reset link.");

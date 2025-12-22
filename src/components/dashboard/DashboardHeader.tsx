@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { supabase } from '@/integrations/supabase/client';
 import { useTheme } from '@/hooks/useTheme';
 import { SettingsModal } from './SettingsModal';
@@ -44,16 +45,9 @@ export function DashboardHeader({
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background">
       <div className="container flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4 px-3 sm:px-4 md:px-6">
-        {/* Logo + Back Button */}
-        <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/')}
-            className="text-muted-foreground hover:text-foreground h-8 w-8"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+        {/* Sidebar Toggle (tablet & mobile) + Logo */}
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          <SidebarTrigger className="lg:hidden" />
           <button
             onClick={() => navigate('/')}
             className="flex items-center gap-1.5 hover:opacity-80 transition-opacity flex-shrink-0"
