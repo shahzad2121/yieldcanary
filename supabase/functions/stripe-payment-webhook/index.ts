@@ -76,36 +76,48 @@ Deno.serve(async (req) => {
       
       if (updateRes.ok) {
         console.log(`[Webhook] User ${customerEmail} payment status updated to is_paid=true.`);
-        // Send transactional email via Resend
-        const resendApiKey = Deno.env.get("RESEND_API_KEY") ?? "";
-        const resendFromEmail = Deno.env.get("RESEND_FROM_EMAIL") ?? "YieldCanary HQ <hello@yieldcanary.com>";
         
-        console.log("[Webhook] RESEND_API_KEY present:", resendApiKey ? "yes" : "NO - MISSING!");
-        console.log("[Webhook] RESEND_FROM_EMAIL:", resendFromEmail);
+        // Send transactional email via template system
+        // Fetch user from database to get real first name
+        const userRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(customerEmail)}&select=username,name`, {
+          headers: {
+            "apikey": serviceRoleKey,
+            "Authorization": `Bearer ${serviceRoleKey}`,
+          },
+        });
+
+        let firstName = customerEmail.split('@')[0]; // Fallback to email extraction
+        if (userRes.ok) {
+          const users = await userRes.json();
+          if (users && users.length > 0) {
+            // Prefer username, then name, then fallback to email extraction
+            firstName = users[0].username || users[0].name || firstName;
+          }
+        }
+        
         console.log("[Webhook] Sending payment receipt email to:", customerEmail);
         
-        const subject = "You're in! YieldCanary Pro is now unlocked!";
-        const body = `Hey ${customerEmail},\nWelcome to the real numbers. The blur is gone and you now see:\n• Death Clock on every ETF\n• True Income Yield after ROC\n• Take-Home Cash Return after taxes\n\nYour dashboard → https://app.yieldcanary.com\nLet's go find some dead canaries,\n-YieldCanary HQ`;
-        const emailRes = await fetch("https://api.resend.com/emails", {
-
+        // Call the send-email edge function (same as client-side does)
+        const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${resendApiKey}`,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${serviceRoleKey}`, // Use service role key for internal calls
           },
           body: JSON.stringify({
-            from: resendFromEmail,
             to: customerEmail,
-            subject,
-            text: body
-          })
+            templateId: 'payment_receipt',  // Use the template ID
+            data: {
+              first_name: firstName,  // Pass first name for personalization
+            },
+          }),
         });
         
         console.log("[Webhook] Email API response status:", emailRes.status);
         
         if (emailRes.ok) {
           const emailResult = await emailRes.json();
-          console.log(`[Webhook] Payment receipt email sent successfully. ID:`, emailResult.id);
+          console.log(`[Webhook] Payment receipt email sent successfully via template.`);
         } else {
           const errText = await emailRes.text();
           console.error("[Webhook] Error sending payment receipt email:", errText);
@@ -154,26 +166,52 @@ Deno.serve(async (req) => {
       });
       if (updateRes.ok) {
         console.log(`User ${email} subscription updated.`);
-        // Send transactional email via Resend
-        const resendApiKey = Deno.env.get("RESEND_API_KEY") ?? "";
-        const resendFromEmail = Deno.env.get("RESEND_FROM_EMAIL") ?? "YieldCanary HQ <hello@yieldcanary.com>";
-        const subject = "You’re in! YieldCanary Pro is now unlocked!";
-        const body = `Hey ${email},\nWelcome to the real numbers. The blur is gone and you now see:\n• Death Clock on every ETF\n• True Income Yield after ROC\n• Take-Home Cash Return after taxes\n\nYour dashboard → https://app.yieldcanary.com\nLet’s go find some dead canaries,\n-YieldCanary HQ`;
-        const emailRes = await fetch("https://api.resend.com/emails", {
+        // Send transactional email via template system with conditional logic
+        // Fetch user from database to get real first name
+        const userRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=username,name`, {
+          headers: {
+            "apikey": serviceRoleKey,
+            "Authorization": `Bearer ${serviceRoleKey}`,
+          },
+        });
+
+        let firstName = email.split('@')[0]; // Fallback to email extraction
+        if (userRes.ok) {
+          const users = await userRes.json();
+          if (users && users.length > 0) {
+            // Prefer username, then name, then fallback to email extraction
+            firstName = users[0].username || users[0].name || firstName;
+          }
+        }
+        
+        // Choose template based on event type
+        // - customer.subscription.created → payment_receipt (new subscription = payment confirmation)
+        // - customer.subscription.updated → access_upgraded (subscription change = access upgrade)
+        const templateId = event.type === "customer.subscription.created" 
+          ? 'payment_receipt' 
+          : 'access_upgraded';
+        
+        console.log(`[Webhook] Sending ${templateId} email to ${email} for event: ${event.type}`);
+        
+        // Call the send-email edge function
+       
+        const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${resendApiKey}`,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${serviceRoleKey}`,
           },
           body: JSON.stringify({
-            from: resendFromEmail,
             to: email,
-            subject,
-            text: body
-          })
+            templateId: templateId,
+            data: {
+              first_name: firstName,
+            },
+          }),
         });
+        
         if (emailRes.ok) {
-          console.log(`Transactional email sent to ${email}.`);
+          console.log(`Transactional email (${templateId}) sent to ${email} via template.`);
         } else {
           const errText = await emailRes.text();
           console.error("Error sending transactional email:", errText);

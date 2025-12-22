@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dashboard } from '@/components/dashboard/Dashboard';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -45,10 +46,9 @@ const DashboardPage = () => {
           content="Monitor your income ETFs. See true yield, death clock, and canary status for all high-yield funds." 
         />
       </Helmet>
-      {/* Sidebar layout temporarily disabled */}
-      {/* <DashboardLayout> */}
+      <DashboardLayout>
       <Dashboard />
-      {/* </DashboardLayout> */}
+      </DashboardLayout>
     </>
   );
 };

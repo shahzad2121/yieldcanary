@@ -738,7 +738,11 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Password Reset - YieldCanary</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
       line-height: 1.6;
@@ -754,19 +758,26 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       overflow: hidden;
     }
     .header {
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
       color: #ffffff;
       padding: 40px 30px;
       text-align: center;
     }
     .header h1 {
-      font-size: 26px;
+      font-size: 32px;
       font-weight: 700;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    .header p {
+      font-size: 16px;
+      opacity: 0.95;
+      font-weight: 500;
     }
     .icon {
       font-size: 42px;
       margin-bottom: 15px;
+      opacity: 0.9;
     }
     .content {
       padding: 40px 30px;
@@ -774,49 +785,98 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
     .greeting {
       font-size: 18px;
       color: #1f2937;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
+      font-weight: 600;
     }
     .message {
       font-size: 16px;
-      color: #4b5563;
-      margin-bottom: 25px;
+      color: #374151;
+      margin-bottom: 24px;
       line-height: 1.8;
     }
     .cta-button {
       display: inline-block;
-      background-color: #ef4444;
+      background: linear-gradient(135deg, #1a9c6e 0%, #158a5f 50%, #0f7a4f 100%);
       color: #ffffff;
-      padding: 14px 32px;
-      border-radius: 6px;
+      padding: 18px 48px;
+      border-radius: 12px;
       text-decoration: none;
-      font-weight: 600;
-      font-size: 16px;
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: 0.3px;
       margin: 30px 0;
+      transition: all 0.3s;
+      box-shadow: 0 4px 16px rgba(26, 156, 110, 0.35), 0 2px 8px rgba(26, 156, 110, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      text-transform: uppercase;
+      position: relative;
+      overflow: hidden;
     }
-    .warning-box {
-      background-color: #fef2f2;
-      border-left: 4px solid #ef4444;
-      padding: 20px;
-      margin: 25px 0;
+    .cta-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    .cta-button:hover {
+      background: linear-gradient(135deg, #1fb87a 0%, #1a9c6e 50%, #158a5f 100%);
+      box-shadow: 0 6px 20px rgba(26, 156, 110, 0.45), 0 4px 12px rgba(26, 156, 110, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+    .cta-button:hover::before {
+      left: 100%;
+    }
+    .info-box {
+      background-color: #f9fafb;
+      border-left: 4px solid #1a9c6e;
+      padding: 20px 24px;
+      margin: 30px 0;
       border-radius: 4px;
     }
-    .warning-box p {
-      color: #991b1b;
-      font-size: 14px;
-      margin-bottom: 10px;
+    .info-box p {
+      color: #374151;
+      font-size: 15px;
+      line-height: 1.7;
+      margin-bottom: 12px;
     }
-    .warning-box p:last-child {
+    .info-box p:last-child {
       margin-bottom: 0;
     }
+    .info-box strong {
+      color: #1a9c6e;
+      font-weight: 600;
+    }
     .link-box {
-      background-color: #f9fafb;
+      background-color: #f1f5f9;
+      border: 1px solid #e2e8f0;
       padding: 15px;
       border-radius: 4px;
       margin: 20px 0;
       word-break: break-all;
-      font-family: monospace;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
       font-size: 12px;
       color: #2563eb;
+      line-height: 1.6;
+    }
+    .security-note {
+      background-color: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 20px;
+      margin: 25px 0;
+      border-radius: 4px;
+    }
+    .security-note p {
+      color: #92400e;
+      font-size: 14px;
+      line-height: 1.7;
+      margin-bottom: 10px;
+    }
+    .security-note p:last-child {
+      margin-bottom: 0;
     }
     .footer {
       background-color: #f9fafb;
@@ -827,6 +887,7 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
     .footer-text {
       font-size: 13px;
       color: #6b7280;
+      margin-bottom: 10px;
     }
     .signature {
       font-size: 14px;
@@ -834,10 +895,23 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       margin-top: 15px;
       font-weight: 500;
     }
+    .brand {
+      color: #1a9c6e;
+      font-weight: 600;
+    }
     @media (max-width: 600px) {
-      .container { border-radius: 0; }
-      .content, .header { padding: 30px 20px; }
-      .header h1 { font-size: 22px; }
+      .container {
+        border-radius: 0;
+      }
+      .content, .header {
+        padding: 30px 20px;
+      }
+      .header h1 {
+        font-size: 26px;
+      }
+      .info-box, .security-note {
+        padding: 16px 20px;
+      }
     }
   </style>
 </head>
@@ -845,22 +919,28 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
   <div class="container">
     <div class="header">
       <div class="icon">🔐</div>
-      <h1>Password Reset Request</h1>
-      <p>Secure your account</p>
+      <h1>🐦 YieldCanary</h1>
+      <p>Password Reset Request</p>
     </div>
     
     <div class="content">
       <p class="greeting">Hey {{first_name}},</p>
       
       <p class="message">
-        Someone (hopefully you) requested a password reset for your YieldCanary account.
+        Someone (hopefully you) requested a password reset for your YieldCanary account. 
+        Click the button below to set a new password.
       </p>
       
-      <p style="text-align: center;">
-        <a href="{{reset_link}}" class="cta-button">Reset Your Password</a>
+      <p style="text-align: center; margin: 40px 0;">
+        <a href="{{reset_link}}" class="cta-button" style="display: inline-block; background: linear-gradient(135deg, #1a9c6e 0%, #158a5f 50%, #0f7a4f 100%); color: #ffffff; padding: 18px 48px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 17px; letter-spacing: 0.3px; box-shadow: 0 4px 16px rgba(26, 156, 110, 0.35), 0 2px 8px rgba(26, 156, 110, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); text-transform: uppercase;">🔐 Reset Your Password</a>
       </p>
       
-      <p class="message" style="font-size: 14px; color: #6b7280;">
+      <div class="info-box">
+        <p><strong>⏰ This link expires in 1 hour</strong></p>
+        <p>For your security, the reset link will expire after 60 minutes. If you need a new link, you can request another password reset.</p>
+      </div>
+      
+      <p class="message" style="font-size: 14px; color: #6b7280; margin-top: 30px;">
         If the button doesn't work, copy and paste this link into your browser:
       </p>
       
@@ -868,20 +948,20 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
         {{reset_link}}
       </div>
       
-      <div class="warning-box">
-        <p><strong>⚠️ This link expires in 1 hour</strong></p>
-        <p>If you didn't request this reset, you can safely ignore this email. Your password will remain unchanged.</p>
+      <div class="security-note">
+        <p><strong>🔒 Didn't request this?</strong></p>
+        <p>If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged and your account is secure.</p>
       </div>
       
       <p class="message" style="margin-top: 30px; font-size: 14px; color: #6b7280;">
-        Need help? Reply to this email and we'll assist you.
+        Need help? Just reply to this email and we'll assist you.
       </p>
     </div>
     
     <div class="footer">
       <p class="footer-text">Keep your account secure.</p>
       <p class="signature">
-        <span style="color: #ef4444; font-weight: 600;">YieldCanary HQ</span>
+        <span class="brand">YieldCanary Support</span>
       </p>
       <p class="footer-text" style="margin-top: 20px; font-size: 12px;">
         © 2024 YieldCanary. All rights reserved.

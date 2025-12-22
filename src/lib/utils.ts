@@ -57,3 +57,10 @@ export function calcTakeHomeCashReturnInception({ latest_adj_close, price_at_inc
 function round4(x: number): number {
   return Math.round(x * 10000) / 10000;
 }
+
+// Format currency in billions (e.g., 11000000000 -> "$11.0 B")
+export function formatCurrencyInBillions(value: number | null | undefined): string {
+  if (value === null || value === undefined || value === 0) return '$0.0 B';
+  const billions = value / 1e9;
+  return `$${billions.toFixed(1)} B`;
+}

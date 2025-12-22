@@ -8,6 +8,7 @@ import { useETFs } from '@/hooks/useETFs';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { CanaryStatus } from '@/types/etf';
 import { supabase } from '@/integrations/supabase/client';
+import { Footer } from '@/components/Footer';
 
 export function Dashboard() {
   const { etfs, loading, error } = useETFs();
@@ -116,14 +117,7 @@ export function Dashboard() {
         />
 
         {/* Footer */}
-        <footer className="text-center py-6 sm:py-8 border-t border-border text-xs sm:text-sm">
-          <p className="text-muted-foreground">
-            Data updated daily. ROC data from 19a-1 filings.
-          </p>
-          <p className="text-xs text-muted-foreground mt-1 sm:mt-2">
-            © 2026 YieldCanary. Not financial advice.
-          </p>
-        </footer>
+        <Footer showDataDisclaimer={true} />
       </main>
 
       <UpgradeModal

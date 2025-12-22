@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '@/integrations/supabase/client';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { ETFTable } from '@/components/dashboard/ETFTable';
 import { FilterBar } from '@/components/dashboard/FilterBar';
@@ -89,7 +90,8 @@ const WatchlistPage = () => {
           content="View and manage your starred income ETFs in your personal YieldCanary watchlist."
         />
       </Helmet>
-      <div className="min-h-screen bg-background">
+      <DashboardLayout>
+        <div className="min-h-screen bg-background">
         <DashboardHeader
           plan={plan}
           isPaid={isPaid}
@@ -135,6 +137,7 @@ const WatchlistPage = () => {
           )}
         </main>
       </div>
+      </DashboardLayout>
     </>
   );
 };

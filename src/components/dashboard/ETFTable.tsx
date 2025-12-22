@@ -334,13 +334,13 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
                 {isPaid && <TableHead className="w-10" />}
-                <SortableHeader label="Ticker" sortKeyProp="ticker" />
-                <SortableHeader label="Name" sortKeyProp="name" className="min-w-[200px]" />
+                <SortableHeader label="Ticker" className="w-20"   sortKeyProp="ticker" />
+                <SortableHeader label="Name" sortKeyProp="name" className="min-w-[150px]" />
                 <SortableHeader label="Canary Status" sortKeyProp="canaryStatus" isKiller />
                 <SortableHeader label="Death Clock" sortKeyProp="deathClock" icon={Clock} isKiller />
                 <SortableHeader label="True Income Yield" sortKeyProp="trueIncomeYield" icon={Percent} isKiller />
                 <SortableHeader label="Total Return 1Y" sortKeyProp="totalReturn1Y" icon={TrendingUp} isKiller />
-                <SortableHeader label="Take-Home Cash Return" sortKeyProp="takeHomeCashReturn1Y" icon={Banknote} className="min-w-[160px]" />
+                <SortableHeader label="Take-Home Cash Return" sortKeyProp="takeHomeCashReturn1Y" icon={Banknote} className="min-w-[150px] text-start" />
                 <SortableHeader label="Price" sortKeyProp="latestAdjClose" />
                 <SortableHeader label="Headline Yield" sortKeyProp="headlineYieldTTM" />
                 <SortableHeader label="ROC %" sortKeyProp="rocPercent" />
@@ -363,12 +363,12 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
                         </button>
                       </TableCell>
                     )}
-                    <TableCell className="font-mono font-semibold text-foreground text-sm">{etf.ticker}</TableCell>
-                    <TableCell className="text-muted-foreground max-w-[200px] truncate text-sm">{etf.name}</TableCell>
-                    <TableCell><CanaryStatusBadge status={etf.canaryStatus} /></TableCell>
+                    <TableCell className="font-mono font-semibold  w-[10px] p-0 text-center text-foreground text-sm">{etf.ticker}</TableCell>
+                    <TableCell className="text-muted-foreground max-w-[200px] p-1 truncate text-sm">{etf.name}</TableCell>
+                    <TableCell  className="p-0"><CanaryStatusBadge status={etf.canaryStatus} /></TableCell>
                     <TableCell className="text-sm"><BlurredCell value={etf.deathClock} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
-                    <TableCell className="text-sm"><BlurredCell value={formatPercent(etf.trueIncomeYield)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
-                    <TableCell className="text-sm"><BlurredCell value={formatReturn1Y(etf, etf.totalReturn1Y, etf.totalReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
+                    <TableCell className="text-sm p-0"><BlurredCell value={formatPercent(etf.trueIncomeYield)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
+                    <TableCell className="text-sm "><BlurredCell value={formatReturn1Y(etf, etf.totalReturn1Y, etf.totalReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className="text-sm"><BlurredCell value={formatReturn1Y(etf, etf.takeHomeCashReturn1Y, etf.takeHomeCashReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className="font-mono text-muted-foreground text-sm">${etf.latestAdjClose ? etf.latestAdjClose.toFixed(2) : '0.00'}</TableCell>
                     <TableCell className="font-mono text-muted-foreground text-sm">{formatPercent(etf.headlineYieldTTM)}</TableCell>

@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { transactionalEmailTemplates } from "../emails/transactionalTemplates.ts";
+import { DEFAULT_FROM } from "../constants.ts";
 
 // Helper to replace {{placeholders}} in template
 function replacePlaceholders(input: string, data: Record<string, string> = {}) {
@@ -56,7 +57,7 @@ Deno.serve(async (req) => {
 
   // Send email via Resend
   const resendApiKey = Deno.env.get("RESEND_API_KEY") ?? "";
-  const resendFromEmail = Deno.env.get("RESEND_FROM_EMAIL") ?? "YieldCanary HQ <hello@yieldcanary.com>";
+  const resendFromEmail = Deno.env.get("RESEND_FROM_EMAIL") ?? DEFAULT_FROM;
   // Use VITE_SUPABASE_SERVICE_ROLE_KEY for Supabase API calls if needed
   const supabaseServiceRoleKey = Deno.env.get("VITE_SUPABASE_SERVICE_ROLE_KEY") ?? "";
   
