@@ -308,8 +308,10 @@ const Landing = () => {
 
         {/* Marketing Stats */}
         <MarketingStats
-          amount={5000}
-          headline="Users save on average by avoiding yield traps"
+          amount={80000}
+          headline="Avoid Yield Traps That Could Cost You Thousands"
+          exampleText="$100,000 in TSLY at its inception: $80,000 in principal loss"
+          disclaimer="Assuming distributions were spent as income"
           description="Join thousands of investors who use YieldCanary to identify dying funds before they erode their portfolio value."
           ctaText="Get Started Free"
           ctaLink="/auth"
@@ -336,7 +338,7 @@ const Landing = () => {
               />
               <TestimonialCard 
                 quote="I was about to load up on another YieldMax single-stock disaster. One look at the red Dead Canary and the 1.8-year Death Clock saved me six figures. Worth 10× the price."
-                name="John Smith"
+                name="John Jacobs"
                 title="Private Investor"
               />
               <TestimonialCard 
