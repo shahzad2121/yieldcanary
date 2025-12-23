@@ -22,6 +22,7 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Welcome to YieldCanary</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -29,67 +30,87 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       box-sizing: border-box;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       line-height: 1.6;
-      color: #333;
-      background-color: #f9fafb;
+      color: #1a2938;
+      background: linear-gradient(135deg, rgba(13, 164, 114, 0.05) 0%, rgba(26, 140, 216, 0.05) 100%);
+      padding: 20px;
     }
     .container {
       max-width: 600px;
       margin: 0 auto;
-      background-color: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 40px rgba(13, 164, 114, 0.1);
       overflow: hidden;
+      border: 1px solid rgba(13, 164, 114, 0.1);
     }
     .header {
-      background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+      background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%);
       color: #ffffff;
-      padding: 40px 30px;
+      padding: 48px 32px;
       text-align: center;
+      position: relative;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+      pointer-events: none;
     }
     .header h1 {
       font-size: 32px;
       font-weight: 700;
       margin-bottom: 12px;
       letter-spacing: -0.5px;
+      position: relative;
+      z-index: 1;
     }
     .header p {
       font-size: 16px;
       opacity: 0.95;
       font-weight: 500;
+      position: relative;
+      z-index: 1;
     }
     .content {
-      padding: 40px 30px;
+      padding: 48px 32px;
+      background: #ffffff;
     }
     .greeting {
-      font-size: 18px;
-      color: #1f2937;
+      font-size: 20px;
+      color: #1a2938;
       margin-bottom: 24px;
       font-weight: 600;
     }
     .intro-text {
       font-size: 16px;
-      color: #374151;
-      margin-bottom: 24px;
+      color: #475569;
+      margin-bottom: 28px;
       line-height: 1.8;
     }
     .what-section {
-      background-color: #f9fafb;
-      border-left: 4px solid #2563eb;
-      padding: 20px 24px;
-      margin: 30px 0;
-      border-radius: 4px;
+      background: linear-gradient(135deg, rgba(13, 164, 114, 0.08) 0%, rgba(26, 140, 216, 0.08) 100%);
+      border: 1px solid rgba(13, 164, 114, 0.2);
+      border-left: 4px solid #0da472;
+      padding: 28px;
+      margin: 32px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(13, 164, 114, 0.1);
     }
     .what-section h2 {
       font-size: 18px;
-      color: #1f2937;
-      margin-bottom: 12px;
+      color: #1a2938;
+      margin-bottom: 16px;
       font-weight: 600;
     }
     .what-section p {
       font-size: 15px;
-      color: #4b5563;
+      color: #475569;
       line-height: 1.7;
       margin-bottom: 16px;
     }
@@ -98,82 +119,80 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
     }
     .what-section li {
       margin-bottom: 10px;
-      color: #1f2937;
+      color: #334155;
       font-size: 15px;
     }
     .what-section strong {
-      color: #2563eb;
+      background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 600;
     }
     .cta-button {
       display: inline-block;
-      background-color: #2563eb;
-      color: #ffffff;
+      background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%);
+      color: #ffffff !important;
       padding: 16px 40px;
-      border-radius: 6px;
+      border-radius: 8px;
       text-decoration: none;
       font-weight: 600;
       font-size: 16px;
-      margin: 30px 0;
-      transition: background-color 0.3s;
-      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+      margin: 32px 0;
+      box-shadow: 0 4px 12px rgba(13, 164, 114, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
     .cta-button:hover {
-      background-color: #1d4ed8;
+      box-shadow: 0 6px 16px rgba(13, 164, 114, 0.4);
     }
     .why-section {
-      margin-top: 30px;
-      padding-top: 30px;
-      border-top: 1px solid #e5e7eb;
+      margin-top: 32px;
+      padding-top: 32px;
+      border-top: 1px solid rgba(13, 164, 114, 0.1);
     }
     .why-section h3 {
-      font-size: 16px;
-      color: #1f2937;
+      font-size: 18px;
+      color: #1a2938;
       margin-bottom: 16px;
       font-weight: 600;
     }
     .why-section p {
       font-size: 15px;
-      color: #4b5563;
-      line-height: 1.7;
-      margin-bottom: 12px;
+      color: #475569;
+      line-height: 1.8;
+      margin-bottom: 16px;
     }
     .footer {
-      background-color: #f9fafb;
-      padding: 30px;
+      background: #f8fafc;
+      padding: 32px;
       text-align: center;
-      border-top: 1px solid #e5e7eb;
+      border-top: 1px solid rgba(13, 164, 114, 0.1);
     }
     .footer-text {
-      font-size: 13px;
-      color: #6b7280;
-      margin-bottom: 10px;
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 12px;
     }
     .signature {
-      font-size: 14px;
-      color: #1f2937;
-      margin-top: 15px;
+      font-size: 15px;
+      color: #1a2938;
+      margin-top: 20px;
       font-weight: 500;
     }
     .founder {
-      color: #2563eb;
+      background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       font-weight: 600;
     }
     @media (max-width: 600px) {
-      .container {
-        border-radius: 0;
-      }
-      .content {
-        padding: 30px 20px;
-      }
-      .header {
-        padding: 30px 20px;
-      }
-      .header h1 {
-        font-size: 26px;
-      }
-      .what-section {
-        padding: 16px 20px;
-      }
+      body { padding: 10px; }
+      .container { border-radius: 8px; }
+      .content, .header { padding: 32px 24px; }
+      .header h1 { font-size: 28px; }
+      .what-section { padding: 24px; }
     }
   </style>
 </head>
@@ -209,7 +228,7 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       </div>
       
       <p style="text-align: center;">
-        <a href="https://yieldcanary.com" class="cta-button">Explore the Dashboard →</a>
+        <a href="https://yieldcanary.com" class="cta-button" style="display: inline-block; background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%); color: #ffffff !important; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; margin: 32px 0; box-shadow: 0 4px 12px rgba(13, 164, 114, 0.3);">Explore the Dashboard →</a>
       </p>
       
       <div class="why-section">
@@ -225,8 +244,6 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       </div>
     </div>
     
-    <div style="border-top: 1px solid #e5e7eb;"></div>
-    
     <div class="footer">
       <p class="footer-text">
         Have questions? Just reply to this email — I read every message.
@@ -236,8 +253,8 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
         <span class="founder">Ryan Fish</span><br>
         Founder, YieldCanary
       </p>
-      <p class="footer-text" style="margin-top: 20px; font-size: 12px;">
-        © 2024 YieldCanary. All rights reserved.
+      <p class="footer-text" style="margin-top: 24px; font-size: 12px;">
+        © 2026 YieldCanary. All rights reserved.
       </p>
     </div>
   </div>
@@ -255,121 +272,176 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Payment Confirmed - YieldCanary Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       line-height: 1.6;
-      color: #333;
-      background-color: #f9fafb;
+      color: #1a2938;
+      background: linear-gradient(135deg, rgba(13, 164, 114, 0.05) 0%, rgba(26, 140, 216, 0.05) 100%);
+      padding: 20px;
     }
     .container {
       max-width: 600px;
       margin: 0 auto;
-      background-color: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 40px rgba(13, 164, 114, 0.1);
       overflow: hidden;
+      border: 1px solid rgba(13, 164, 114, 0.1);
     }
     .header {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%);
       color: #ffffff;
-      padding: 40px 30px;
+      padding: 48px 32px;
       text-align: center;
+      position: relative;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+      pointer-events: none;
     }
     .header h1 {
-      font-size: 28px;
+      font-size: 32px;
       font-weight: 700;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+      position: relative;
+      z-index: 1;
+    }
+    .header p {
+      font-size: 16px;
+      opacity: 0.95;
+      font-weight: 500;
+      position: relative;
+      z-index: 1;
     }
     .success-icon {
-      font-size: 48px;
-      margin-bottom: 15px;
+      font-size: 56px;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+      display: inline-block;
     }
     .content {
-      padding: 40px 30px;
+      padding: 48px 32px;
+      background: #ffffff;
     }
     .greeting {
-      font-size: 18px;
-      color: #1f2937;
-      margin-bottom: 20px;
+      font-size: 20px;
+      color: #1a2938;
+      margin-bottom: 24px;
       font-weight: 600;
     }
     .message {
       font-size: 16px;
-      color: #4b5563;
-      margin-bottom: 25px;
+      color: #475569;
+      margin-bottom: 28px;
       line-height: 1.8;
     }
     .feature-box {
-      background-color: #f0fdf4;
-      border-left: 4px solid #10b981;
-      padding: 20px;
-      margin: 25px 0;
-      border-radius: 4px;
+      background: linear-gradient(135deg, rgba(13, 164, 114, 0.08) 0%, rgba(26, 140, 216, 0.08) 100%);
+      border: 1px solid rgba(13, 164, 114, 0.2);
+      border-left: 4px solid #0da472;
+      padding: 28px;
+      margin: 32px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(13, 164, 114, 0.1);
     }
     .feature-box h3 {
-      color: #1f2937;
-      font-size: 16px;
-      margin-bottom: 15px;
+      color: #1a2938;
+      font-size: 18px;
+      margin-bottom: 20px;
+      font-weight: 600;
     }
     .feature-box ul {
       list-style: none;
       padding: 0;
     }
     .feature-box li {
-      color: #374151;
-      padding: 8px 0;
-      padding-left: 25px;
+      color: #334155;
+      padding: 10px 0;
+      padding-left: 32px;
       position: relative;
+      font-size: 15px;
     }
     .feature-box li:before {
       content: "✓";
       position: absolute;
       left: 0;
-      color: #10b981;
+      color: #0da472;
       font-weight: bold;
-      font-size: 18px;
+      font-size: 20px;
+      background: rgba(13, 164, 114, 0.1);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
     }
     .cta-button {
       display: inline-block;
-      background-color: #2563eb;
-      color: #ffffff;
-      padding: 14px 32px;
-      border-radius: 6px;
+      background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%);
+      color: #ffffff !important;
+      padding: 16px 40px;
+      border-radius: 8px;
       text-decoration: none;
       font-weight: 600;
       font-size: 16px;
-      margin: 30px 0;
+      margin: 32px 0;
+      box-shadow: 0 4px 12px rgba(13, 164, 114, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .cta-button:hover {
+      box-shadow: 0 6px 16px rgba(13, 164, 114, 0.4);
     }
     .footer {
-      background-color: #f9fafb;
-      padding: 30px;
+      background: #f8fafc;
+      padding: 32px;
       text-align: center;
-      border-top: 1px solid #e5e7eb;
+      border-top: 1px solid rgba(13, 164, 114, 0.1);
     }
     .footer-text {
-      font-size: 13px;
-      color: #6b7280;
-      margin-bottom: 10px;
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 12px;
     }
     .signature {
-      font-size: 14px;
-      color: #1f2937;
-      margin-top: 15px;
+      font-size: 15px;
+      color: #1a2938;
+      margin-top: 20px;
       font-weight: 500;
     }
+    .signature-name {
+      background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 600;
+    }
     @media (max-width: 600px) {
-      .container { border-radius: 0; }
-      .content, .header { padding: 30px 20px; }
-      .header h1 { font-size: 24px; }
+      body { padding: 10px; }
+      .container { border-radius: 8px; }
+      .content, .header { padding: 32px 24px; }
+      .header h1 { font-size: 28px; }
+      .success-icon { font-size: 48px; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <div class="success-icon">🎉</div>
+      <div class="success-icon">🐤</div>
       <h1>Payment Confirmed!</h1>
       <p>YieldCanary Pro is Now Active</p>
     </div>
@@ -393,10 +465,10 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       </div>
       
       <p style="text-align: center;">
-        <a href="https://yieldcanary.com" class="cta-button">Open Your Dashboard</a>
+        <a href="https://yieldcanary.com" class="cta-button" style="display: inline-block; background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%); color: #ffffff !important; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; margin: 32px 0; box-shadow: 0 4px 12px rgba(13, 164, 114, 0.3);">Open Your Dashboard</a>
       </p>
       
-      <p class="message" style="margin-top: 30px; font-size: 14px; color: #6b7280;">
+      <p class="message" style="margin-top: 32px; font-size: 14px; color: #64748b;">
         Need help getting started? Just reply to this email and we'll guide you through it.
       </p>
     </div>
@@ -405,11 +477,11 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       <p class="footer-text">Questions? Reply to this email anytime.</p>
       <p class="signature">
         Let's go find some dead canaries,<br>
-        <span style="color: #2563eb; font-weight: 600;">Ryan Fish</span><br>
+        <span class="signature-name">Ryan Fish</span><br>
         Founder, YieldCanary
       </p>
-      <p class="footer-text" style="margin-top: 20px; font-size: 12px;">
-        © 2024 YieldCanary. All rights reserved.
+      <p class="footer-text" style="margin-top: 24px; font-size: 12px;">
+        © 2026 YieldCanary. All rights reserved.
       </p>
     </div>
   </div>
@@ -427,112 +499,155 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Access Upgraded - YieldCanary</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       line-height: 1.6;
-      color: #333;
-      background-color: #f9fafb;
+      color: #1a2938;
+      background: linear-gradient(135deg, rgba(26, 140, 216, 0.05) 0%, rgba(13, 164, 114, 0.05) 100%);
+      padding: 20px;
     }
     .container {
       max-width: 600px;
       margin: 0 auto;
-      background-color: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 40px rgba(26, 140, 216, 0.1);
       overflow: hidden;
+      border: 1px solid rgba(26, 140, 216, 0.1);
     }
     .header {
-      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      background: linear-gradient(135deg, #1a8cd8 0%, #0da472 100%);
       color: #ffffff;
-      padding: 40px 30px;
+      padding: 48px 32px;
       text-align: center;
+      position: relative;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 70% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+      pointer-events: none;
     }
     .header h1 {
       font-size: 32px;
       font-weight: 700;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+      position: relative;
+      z-index: 1;
     }
-    .boom {
-      font-size: 52px;
-      margin-bottom: 15px;
-      animation: pulse 1s ease-in-out;
+    .header p {
+      font-size: 16px;
+      opacity: 0.95;
+      font-weight: 500;
+      position: relative;
+      z-index: 1;
     }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
+    .upgrade-icon {
+      font-size: 56px;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+      display: inline-block;
     }
     .content {
-      padding: 40px 30px;
+      padding: 48px 32px;
+      background: #ffffff;
     }
     .greeting {
-      font-size: 18px;
-      color: #1f2937;
-      margin-bottom: 20px;
+      font-size: 20px;
+      color: #1a2938;
+      margin-bottom: 24px;
       font-weight: 600;
     }
     .highlight-box {
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      background: linear-gradient(135deg, rgba(26, 140, 216, 0.1) 0%, rgba(13, 164, 114, 0.1) 100%);
+      border: 1px solid rgba(26, 140, 216, 0.25);
       border-radius: 8px;
-      padding: 25px;
+      padding: 32px;
       text-align: center;
-      margin: 25px 0;
-      border: 2px solid #fbbf24;
+      margin: 32px 0;
+      box-shadow: 0 2px 8px rgba(26, 140, 216, 0.15);
     }
     .highlight-box h2 {
-      color: #92400e;
-      font-size: 20px;
-      margin-bottom: 10px;
+      color: #1a2938;
+      font-size: 22px;
+      margin-bottom: 12px;
+      font-weight: 700;
     }
     .highlight-box p {
-      color: #78350f;
-      font-size: 14px;
+      color: #475569;
+      font-size: 15px;
+      font-weight: 500;
     }
     .message {
       font-size: 16px;
-      color: #4b5563;
-      margin-bottom: 25px;
+      color: #475569;
+      margin-bottom: 28px;
       line-height: 1.8;
     }
     .cta-button {
       display: inline-block;
-      background-color: #8b5cf6;
-      color: #ffffff;
-      padding: 14px 32px;
-      border-radius: 6px;
+      background: linear-gradient(135deg, #1a8cd8 0%, #0da472 100%);
+      color: #ffffff !important;
+      padding: 16px 40px;
+      border-radius: 8px;
       text-decoration: none;
       font-weight: 600;
       font-size: 16px;
-      margin: 30px 0;
+      margin: 32px 0;
+      box-shadow: 0 4px 12px rgba(26, 140, 216, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .cta-button:hover {
+      box-shadow: 0 6px 16px rgba(26, 140, 216, 0.4);
     }
     .footer {
-      background-color: #f9fafb;
-      padding: 30px;
+      background: #f8fafc;
+      padding: 32px;
       text-align: center;
-      border-top: 1px solid #e5e7eb;
+      border-top: 1px solid rgba(26, 140, 216, 0.1);
     }
     .footer-text {
-      font-size: 13px;
-      color: #6b7280;
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 12px;
     }
     .signature {
-      font-size: 14px;
-      color: #1f2937;
-      margin-top: 15px;
+      font-size: 15px;
+      color: #1a2938;
+      margin-top: 20px;
       font-weight: 500;
     }
+    .signature-name {
+      background: linear-gradient(135deg, #1a8cd8 0%, #0da472 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 600;
+    }
     @media (max-width: 600px) {
-      .container { border-radius: 0; }
-      .content, .header { padding: 30px 20px; }
-      .header h1 { font-size: 26px; }
+      body { padding: 10px; }
+      .container { border-radius: 8px; }
+      .content, .header { padding: 32px 24px; }
+      .header h1 { font-size: 28px; }
+      .upgrade-icon { font-size: 48px; }
+      .highlight-box { padding: 24px; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <div class="boom">💥</div>
+      <div class="upgrade-icon">⚡</div>
       <h1>The Blur is Gone!</h1>
       <p>Pro Access Activated</p>
     </div>
@@ -554,7 +669,7 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       </p>
       
       <p style="text-align: center;">
-        <a href="https://yieldcanary.com" class="cta-button">Open the Dashboard</a>
+        <a href="https://yieldcanary.com" class="cta-button" style="display: inline-block; background: linear-gradient(135deg, #1a8cd8 0%, #0da472 100%); color: #ffffff !important; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; margin: 32px 0; box-shadow: 0 4px 12px rgba(26, 140, 216, 0.3);">Open the Dashboard</a>
       </p>
     </div>
     
@@ -562,10 +677,10 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       <p class="footer-text">Happy hunting!</p>
       <p class="signature">
         Enjoy the truth,<br>
-        <span style="color: #8b5cf6; font-weight: 600;">YieldCanary HQ</span>
+        <span class="signature-name">YieldCanary HQ</span>
       </p>
-      <p class="footer-text" style="margin-top: 20px; font-size: 12px;">
-        © 2024 YieldCanary. All rights reserved.
+      <p class="footer-text" style="margin-top: 24px; font-size: 12px;">
+        © 2026 YieldCanary. All rights reserved.
       </p>
     </div>
   </div>
@@ -583,105 +698,157 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Access Expired - YieldCanary</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       line-height: 1.6;
-      color: #333;
-      background-color: #f9fafb;
+      color: #1a2938;
+      background: linear-gradient(135deg, rgba(13, 164, 114, 0.05) 0%, rgba(26, 140, 216, 0.05) 100%);
+      padding: 20px;
     }
     .container {
       max-width: 600px;
       margin: 0 auto;
-      background-color: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 40px rgba(13, 164, 114, 0.1);
       overflow: hidden;
+      border: 1px solid rgba(13, 164, 114, 0.1);
     }
     .header {
-      background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+      background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%);
       color: #ffffff;
-      padding: 40px 30px;
+      padding: 48px 32px;
       text-align: center;
+      position: relative;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+      pointer-events: none;
     }
     .header h1 {
-      font-size: 26px;
+      font-size: 32px;
       font-weight: 700;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+      position: relative;
+      z-index: 1;
     }
-    .icon {
-      font-size: 42px;
-      margin-bottom: 15px;
-      opacity: 0.9;
+    .header p {
+      font-size: 16px;
+      opacity: 0.95;
+      font-weight: 500;
+      position: relative;
+      z-index: 1;
+    }
+    .expired-icon {
+      font-size: 56px;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+      display: inline-block;
     }
     .content {
-      padding: 40px 30px;
+      padding: 48px 32px;
+      background: #ffffff;
     }
     .greeting {
-      font-size: 18px;
-      color: #1f2937;
-      margin-bottom: 20px;
+      font-size: 20px;
+      color: #1a2938;
+      margin-bottom: 24px;
+      font-weight: 600;
     }
     .message {
       font-size: 16px;
-      color: #4b5563;
-      margin-bottom: 25px;
+      color: #475569;
+      margin-bottom: 28px;
       line-height: 1.8;
     }
     .info-box {
-      background-color: #f1f5f9;
-      border-left: 4px solid #64748b;
-      padding: 20px;
-      margin: 25px 0;
-      border-radius: 4px;
+      background: linear-gradient(135deg, rgba(13, 164, 114, 0.08) 0%, rgba(26, 140, 216, 0.08) 100%);
+      border: 1px solid rgba(13, 164, 114, 0.2);
+      border-left: 4px solid #0da472;
+      padding: 28px;
+      margin: 32px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(13, 164, 114, 0.1);
     }
     .info-box p {
-      color: #475569;
-      font-size: 14px;
-      margin-bottom: 10px;
+      color: #334155;
+      font-size: 15px;
+      margin-bottom: 12px;
+      line-height: 1.7;
     }
     .info-box p:last-child {
       margin-bottom: 0;
     }
+    .info-box strong {
+      color: #1a2938;
+      font-weight: 600;
+    }
     .cta-button {
       display: inline-block;
-      background-color: #2563eb;
-      color: #ffffff;
-      padding: 14px 32px;
-      border-radius: 6px;
+      background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%);
+      color: #ffffff !important;
+      padding: 16px 40px;
+      border-radius: 8px;
       text-decoration: none;
       font-weight: 600;
       font-size: 16px;
-      margin: 30px 0;
+      margin: 32px 0;
+      box-shadow: 0 4px 12px rgba(13, 164, 114, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .cta-button:hover {
+      box-shadow: 0 6px 16px rgba(13, 164, 114, 0.4);
     }
     .footer {
-      background-color: #f9fafb;
-      padding: 30px;
+      background: #f8fafc;
+      padding: 32px;
       text-align: center;
-      border-top: 1px solid #e5e7eb;
+      border-top: 1px solid rgba(13, 164, 114, 0.1);
     }
     .footer-text {
-      font-size: 13px;
-      color: #6b7280;
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 12px;
     }
     .signature {
-      font-size: 14px;
-      color: #1f2937;
-      margin-top: 15px;
+      font-size: 15px;
+      color: #1a2938;
+      margin-top: 20px;
       font-weight: 500;
     }
+    .signature-name {
+      background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 600;
+    }
     @media (max-width: 600px) {
-      .container { border-radius: 0; }
-      .content, .header { padding: 30px 20px; }
-      .header h1 { font-size: 22px; }
+      body { padding: 10px; }
+      .container { border-radius: 8px; }
+      .content, .header { padding: 32px 24px; }
+      .header h1 { font-size: 28px; }
+      .expired-icon { font-size: 48px; }
+      .info-box { padding: 24px; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <div class="icon">⏰</div>
+      <div class="expired-icon">⏰</div>
       <h1>Your Pro Access Has Expired</h1>
       <p>The blur is back</p>
     </div>
@@ -704,10 +871,10 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       </p>
       
       <p style="text-align: center;">
-        <a href="https://yieldcanary.com/pricing" class="cta-button">Reactivate Pro Access</a>
+        <a href="https://yieldcanary.com/pricing" class="cta-button" style="display: inline-block; background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%); color: #ffffff !important; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; margin: 32px 0; box-shadow: 0 4px 12px rgba(13, 164, 114, 0.3); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);">Reactivate Pro Access</a>
       </p>
       
-      <p class="message" style="margin-top: 30px; font-size: 14px; color: #6b7280; text-align: center;">
+      <p class="message" style="margin-top: 32px; font-size: 14px; color: #64748b; text-align: center;">
         Questions? Just reply to this email.
       </p>
     </div>
@@ -716,10 +883,10 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       <p class="footer-text">We're here if you need us.</p>
       <p class="signature">
         No pressure,<br>
-        <span style="color: #64748b; font-weight: 600;">YieldCanary HQ</span>
+        <span class="signature-name">YieldCanary HQ</span>
       </p>
-      <p class="footer-text" style="margin-top: 20px; font-size: 12px;">
-        © 2024 YieldCanary. All rights reserved.
+      <p class="footer-text" style="margin-top: 24px; font-size: 12px;">
+        © 2026 YieldCanary. All rights reserved.
       </p>
     </div>
   </div>
@@ -737,6 +904,7 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Password Reset - YieldCanary</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -744,73 +912,94 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       box-sizing: border-box;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       line-height: 1.6;
-      color: #333;
-      background-color: #f9fafb;
+      color: #1a2938;
+      background: linear-gradient(135deg, rgba(13, 164, 114, 0.05) 0%, rgba(26, 140, 216, 0.05) 100%);
+      padding: 20px;
     }
     .container {
       max-width: 600px;
       margin: 0 auto;
-      background-color: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 40px rgba(13, 164, 114, 0.1);
       overflow: hidden;
+      border: 1px solid rgba(13, 164, 114, 0.1);
     }
     .header {
-      background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+      background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%);
       color: #ffffff;
-      padding: 40px 30px;
+      padding: 48px 32px;
       text-align: center;
+      position: relative;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+      pointer-events: none;
     }
     .header h1 {
       font-size: 32px;
       font-weight: 700;
       margin-bottom: 12px;
       letter-spacing: -0.5px;
+      position: relative;
+      z-index: 1;
     }
     .header p {
       font-size: 16px;
       opacity: 0.95;
       font-weight: 500;
+      position: relative;
+      z-index: 1;
     }
     .icon {
-      font-size: 42px;
-      margin-bottom: 15px;
-      opacity: 0.9;
+      font-size: 56px;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+      display: inline-block;
     }
     .content {
-      padding: 40px 30px;
+      padding: 48px 32px;
+      background: #ffffff;
     }
     .greeting {
-      font-size: 18px;
-      color: #1f2937;
+      font-size: 20px;
+      color: #1a2938;
       margin-bottom: 24px;
       font-weight: 600;
     }
     .message {
       font-size: 16px;
-      color: #374151;
-      margin-bottom: 24px;
+      color: #475569;
+      margin-bottom: 28px;
       line-height: 1.8;
     }
     .cta-button {
       display: inline-block;
-      background: linear-gradient(135deg, #1a9c6e 0%, #158a5f 50%, #0f7a4f 100%);
-      color: #ffffff;
+      background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%);
+      color: #ffffff !important;
       padding: 18px 48px;
-      border-radius: 12px;
+      border-radius: 8px;
       text-decoration: none;
       font-weight: 700;
       font-size: 17px;
       letter-spacing: 0.3px;
-      margin: 30px 0;
+      margin: 32px 0;
       transition: all 0.3s;
-      box-shadow: 0 4px 16px rgba(26, 156, 110, 0.35), 0 2px 8px rgba(26, 156, 110, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 16px rgba(13, 164, 114, 0.35), 0 2px 8px rgba(13, 164, 114, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
       border: 1px solid rgba(255, 255, 255, 0.1);
       text-transform: uppercase;
       position: relative;
       overflow: hidden;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
     .cta-button::before {
       content: '';
@@ -823,22 +1012,24 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       transition: left 0.5s;
     }
     .cta-button:hover {
-      background: linear-gradient(135deg, #1fb87a 0%, #1a9c6e 50%, #158a5f 100%);
-      box-shadow: 0 6px 20px rgba(26, 156, 110, 0.45), 0 4px 12px rgba(26, 156, 110, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      background: linear-gradient(135deg, #0fb881 0%, #1c9de8 100%);
+      box-shadow: 0 6px 20px rgba(13, 164, 114, 0.45), 0 4px 12px rgba(13, 164, 114, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
       transform: translateY(-2px);
     }
     .cta-button:hover::before {
       left: 100%;
     }
     .info-box {
-      background-color: #f9fafb;
-      border-left: 4px solid #1a9c6e;
-      padding: 20px 24px;
-      margin: 30px 0;
-      border-radius: 4px;
+      background: linear-gradient(135deg, rgba(13, 164, 114, 0.08) 0%, rgba(26, 140, 216, 0.08) 100%);
+      border: 1px solid rgba(13, 164, 114, 0.2);
+      border-left: 4px solid #0da472;
+      padding: 28px;
+      margin: 32px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(13, 164, 114, 0.1);
     }
     .info-box p {
-      color: #374151;
+      color: #334155;
       font-size: 15px;
       line-height: 1.7;
       margin-bottom: 12px;
@@ -847,27 +1038,27 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       margin-bottom: 0;
     }
     .info-box strong {
-      color: #1a9c6e;
+      color: #1a2938;
       font-weight: 600;
     }
     .link-box {
       background-color: #f1f5f9;
-      border: 1px solid #e2e8f0;
+      border: 1px solid rgba(13, 164, 114, 0.2);
       padding: 15px;
       border-radius: 4px;
       margin: 20px 0;
       word-break: break-all;
       font-family: 'JetBrains Mono', 'Courier New', monospace;
       font-size: 12px;
-      color: #2563eb;
+      color: #0da472;
       line-height: 1.6;
     }
     .security-note {
       background-color: #fef3c7;
       border-left: 4px solid #f59e0b;
-      padding: 20px;
-      margin: 25px 0;
-      border-radius: 4px;
+      padding: 24px;
+      margin: 28px 0;
+      border-radius: 8px;
     }
     .security-note p {
       color: #92400e;
@@ -879,38 +1070,41 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       margin-bottom: 0;
     }
     .footer {
-      background-color: #f9fafb;
-      padding: 30px;
+      background: #f8fafc;
+      padding: 32px;
       text-align: center;
-      border-top: 1px solid #e5e7eb;
+      border-top: 1px solid rgba(13, 164, 114, 0.1);
     }
     .footer-text {
-      font-size: 13px;
-      color: #6b7280;
-      margin-bottom: 10px;
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 12px;
     }
     .signature {
-      font-size: 14px;
-      color: #1f2937;
-      margin-top: 15px;
+      font-size: 15px;
+      color: #1a2938;
+      margin-top: 20px;
       font-weight: 500;
     }
     .brand {
-      color: #1a9c6e;
+      background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       font-weight: 600;
     }
     @media (max-width: 600px) {
-      .container {
-        border-radius: 0;
-      }
+      body { padding: 10px; }
+      .container { border-radius: 8px; }
       .content, .header {
-        padding: 30px 20px;
+        padding: 32px 24px;
       }
       .header h1 {
-        font-size: 26px;
+        font-size: 28px;
       }
+      .icon { font-size: 48px; }
       .info-box, .security-note {
-        padding: 16px 20px;
+        padding: 20px;
       }
     }
   </style>
@@ -932,7 +1126,7 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       </p>
       
       <p style="text-align: center; margin: 40px 0;">
-        <a href="{{reset_link}}" class="cta-button" style="display: inline-block; background: linear-gradient(135deg, #1a9c6e 0%, #158a5f 50%, #0f7a4f 100%); color: #ffffff; padding: 18px 48px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 17px; letter-spacing: 0.3px; box-shadow: 0 4px 16px rgba(26, 156, 110, 0.35), 0 2px 8px rgba(26, 156, 110, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); text-transform: uppercase;">🔐 Reset Your Password</a>
+        <a href="{{reset_link}}" class="cta-button" style="display: inline-block; background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%); color: #ffffff !important; padding: 18px 48px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 17px; letter-spacing: 0.3px; box-shadow: 0 4px 16px rgba(13, 164, 114, 0.35), 0 2px 8px rgba(13, 164, 114, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); text-transform: uppercase;">🔐 Reset Your Password</a>
       </p>
       
       <div class="info-box">
@@ -940,7 +1134,7 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
         <p>For your security, the reset link will expire after 60 minutes. If you need a new link, you can request another password reset.</p>
       </div>
       
-      <p class="message" style="font-size: 14px; color: #6b7280; margin-top: 30px;">
+      <p class="message" style="font-size: 14px; color: #64748b; margin-top: 30px;">
         If the button doesn't work, copy and paste this link into your browser:
       </p>
       
@@ -953,7 +1147,7 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
         <p>If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged and your account is secure.</p>
       </div>
       
-      <p class="message" style="margin-top: 30px; font-size: 14px; color: #6b7280;">
+      <p class="message" style="margin-top: 32px; font-size: 14px; color: #64748b;">
         Need help? Just reply to this email and we'll assist you.
       </p>
     </div>
@@ -963,8 +1157,8 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       <p class="signature">
         <span class="brand">YieldCanary Support</span>
       </p>
-      <p class="footer-text" style="margin-top: 20px; font-size: 12px;">
-        © 2024 YieldCanary. All rights reserved.
+      <p class="footer-text" style="margin-top: 24px; font-size: 12px;">
+        © 2026 YieldCanary. All rights reserved.
       </p>
     </div>
   </div>

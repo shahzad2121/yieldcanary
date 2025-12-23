@@ -13,6 +13,10 @@ interface MarketingStatsProps {
   amount: number;
   /** Main headline text */
   headline?: string;
+  /** Example text showing the scenario (e.g., "$100,000 in TSLY at its inception: $80,000 in principal loss") */
+  exampleText?: string;
+  /** Disclaimer text (e.g., "Assuming distributions were spent as income") */
+  disclaimer?: string;
   /** Supporting description text */
   description?: string;
   /** Call-to-action button text */
@@ -111,6 +115,8 @@ function formatCurrency(amount: number): string {
 export function MarketingStats({
   amount,
   headline = "Users save $X on average by avoiding yield traps",
+  exampleText,
+  disclaimer,
   description = "Join thousands of investors who use YieldCanary to identify dying funds before they erode their portfolio value.",
   ctaText = "Get Started Free",
   ctaLink = "/auth",
@@ -274,9 +280,22 @@ export function MarketingStats({
                 </div>
               </div>
               
-              <p className="text-xs sm:text-sm text-muted-foreground uppercase tracking-wide mt-2 sm:mt-4">
-                Average Savings Per User
-              </p>
+              {exampleText ? (
+                <div className="mt-2 sm:mt-4 space-y-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    {exampleText}
+                  </p>
+                  {disclaimer && (
+                    <p className="text-xs text-muted-foreground/80 italic">
+                      {disclaimer}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs sm:text-sm text-muted-foreground uppercase tracking-wide mt-2 sm:mt-4">
+                  Average Savings Per User
+                </p>
+              )}
             </div>
 
             {/* Description */}

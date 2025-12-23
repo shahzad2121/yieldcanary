@@ -97,7 +97,7 @@ export function Footer({ showDataDisclaimer = false }: FooterProps) {
               <XIcon className="h-5 w-5 group-hover:social-icon-glow" />
             </a>
             <a
-              href="https://youtube.com/@yieldcanary"
+              href="https://www.youtube.com/@ryan_fish"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Subscribe to our YouTube channel"
@@ -106,7 +106,7 @@ export function Footer({ showDataDisclaimer = false }: FooterProps) {
               <Youtube className="h-5 w-5 group-hover:social-icon-glow" />
             </a>
             <a
-              href="https://tiktok.com/@yieldcanary"
+              href="https://www.tiktok.com/@yieldcanary"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Follow us on TikTok"
@@ -115,7 +115,7 @@ export function Footer({ showDataDisclaimer = false }: FooterProps) {
               <TikTokIcon className="h-5 w-5 group-hover:social-icon-glow" />
             </a>
             <a
-              href="https://instagram.com/yieldcanary"
+              href="https://www.instagram.com/yieldcanary"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Follow us on Instagram"
