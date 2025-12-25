@@ -14,26 +14,43 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [taxRate, setTaxRate] = useState("0");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState<string | null>(null);
+  const [taxRate, setTaxRate] = useState("20");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [taxRateError, setTaxRateError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
-    // Check if user is already logged in
+    // Check current session and handle password-recovery URL on initial load
     const checkSession = async () => {
       try {
+        const url = window.location.href;
+        const isRecoveryFlow = url.includes("type=recovery");
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) {
           console.error("Session check error:", sessionError);
           return;
         }
-        if (session?.user) {
-          navigate("/dashboard");
+
+        // If the user arrived via a password recovery link, immediately enter reset mode
+        if (isRecoveryFlow && session?.user) {
+          console.log("Detected password recovery flow from URL during session check");
+          setIsResettingPassword(true);
+          setIsLogin(true);
+          setError("");
+          setSuccessMessage("Enter a new password for your YieldCanary account.");
+          setPassword("");
+          setConfirmPassword("");
+          setRecoveryEmail(session.user.email ?? null);
         }
+        // NOTE: We no longer auto-redirect to the dashboard here to avoid
+        // skipping the reset-password form when coming from recovery links.
       } catch (err) {
         console.error("Error checking session:", err);
       }
@@ -45,14 +62,101 @@ export default function Auth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
-        if (session?.user) {
-          navigate("/dashboard");
+
+        if (event === "PASSWORD_RECOVERY") {
+          console.log("Password recovery mode activated from auth state change");
+          setIsResettingPassword(true);
+          setIsLogin(true);
+          setError("");
+          setSuccessMessage("Enter a new password for your YieldCanary account.");
+          setPassword("");
+          setConfirmPassword("");
+          setRecoveryEmail(session?.user?.email ?? null);
+          return;
+        }
+
+        if (event === "SIGNED_IN") {
+          const urlHasRecovery = window.location.href.includes("type=recovery");
+          // If we're in or coming from a recovery flow, don't auto-redirect away
+          if (isResettingPassword || urlHasRecovery) {
+            console.log("Signed in during password recovery flow; staying on Auth page");
+            return;
+          }
+
+          if (session?.user) {
+            console.log("Signed in normally, navigating to dashboard");
+            navigate("/dashboard");
+          }
         }
       }
     );
 
     return () => subscription?.unsubscribe();
-  }, [navigate]);
+  }, [navigate, isResettingPassword]);
+
+  const handleForgotPassword = async () => {
+    setError("");
+    setSuccessMessage("");
+
+    if (!email) {
+      setError("Please enter your email address first");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Call custom password reset Edge Function that uses Resend
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!supabaseUrl) {
+        throw new Error('VITE_SUPABASE_URL is not set');
+      }
+
+      // Get current session for authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+
+      // Add authorization header if session exists
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/reset-password`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          email,
+          redirectTo: `${window.location.origin}/auth`,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Failed to send password reset email:', error);
+        throw new Error(error.error || 'Failed to send password reset email');
+      }
+
+      setSuccessMessage("Password reset email sent. Check your inbox for the reset link.");
+      toast({
+        title: "Password reset email sent",
+        description: "Check your inbox and follow the link to set a new password.",
+      });
+    } catch (err: any) {
+      console.error("Forgot password error:", err);
+      const errorMessage = err?.message || "Failed to send password reset email";
+      setError(errorMessage);
+      toast({
+        title: "Password Reset Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,27 +164,59 @@ export default function Auth() {
     setSuccessMessage("");
     setLoading(true);
 
-    // Validation
-    if (!email || !password) {
-      setError("Please fill in all fields");
-      setLoading(false);
-      return;
-    }
-
-    if (!isLogin && !username) {
-      setError("Please provide a username");
-      setLoading(false);
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      setLoading(false);
-      return;
-    }
-
     try {
-      if (isLogin) {
+      if (isResettingPassword) {
+        // Validation for password reset flow
+        if (!password || !confirmPassword) {
+          setError("Please fill in all password fields");
+          setLoading(false);
+          return;
+        }
+
+        if (password.length < 6) {
+          setError("Password must be at least 6 characters");
+          setLoading(false);
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          setError("Passwords do not match");
+          setLoading(false);
+          return;
+        }
+
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) {
+          console.error("Update password error:", error);
+          throw new Error(error.message);
+        }
+
+        setSuccessMessage("Password updated successfully. You can now sign in with your new password.");
+        toast({
+          title: "Password updated",
+          description: "You can now sign in with your new password.",
+        });
+
+        // Reset state back to normal login mode
+        setIsResettingPassword(false);
+        setPassword("");
+        setConfirmPassword("");
+        setRecoveryEmail(null);
+        setIsLogin(true);
+      } else if (isLogin) {
+        // Validation for login flow
+        if (!email || !password) {
+          setError("Please fill in all fields");
+          setLoading(false);
+          return;
+        }
+
+        if (password.length < 6) {
+          setError("Password must be at least 6 characters");
+          setLoading(false);
+          return;
+        }
+
         console.log("Attempting sign in with:", email);
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
@@ -93,6 +229,41 @@ export default function Auth() {
         console.log("Sign in successful:", data.user?.email);
         toast({ title: "Welcome back!", description: "Taking you to the landing page..." });
       } else {
+        // Validation for sign up flow
+        if (!email || !password) {
+          setError("Please fill in all fields");
+          setLoading(false);
+          return;
+        }
+
+        if (!username) {
+          setError("Please provide a username");
+          setLoading(false);
+          return;
+        }
+
+        if (password.length < 6) {
+          setError("Password must be at least 6 characters");
+          setLoading(false);
+          return;
+        }
+
+        // Determine final tax rate before sign-up
+        let finalTaxRate = 20;
+        const trimmedTax = taxRate.trim();
+        if (trimmedTax !== "") {
+          const parsed = Number(trimmedTax);
+          if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
+            setTaxRateError("Tax rate must be between 0 and 100");
+            return;
+          }
+          finalTaxRate = parsed;
+        } else {
+          // Empty input means "use default 20%"
+          setTaxRate("20");
+        }
+        setTaxRateError("");
+
         console.log("Attempting sign up with:", email);
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -117,7 +288,7 @@ export default function Auth() {
                 {
                   email: data.user.email,
                   username: username,
-                  tax_rate: parseFloat(taxRate) || 0,
+                  tax_rate: finalTaxRate,
                 },
                 { onConflict: 'email' }
               );
@@ -209,12 +380,20 @@ export default function Auth() {
             <span className="text-lg xs:text-2xl font-bold text-foreground">YieldCanary</span>
           </button>
           <h1 className="text-xl xs:text-2xl font-semibold text-foreground">
-            {isLogin ? "Welcome back" : "Create your account"}
+            {isResettingPassword
+              ? "Reset your password"
+              : isLogin
+                ? "Welcome back"
+                : "Create your account"}
           </h1>
           <p className="text-xs xs:text-sm text-muted-foreground mt-1 xs:mt-2">
-            {isLogin
-              ? "Sign in to access your dashboard"
-              : "Start tracking your high-yield ETFs"}
+            {isResettingPassword
+              ? recoveryEmail
+                ? `Choose a new password for ${recoveryEmail}`
+                : "Choose a new password for your account"
+              : isLogin
+                ? "Sign in to access your dashboard"
+                : "Start tracking your high-yield ETFs"}
           </p>
         </div>
 
@@ -229,20 +408,22 @@ export default function Auth() {
               {successMessage}
             </div>
           )}
-          <div className="space-y-1.5 xs:space-y-2">
-            <Label htmlFor="email" className="text-xs xs:text-sm">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="text-sm h-9 xs:h-10"
-            />
-          </div>
+          {!isResettingPassword && (
+            <div className="space-y-1.5 xs:space-y-2">
+              <Label htmlFor="email" className="text-xs xs:text-sm">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="text-sm h-9 xs:h-10"
+              />
+            </div>
+          )}
 
-          {!isLogin && (
+          {!isLogin && !isResettingPassword && (
             <div className="space-y-1.5 xs:space-y-2">
               <Label htmlFor="username" className="text-xs xs:text-sm">Username</Label>
               <Input
@@ -257,13 +438,13 @@ export default function Auth() {
             </div>
           )}
 
-          {!isLogin && (
+          {!isLogin && !isResettingPassword && (
             <div className="space-y-1.5 xs:space-y-2">
               <Label htmlFor="taxRate" className="text-xs xs:text-sm">Tax Rate (%)</Label>
               <Input
                 id="taxRate"
                 type="number"
-                placeholder="0"
+                placeholder="20"
                 min="0"
                 max="100"
                 step="0.01"
@@ -271,6 +452,9 @@ export default function Auth() {
                 onChange={(e) => setTaxRate(e.target.value)}
                 className="text-sm h-9 xs:h-10"
               />
+              {taxRateError && (
+                <p className="text-xs text-destructive">{taxRateError}</p>
+              )}
               <p className="text-xs text-muted-foreground">Your tax rate for yield calculations. You can adjust this later.</p>
             </div>
           )}
@@ -289,22 +473,59 @@ export default function Auth() {
             />
           </div>
 
+          {isResettingPassword && (
+            <div className="space-y-1.5 xs:space-y-2">
+              <Label htmlFor="confirmPassword" className="text-xs xs:text-sm">Confirm new password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+                className="text-sm h-9 xs:h-10"
+              />
+            </div>
+          )}
+
+          {isLogin && !isResettingPassword && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-xs xs:text-sm text-muted-foreground hover:text-foreground transition-colors"
+                disabled={loading}
+              >
+                Forgot your password?
+              </button>
+            </div>
+          )}
+
           <Button type="submit" className="w-full text-sm xs:text-base h-9 xs:h-10" disabled={loading}>
-            {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
+            {loading
+              ? "Loading..."
+              : isResettingPassword
+                ? "Update Password"
+                : isLogin
+                  ? "Sign In"
+                  : "Sign Up"}
           </Button>
         </form>
 
-        <div className="mt-4 xs:mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-xs xs:text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {isLogin
-              ? "Don't have an account? Sign up"
-              : "Already have an account? Sign in"}
-          </button>
-        </div>
+        {!isResettingPassword && (
+          <div className="mt-4 xs:mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-xs xs:text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {isLogin
+                ? "Don't have an account? Sign up"
+                : "Already have an account? Sign in"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import { useETFs } from '@/hooks/useETFs';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { CanaryStatus } from '@/types/etf';
 import { supabase } from '@/integrations/supabase/client';
+import { Footer } from '@/components/Footer';
 
 export function Dashboard() {
   const { etfs, loading, error } = useETFs();
@@ -17,7 +18,11 @@ export function Dashboard() {
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
 
-  const isPaid = subscriptionUser?.is_paid || false;
+  // Plan derivation: for now we distinguish only between 'free' and 'basic'
+  type Plan = 'free' | 'basic';
+  const subscriptionTier = subscriptionUser?.subscription_tier ?? null;
+  const plan: Plan = subscriptionTier === 'basic' ? 'basic' : 'free';
+  const isPaid = plan !== 'free';
 
   // Get user email from session
   useEffect(() => {
@@ -74,6 +79,7 @@ export function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader
+        plan={plan}
         isPaid={isPaid}
         userEmail={userEmail}
         searchQuery={searchQuery}
@@ -105,19 +111,13 @@ export function Dashboard() {
         {/* ETF Table */}
         <ETFTable
           etfs={filteredETFs}
+          plan={plan}
           isPaid={isPaid}
           onUpgrade={() => setIsUpgradeModalOpen(true)}
         />
 
         {/* Footer */}
-        <footer className="text-center py-6 sm:py-8 border-t border-border text-xs sm:text-sm">
-          <p className="text-muted-foreground">
-            Data updated daily. ROC data from 19a-1 filings.
-          </p>
-          <p className="text-xs text-muted-foreground mt-1 sm:mt-2">
-            © 2026 YieldCanary. Not financial advice.
-          </p>
-        </footer>
+        <Footer showDataDisclaimer={true} />
       </main>
 
       <UpgradeModal

@@ -8,6 +8,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTheme } from '@/hooks/useTheme';
 import { sendTransactionalEmail } from '@/lib/sendTransactionalEmail';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Footer } from '@/components/Footer';
+import { MarketingStats } from '@/components/MarketingStats';
+import { DashboardScreenshot } from '@/components/DashboardScreenshot';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const Landing = () => {
-  const [isYearly, setIsYearly] = useState(true);
+  const [isYearly, setIsYearly] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const navigate = useNavigate();
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -254,6 +257,15 @@ const Landing = () => {
           </div>
         </section>
 
+        {/* Dashboard Screenshot with 3D Pop-out */}
+        <DashboardScreenshot
+          imageSrc="/dashboard.png"
+          alt="YieldCanary Dashboard - See which ETFs are healthy vs dying"
+          enableParticles={true}
+          enableFloating={true}
+          enableScanLine={true}
+        />
+
         {/* Value Proposition */}
         <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-muted/30">
           <div className="max-w-4xl mx-auto text-center">
@@ -294,6 +306,19 @@ const Landing = () => {
           </div>
         </section>
 
+        {/* Marketing Stats */}
+        <MarketingStats
+          amount={80000}
+          headline="Avoid Yield Traps That Could Cost You Thousands"
+          exampleText="$100,000 in TSLY at its inception: $80,000 in principal loss"
+          disclaimer="Assuming distributions were spent as income"
+          description="Join thousands of investors who use YieldCanary to identify dying funds before they erode their portfolio value."
+          ctaText="Get Started Free"
+          ctaLink="/auth"
+          enableParticles={true}
+          enableCounter={true}
+        />
+
         {/* Testimonials */}
         <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
           <div className="max-w-6xl mx-auto">
@@ -313,7 +338,7 @@ const Landing = () => {
               />
               <TestimonialCard 
                 quote="I was about to load up on another YieldMax single-stock disaster. One look at the red Dead Canary and the 1.8-year Death Clock saved me six figures. Worth 10× the price."
-                name="John Smith"
+                name="John Jacobs"
                 title="Private Investor"
               />
               <TestimonialCard 
@@ -395,6 +420,7 @@ const Landing = () => {
                 description="Never miss another dying fund"
                 price={isYearly ? "$189" : "$19"}
                 period={isYearly ? "/ year" : "/ month"}
+                teaserText={!isYearly ? "Lock in $19/month now – going to $49/month when released" : undefined}
                 features={[
                   "Everything in Basic +",
                   'Weekly "Dead Canary Alert" emails',
@@ -413,17 +439,7 @@ const Landing = () => {
         </section>
 
         {/* Footer */}
-        <footer className="border-t border-border py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-lg xs:text-xl">🐤</span>
-              <span className="text-sm xs:text-base font-bold text-foreground">YieldCanary</span>
-            </div>
-            <p className="text-xs xs:text-sm text-muted-foreground text-center sm:text-right">
-              © 2026 YieldCanary. All rights reserved.
-            </p>
-          </div>
-        </footer>
+        <Footer />
       </div>
     </>
   );
@@ -472,6 +488,7 @@ const PricingCard = ({
   buttonText, 
   buttonVariant = "default",
   featured = false,
+  teaserText,
   onCheckout,
   isLoading = false,
 }: { 
@@ -483,6 +500,7 @@ const PricingCard = ({
   buttonText: string; 
   buttonVariant?: "default" | "outline";
   featured?: boolean;
+  teaserText?: string;
   onCheckout: () => void;
   isLoading?: boolean;
 }) => (
@@ -490,6 +508,13 @@ const PricingCard = ({
     <div className="relative z-10">
       <h3 className={`text-lg xs:text-xl font-bold mb-1 ${featured ? 'text-primary electric-text' : 'text-foreground'}`}>{name}</h3>
       <p className="text-xs xs:text-sm text-muted-foreground mb-3 xs:mb-4">{description}</p>
+      {teaserText && (
+        <div className="mb-3 xs:mb-4 px-3 py-2 rounded-md bg-amber-500/10 border border-amber-500/20">
+          <p className="text-xs xs:text-sm font-medium text-amber-600 dark:text-amber-400 text-center">
+            {teaserText}
+          </p>
+        </div>
+      )}
       <div className="mb-4 xs:mb-6">
         <span className={`text-3xl xs:text-4xl font-bold ${featured ? 'electric-text' : 'text-foreground'}`}>{price}</span>
         <span className="text-xs xs:text-sm text-muted-foreground">{period}</span>
