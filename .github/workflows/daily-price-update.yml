@@ -1,0 +1,48 @@
+name: Daily ETF Price Update (Official Closing Price)
+
+on:
+  schedule:
+    # Run once after market close to get official closing prices
+    # Market closes at 4:00 PM ET, run at 4:30 PM ET (9:30 PM UTC) to ensure official closing price is available
+    - cron: '30 21 * * 1-5'  # Monday-Friday, 9:30 PM UTC (4:30 PM ET)
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./data ingestion
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: 'data ingestion/requirements.txt'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Update official closing prices
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+        run: python update_daily_prices.py
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Daily Closing Price Update" >> $GITHUB_STEP_SUMMARY
+          echo "- **Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Purpose:** Update official end-of-day closing prices" >> $GITHUB_STEP_SUMMARY
+
+
