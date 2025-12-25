@@ -150,12 +150,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
   });
 
   const toggleWatchlist = (ticker: string) => {
-    // Only paid users can maintain a watchlist
-    if (!isPaid) {
-      onUpgrade();
-      return;
-    }
-
+    // Watchlist is now available for all users (free and paid)
     if (isInWatchlist(ticker)) {
       removeFromWatchlist(ticker);
     } else {
@@ -333,7 +328,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
-                {isPaid && <TableHead className="w-10" />}
+                <TableHead className="w-10" />
                 <SortableHeader label="Ticker" className="w-20"   sortKeyProp="ticker" />
                 <SortableHeader label="Name" sortKeyProp="name" className="min-w-[150px]" />
                 <SortableHeader label="Canary Status" sortKeyProp="canaryStatus" isKiller />
@@ -353,16 +348,14 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
                 const unlocked = isUnlocked(etf.ticker);
                 return (
                   <TableRow key={etf.id} className="hover:bg-muted/50 transition-colors">
-                    {isPaid && (
-                      <TableCell>
-                        <button
-                          onClick={() => toggleWatchlist(etf.ticker)}
-                          className="p-1 hover:bg-secondary rounded transition-colors"
-                        >
-                          <Star className={`h-4 w-4 ${isInWatchlist(etf.ticker) ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} />
-                        </button>
-                      </TableCell>
-                    )}
+                    <TableCell>
+                      <button
+                        onClick={() => toggleWatchlist(etf.ticker)}
+                        className="p-1 hover:bg-secondary rounded transition-colors"
+                      >
+                        <Star className={`h-4 w-4 ${isInWatchlist(etf.ticker) ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} />
+                      </button>
+                    </TableCell>
                     <TableCell className="font-mono font-semibold  w-[10px] p-0 text-center text-foreground text-sm">{etf.ticker}</TableCell>
                     <TableCell className="text-muted-foreground max-w-[200px] p-1 truncate text-sm">{etf.name}</TableCell>
                     <TableCell  className="p-0"><CanaryStatusBadge status={etf.canaryStatus} /></TableCell>
@@ -397,14 +390,12 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
                   </div>
                   <p className="text-[11px] text-muted-foreground truncate mt-0.5">{etf.name}</p>
                 </div>
-                {isPaid && (
-                  <button
-                    onClick={() => toggleWatchlist(etf.ticker)}
-                    className="p-1 hover:bg-secondary rounded transition-colors ml-2"
-                  >
-                    <Star className={`h-4 w-4 ${isInWatchlist(etf.ticker) ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} />
-                  </button>
-                )}
+                <button
+                  onClick={() => toggleWatchlist(etf.ticker)}
+                  className="p-1 hover:bg-secondary rounded transition-colors ml-2"
+                >
+                  <Star className={`h-4 w-4 ${isInWatchlist(etf.ticker) ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} />
+                </button>
               </div>
 
               {/* Key metrics grid */}
@@ -459,7 +450,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
       {plan === 'free' && (
         <div className="text-center py-6 border border-dashed border-primary/30 rounded-xl bg-primary/5">
           <p className="text-muted-foreground mb-3">
-            Upgrade to unlock all ETF data, watchlists, alerts, and CSV export
+            Upgrade to unlock all ETF data, alerts, and CSV export
           </p>
           <Button onClick={onUpgrade} className="gap-2 bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90">
             <Banknote className="h-4 w-4" />

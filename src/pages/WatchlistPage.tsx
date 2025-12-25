@@ -6,6 +6,7 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { ETFTable } from '@/components/dashboard/ETFTable';
 import { FilterBar } from '@/components/dashboard/FilterBar';
 import { KillerStats } from '@/components/dashboard/KillerStats';
+import { Footer } from '@/components/Footer';
 import { useETFs } from '@/hooks/useETFs';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { useWatchlist } from '@/hooks/useWatchlist';
@@ -135,6 +136,9 @@ const WatchlistPage = () => {
               onUpgrade={() => {}} // Watchlist is only visible when already signed in; upgrade CTA handled elsewhere
             />
           )}
+
+          {/* Footer */}
+          <Footer showDataDisclaimer={true} />
         </main>
       </div>
       </DashboardLayout>
