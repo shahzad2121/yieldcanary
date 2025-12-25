@@ -1,0 +1,81 @@
+name: Real-Time ETF Price Update (2-Minute Polling)
+
+on:
+  schedule:
+    # Run every 2 minutes during market hours (9:30 AM - 4:00 PM ET)
+    # Market hours in UTC: 1:30 PM - 8:00 PM UTC (9:30 AM - 4:00 PM ET)
+    # Every 2 minutes on weekdays (Monday-Friday)
+    # Note: GitHub Actions cron runs in UTC
+    # We'll check market hours in the workflow step to ensure we only run during market hours
+    
+    # Run every 2 minutes on weekdays (the market check step will filter)
+    - cron: '*/2 * * * 1-5'  # Every 2 minutes, Monday-Friday
+    
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  update-realtime-prices:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./data ingestion
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: 'data ingestion/requirements.txt'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check if market is open
+        id: market-check
+        run: |
+          # Get current UTC time
+          CURRENT_HOUR=$(date -u +%H)
+          CURRENT_MINUTE=$(date -u +%M)
+          CURRENT_DAY=$(date -u +%u)  # 1=Monday, 7=Sunday
+          
+          # Market hours: 13:30 - 20:00 UTC (9:30 AM - 4:00 PM ET)
+          # Check if weekday (1-5) and within market hours
+          if [ "$CURRENT_DAY" -ge 1 ] && [ "$CURRENT_DAY" -le 5 ]; then
+            if [ "$CURRENT_HOUR" -ge 13 ] && [ "$CURRENT_HOUR" -le 20 ]; then
+              # Check if after 1:30 PM or before 8:00 PM
+              if [ "$CURRENT_HOUR" -gt 13 ] || ([ "$CURRENT_HOUR" -eq 13 ] && [ "$CURRENT_MINUTE" -ge 30 ]); then
+                if [ "$CURRENT_HOUR" -lt 20 ] || ([ "$CURRENT_HOUR" -eq 20 ] && [ "$CURRENT_MINUTE" -eq 0 ]); then
+                  echo "market_open=true" >> $GITHUB_OUTPUT
+                  echo "✅ Market is open - proceeding with update"
+                  exit 0
+                fi
+              fi
+            fi
+          fi
+          
+          echo "market_open=false" >> $GITHUB_OUTPUT
+          echo "⏸️  Market is closed - skipping update"
+          exit 0
+
+      - name: Update real-time ETF prices
+        if: steps.market-check.outputs.market_open == 'true'
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+        run: python update_realtime_prices.py
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Real-Time Price Update (2-Minute Polling)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Market Status:** ${{ steps.market-check.outputs.market_open }}" >> $GITHUB_STEP_SUMMARY
+
