@@ -15,6 +15,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { supabase } from '@/integrations/supabase/client';
 import { useTheme } from '@/hooks/useTheme';
 import { SettingsModal } from './SettingsModal';
+import { FeedbackModal } from '@/components/modals/FeedbackModal';
 
 interface DashboardHeaderProps {
   plan: 'free' | 'basic';
@@ -35,6 +36,7 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -74,6 +76,17 @@ export function DashboardHeader({
 
         {/* Actions - Right aligned */}
         <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+
+          {/* Feedback Button */}
+          <Button
+            variant="ghost"
+            onClick={() => setIsFeedbackOpen(true)}
+            className="text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4"
+            aria-label="Send feedback"
+          >
+            Feedback
+          </Button>
+
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
@@ -168,6 +181,12 @@ export function DashboardHeader({
         onClose={() => setIsSettingsOpen(false)}
         userEmail={userEmail}
       />
+         {/* Feedback Modal */}
+       <FeedbackModal
+         isOpen={isFeedbackOpen}
+         onClose={() => setIsFeedbackOpen(false)}
+         userEmail={userEmail}
+       />
     </header>
   );
 }
