@@ -87,7 +87,7 @@ export function Dashboard() {
         onUpgrade={() => setIsUpgradeModalOpen(true)}
       />
 
-      <main className="container px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <main className="container py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Hero Section */}
         <div className="text-center space-y-1 sm:space-y-2 py-2 sm:py-4">
           <h1 className="text-xl sm:text-3xl md:text-4xl font-bold tracking-tight text-foreground px-2">

@@ -190,9 +190,22 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
     @media (max-width: 600px) {
       body { padding: 10px; }
       .container { border-radius: 8px; }
-      .content, .header { padding: 32px 24px; }
-      .header h1 { font-size: 28px; }
-      .what-section { padding: 24px; }
+      .content, .header { padding: 24px 20px; }
+      .header h1 { font-size: 22px; }
+      .header p { font-size: 14px; }
+      .greeting { font-size: 18px; margin-bottom: 20px; }
+      .intro-text { font-size: 14px; line-height: 1.7; margin-bottom: 24px; }
+      .what-section { padding: 20px; margin: 24px 0; }
+      .what-section h2 { font-size: 16px; margin-bottom: 12px; }
+      .what-section p { font-size: 14px; line-height: 1.6; }
+      .what-section li { font-size: 14px; }
+      .why-section { margin-top: 24px; padding-top: 24px; }
+      .why-section h3 { font-size: 16px; margin-bottom: 12px; }
+      .why-section p { font-size: 14px; line-height: 1.7; }
+      .cta-button { padding: 14px 32px; font-size: 14px; margin: 24px 0; }
+      .footer { padding: 24px 20px; }
+      .footer-text { font-size: 13px; }
+      .signature { font-size: 14px; }
     }
   </style>
 </head>
@@ -432,9 +445,19 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
     @media (max-width: 600px) {
       body { padding: 10px; }
       .container { border-radius: 8px; }
-      .content, .header { padding: 32px 24px; }
-      .header h1 { font-size: 28px; }
-      .success-icon { font-size: 48px; }
+      .content, .header { padding: 24px 20px; }
+      .header h1 { font-size: 22px; }
+      .header p { font-size: 14px; }
+      .success-icon { font-size: 40px; margin-bottom: 16px; }
+      .greeting { font-size: 18px; margin-bottom: 20px; }
+      .message { font-size: 14px; line-height: 1.7; margin-bottom: 24px; }
+      .feature-box { padding: 20px; margin: 24px 0; }
+      .feature-box h3 { font-size: 16px; margin-bottom: 16px; }
+      .feature-box li { font-size: 14px; padding: 8px 0; padding-left: 28px; }
+      .cta-button { padding: 14px 32px; font-size: 14px; margin: 24px 0; }
+      .footer { padding: 24px 20px; }
+      .footer-text { font-size: 13px; }
+      .signature { font-size: 14px; }
     }
   </style>
 </head>
@@ -637,10 +660,19 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
     @media (max-width: 600px) {
       body { padding: 10px; }
       .container { border-radius: 8px; }
-      .content, .header { padding: 32px 24px; }
-      .header h1 { font-size: 28px; }
-      .upgrade-icon { font-size: 48px; }
-      .highlight-box { padding: 24px; }
+      .content, .header { padding: 24px 20px; }
+      .header h1 { font-size: 22px; }
+      .header p { font-size: 14px; }
+      .upgrade-icon { font-size: 40px; margin-bottom: 16px; }
+      .greeting { font-size: 18px; margin-bottom: 20px; }
+      .message { font-size: 14px; line-height: 1.7; margin-bottom: 24px; }
+      .highlight-box { padding: 20px; margin: 24px 0; }
+      .highlight-box h2 { font-size: 18px; margin-bottom: 10px; }
+      .highlight-box p { font-size: 14px; }
+      .cta-button { padding: 14px 32px; font-size: 14px; margin: 24px 0; }
+      .footer { padding: 24px 20px; }
+      .footer-text { font-size: 13px; }
+      .signature { font-size: 14px; }
     }
   </style>
 </head>
@@ -838,10 +870,18 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
     @media (max-width: 600px) {
       body { padding: 10px; }
       .container { border-radius: 8px; }
-      .content, .header { padding: 32px 24px; }
-      .header h1 { font-size: 28px; }
-      .expired-icon { font-size: 48px; }
-      .info-box { padding: 24px; }
+      .content, .header { padding: 24px 20px; }
+      .header h1 { font-size: 22px; }
+      .header p { font-size: 14px; }
+      .expired-icon { font-size: 40px; margin-bottom: 16px; }
+      .greeting { font-size: 18px; margin-bottom: 20px; }
+      .message { font-size: 14px; line-height: 1.7; margin-bottom: 24px; }
+      .info-box { padding: 20px; margin: 24px 0; }
+      .info-box p { font-size: 14px; line-height: 1.6; }
+      .cta-button { padding: 14px 32px; font-size: 14px; margin: 24px 0; }
+      .footer { padding: 24px 20px; }
+      .footer-text { font-size: 13px; }
+      .signature { font-size: 14px; }
     }
   </style>
 </head>
@@ -1096,16 +1136,21 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
     @media (max-width: 600px) {
       body { padding: 10px; }
       .container { border-radius: 8px; }
-      .content, .header {
-        padding: 32px 24px;
-      }
-      .header h1 {
-        font-size: 28px;
-      }
-      .icon { font-size: 48px; }
-      .info-box, .security-note {
-        padding: 20px;
-      }
+      .content, .header { padding: 24px 20px; }
+      .header h1 { font-size: 22px; }
+      .header p { font-size: 14px; }
+      .icon { font-size: 40px; margin-bottom: 16px; }
+      .greeting { font-size: 18px; margin-bottom: 20px; }
+      .message { font-size: 14px; line-height: 1.7; margin-bottom: 24px; }
+      .info-box { padding: 20px; margin: 24px 0; }
+      .info-box p { font-size: 14px; line-height: 1.6; }
+      .security-note { padding: 20px; margin: 24px 0; }
+      .security-note p { font-size: 13px; line-height: 1.6; }
+      .link-box { padding: 12px; font-size: 11px; margin: 16px 0; }
+      .cta-button { padding: 14px 32px; font-size: 14px; margin: 24px 0; }
+      .footer { padding: 24px 20px; }
+      .footer-text { font-size: 13px; }
+      .signature { font-size: 14px; }
     }
   </style>
 </head>

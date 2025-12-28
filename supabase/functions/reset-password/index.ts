@@ -32,6 +32,11 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Debug logging to investigate email format issues
+  console.log("Received email:", JSON.stringify(email));
+  console.log("Email length:", email?.length);
+  console.log("Email char codes:", email?.split('').map(c => c.charCodeAt(0)));
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceRoleKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
   
@@ -81,6 +86,10 @@ Deno.serve(async (req) => {
         headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" }
       });
     }
+
+    // Debug: Log the reset link URL that will be sent to the user
+    console.log("Reset link URL that will be sent to user:", resetLink);
+    console.log("Reset link URL length:", resetLink.length);
 
     // Step 2: Get user info for personalization
     let firstName = email.split('@')[0]; // Fallback
