@@ -4,6 +4,7 @@ import type { Engine } from '@tsparticles/engine';
 import { initParticlesEngine } from '@tsparticles/react';
 import { loadSlim } from '@tsparticles/slim';
 import { TrendingDown, Clock, AlertTriangle, Shield } from 'lucide-react';
+import { useTheme } from '@/hooks/useTheme';
 
 let particlesInit: (() => Promise<void>) | null = null;
 
@@ -39,7 +40,7 @@ interface DashboardScreenshotProps {
  * Displays a dashboard screenshot with 3D pop-out effect, holographic frame, and particle effects
  */
 export function DashboardScreenshot({
-  imageSrc = '/dashboard.png',
+  imageSrc,
   alt = 'YieldCanary Dashboard Preview',
   className = '',
   enableParticles = true,
@@ -48,7 +49,11 @@ export function DashboardScreenshot({
   enableFeatureBadges = true,
   maxWidth = '100%',
 }: DashboardScreenshotProps) {
+  const { theme } = useTheme();
   const [hoveredBadge, setHoveredBadge] = useState<string | null>(null);
+  
+  // Use theme-based image if imageSrc is not provided
+  const finalImageSrc = imageSrc || (theme === 'light' ? '/dashboard-light.png' : '/dashboard.png');
 
   // Feature badges matching existing homepage content
   const featureBadges: FeatureBadge[] = [
@@ -211,7 +216,7 @@ export function DashboardScreenshot({
               {/* Dashboard Screenshot Image */}
               <div className="holographic-image-wrapper relative">
                 <img
-                  src={imageSrc}
+                  src={finalImageSrc}
                   alt={alt}
                   className="holographic-screenshot-image w-full h-auto rounded-lg"
                   loading="lazy"
