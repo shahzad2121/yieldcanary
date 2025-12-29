@@ -217,7 +217,7 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
     </div>
     
     <div class="content">
-      <p class="greeting">Welcome, {{first_name|friend}}! 👋</p>
+      <p class="greeting">Welcome, {{first_name|there!}}! 👋</p>
       
       <p class="intro-text">
         Thanks for joining YieldCanary. Your account is active and ready to use. 
@@ -245,14 +245,12 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       </p>
       
       <div class="why-section">
-        <h3>Why we built this</h3>
+        <h3>Why We Built This</h3>
         <p>
-          Income ETFs have exploded in popularity, but most investors do not realize they are paying 12%+ yields 
-          funded by selling off their own principal. That is not income — that is liquidation with extra steps.
+          High-yield income ETFs have exploded in popularity, but most investors don't realize that many of those eye-catching 12%+ yields are funded by quietly returning their own principal.
         </p>
         <p>
-          YieldCanary gives you the data to make smarter decisions. Browse the full ETF list, compare true yields, 
-          and spot the funds that are actually generating sustainable income versus those burning through assets.
+          That's not true income — it's liquidation with extra steps. YieldCanary gives you the data to make smarter decisions. Browse the full ETF list, compare true yields, and easily spot the funds generating sustainable income versus those slowly burning through assets.
         </p>
       </div>
     </div>
@@ -262,7 +260,6 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
         Have questions? Just reply to this email — I read every message.
       </p>
       <p class="signature">
-        Happy hunting,<br>
         <span class="founder">Ryan Fish</span><br>
         Founder, YieldCanary
       </p>
@@ -470,7 +467,7 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
     </div>
     
     <div class="content">
-      <p class="greeting">Hey {{first_name}},</p>
+      <p class="greeting">Hey, {{first_name|there!}}!</p>
       
       <p class="message">
         Welcome to the real numbers. The blur is <strong>gone</strong> — you now have full access to every metric we track.
@@ -685,7 +682,7 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
     </div>
     
     <div class="content">
-      <p class="greeting">{{first_name}},</p>
+      <p class="greeting">{{first_name|there!}},</p>
       
       <div class="highlight-box">
         <h2>Full Access Unlocked</h2>
@@ -706,7 +703,6 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
     </div>
     
     <div class="footer">
-      <p class="footer-text">Happy hunting!</p>
       <p class="signature">
         Enjoy the truth,<br>
         <span class="signature-name">YieldCanary HQ</span>
@@ -894,7 +890,7 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
     </div>
     
     <div class="content">
-      <p class="greeting">Hey {{first_name}},</p>
+      <p class="greeting">Hey {{first_name|there!}},</p>
       
       <p class="message">
         Your Pro access expired today — the blur is back on and premium metrics are now hidden.
@@ -1163,7 +1159,7 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
     </div>
     
     <div class="content">
-      <p class="greeting">Hey {{first_name}},</p>
+      <p class="greeting">Hey {{first_name|there!}},</p>
       
       <p class="message">
         Someone (hopefully you) requested a password reset for your YieldCanary account. 

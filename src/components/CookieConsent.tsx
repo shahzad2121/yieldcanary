@@ -15,7 +15,8 @@ export function CookieConsent() {
     const script = document.createElement('script');
     script.id = 'cookieyes';
     script.type = 'text/javascript';
-    script.src = 'https://cdn-cookieyes.com/client_data/8dddac2ddaf627c91bd827651af7d894/script.js';
+    // script.src = 'https://cdn-cookieyes.com/client_data/8dddac2ddaf627c91bd827651af7d894/script.js';
+    script.src = 'https://cdn-cookieyes.com/client_data/3e3737c52c80b2c035d09f64871a8693/script.js';
     script.async = true;
 
     // Add script to document head

@@ -259,7 +259,6 @@ const Landing = () => {
 
         {/* Dashboard Screenshot with 3D Pop-out */}
         <DashboardScreenshot
-          imageSrc="/dashboard.png"
           alt="YieldCanary Dashboard - See which ETFs are healthy vs dying"
           enableParticles={true}
           enableFloating={true}

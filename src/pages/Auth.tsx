@@ -227,7 +227,7 @@ export default function Auth() {
           throw new Error(error.message);
         }
         console.log("Sign in successful:", data.user?.email);
-        toast({ title: "Welcome back!", description: "Taking you to the landing page..." });
+        toast({ title: "Welcome back!", description: "Taking you to the dashboard..." });
       } else {
         // Validation for sign up flow
         if (!email || !password) {
