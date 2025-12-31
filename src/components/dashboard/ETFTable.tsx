@@ -43,7 +43,7 @@ type SortKey = keyof ETF;
 type SortDirection = 'asc' | 'desc';
 
 export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
-  const [sortKey, setSortKey] = useState<SortKey>('takeHomeCashReturn1Y');
+  const [sortKey, setSortKey] = useState<SortKey>('trueIncomeYield');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Persistent watchlist (starred ETFs) for the current user
