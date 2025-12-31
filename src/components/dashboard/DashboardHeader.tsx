@@ -105,8 +105,7 @@ export function DashboardHeader({
             <Button
               onClick={onUpgrade}
               variant="outline"
-              className="hidden sm:flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4"
-            >
+              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4"              >
               <Crown className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Upgrade</span>
             </Button>
