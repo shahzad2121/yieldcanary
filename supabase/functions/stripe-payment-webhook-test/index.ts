@@ -5,8 +5,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
 // Deno-compatible Stripe webhook handler using fetch
-const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
-const stripeWebhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") ?? "";
+const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY_TEST") ?? "";
+const stripeWebhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET_TEST") ?? "";
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 
