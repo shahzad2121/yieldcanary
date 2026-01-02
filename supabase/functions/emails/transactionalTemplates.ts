@@ -484,6 +484,9 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
         </ul>
       </div>
       
+      <p style="text-align: center; margin-top: 32px;">
+        <a href="{{invoice_pdf_url|#}}" style="display: inline-block; color: #64748b; text-decoration: underline; font-size: 14px; margin-bottom: 20px;">View Payment Receipt (PDF)</a>
+      </p>
       <p style="text-align: center;">
         <a href="https://yieldcanary.com" class="cta-button" style="display: inline-block; background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%); color: #ffffff !important; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; margin: 32px 0; box-shadow: 0 4px 12px rgba(13, 164, 114, 0.3);">Open Your Dashboard</a>
       </p>

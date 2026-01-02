@@ -30,9 +30,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
+    const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY_TEST") ?? "";
     if (!stripeSecret) {
-      throw new Error("STRIPE_SECRET_KEY not set");
+      throw new Error("STRIPE_SECRET_KEY_TEST not set");
     }
 
     // Fetch price details from Stripe to determine if it's recurring or one-time
@@ -101,3 +101,4 @@ Deno.serve(async (req) => {
     });
   }
 });
+

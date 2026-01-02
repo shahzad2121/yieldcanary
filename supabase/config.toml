@@ -9,3 +9,13 @@ entrypoint = "./functions/stripe-payment-webhook/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/stripe-payment-webhook/*.html" ]
+[functions.stripe-payment-webhook-test]
+enabled = true
+verify_jwt = false
+import_map = "./functions/stripe-payment-webhook-test/deno.json"
+entrypoint = "./functions/stripe-payment-webhook-test/index.ts"
+[functions.create-checkout-session-test]
+enabled = true
+verify_jwt = false
+import_map = "./functions/create-checkout-session-test/deno.json"
+entrypoint = "./functions/create-checkout-session-test/index.ts"
