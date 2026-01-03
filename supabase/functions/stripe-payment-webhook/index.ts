@@ -49,103 +49,167 @@ Deno.serve(async (req) => {
   }
 
   // Handle one-time payment (checkout.session.completed)
+  // For subscriptions, customer.subscription.created will send the email
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
     const customerEmail = session.customer_email;
+    const mode = session.mode; // "subscription" or "payment"
 
-    console.log("[Webhook] Checkout completed for:", customerEmail);
+    console.log("[Webhook] Checkout completed for:", customerEmail, "Mode:", mode);
 
-    // Fetch invoice PDF URL if available
-    let invoicePdfUrl = "";
-    const invoiceId = session.invoice;
-    if (invoiceId && typeof invoiceId === 'string') {
-      try {
-        const invoiceRes = await fetch(`https://api.stripe.com/v1/invoices/${invoiceId}`, {
-          headers: {
-            "Authorization": `Bearer ${stripeSecret}`,
-          },
-        });
-        if (invoiceRes.ok) {
-          const invoice = await invoiceRes.json();
-          invoicePdfUrl = invoice.hosted_invoice_url || invoice.invoice_pdf || "";
-          console.log("[Webhook] Invoice PDF URL retrieved:", invoicePdfUrl ? "yes" : "no");
-        }
-      } catch (invoiceError) {
-        console.error("[Webhook] Error fetching invoice:", invoiceError);
-      }
-    }
-
-    if (customerEmail) {
-      // Update user's payment status in Supabase
-      const updateRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(customerEmail)}`, {
-        method: "PATCH",
-        headers: {
-          "apikey": serviceRoleKey,
-          "Authorization": `Bearer ${serviceRoleKey}`,
-          "Content-Type": "application/json",
-          "Prefer": "return=representation"
-        },
-        body: JSON.stringify({
-          is_paid: true,
-          subscription_tier: "basic",
-          updated_at: new Date().toISOString(),
-        })
-      });
-
-      console.log("[Webhook] Update response status:", updateRes.status);
+    // For subscriptions, skip email - customer.subscription.created will handle it
+    // Only send email for one-time payments (mode === "payment")
+    if (mode === "subscription") {
+      console.log("[Webhook] Subscription checkout - skipping email (customer.subscription.created will send it)");
       
-      if (updateRes.ok) {
-        console.log(`[Webhook] User ${customerEmail} payment status updated to is_paid=true.`);
-        
-        // Send transactional email via template system
-        // Fetch user from database to get real first name
-        const userRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(customerEmail)}&select=username,name`, {
+      // Still update user's payment status in Supabase
+      if (customerEmail) {
+        const updateRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(customerEmail)}`, {
+          method: "PATCH",
           headers: {
             "apikey": serviceRoleKey,
             "Authorization": `Bearer ${serviceRoleKey}`,
-          },
-        });
-
-        let firstName = customerEmail.split('@')[0]; // Fallback to email extraction
-        if (userRes.ok) {
-          const users = await userRes.json();
-          if (users && users.length > 0) {
-            // Prefer username, then name, then fallback to email extraction
-            firstName = users[0].username || users[0].name || firstName;
-          }
-        }
-        
-        console.log("[Webhook] Sending payment receipt email to:", customerEmail);
-        
-        // Call the send-email edge function (same as client-side does)
-        const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-          method: "POST",
-          headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${serviceRoleKey}`, // Use service role key for internal calls
+            "Prefer": "return=representation"
           },
           body: JSON.stringify({
-            to: customerEmail,
-            templateId: 'payment_receipt',  // Use the template ID
-            data: {
-              first_name: firstName,  // Pass first name for personalization
-              invoice_pdf_url: invoicePdfUrl,  // Add invoice PDF URL
-            },
-          }),
+            is_paid: true,
+            subscription_tier: "basic",
+            updated_at: new Date().toISOString(),
+          })
         });
-        
-        console.log("[Webhook] Email API response status:", emailRes.status);
-        
-        if (emailRes.ok) {
-          const emailResult = await emailRes.json();
-          console.log(`[Webhook] Payment receipt email sent successfully via template.`);
-        } else {
-          const errText = await emailRes.text();
-          console.error("[Webhook] Error sending payment receipt email:", errText);
+        console.log("[Webhook] Subscription user status updated:", updateRes.status);
+      }
+    } else {
+      // One-time payment - send email from here
+      // Fetch invoice details if available
+      let invoicePdfUrl = "";
+      let invoicePdfDownloadUrl = "";
+      let invoiceNumber = "";
+      const invoiceId = session.invoice;
+      if (invoiceId && typeof invoiceId === 'string') {
+        try {
+          const invoiceRes = await fetch(`https://api.stripe.com/v1/invoices/${invoiceId}`, {
+            headers: {
+              "Authorization": `Bearer ${stripeSecret}`,
+            },
+          });
+          if (invoiceRes.ok) {
+            const invoice = await invoiceRes.json();
+            invoicePdfUrl = invoice.hosted_invoice_url || invoice.invoice_pdf || "";
+            invoicePdfDownloadUrl = invoice.invoice_pdf || "";
+            invoiceNumber = invoice.number || invoice.id || "";
+            console.log("[Webhook] Invoice PDF URL retrieved:", invoicePdfUrl ? "yes" : "no");
+          }
+        } catch (invoiceError) {
+          console.error("[Webhook] Error fetching invoice:", invoiceError);
         }
-      } else {
-        const errText = await updateRes.text();
-        console.error(`[Webhook] Error updating user payment status:`, errText);
+      }
+
+      if (customerEmail) {
+        // Update user's payment status in Supabase
+        const updateRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(customerEmail)}`, {
+          method: "PATCH",
+          headers: {
+            "apikey": serviceRoleKey,
+            "Authorization": `Bearer ${serviceRoleKey}`,
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+          },
+          body: JSON.stringify({
+            is_paid: true,
+            subscription_tier: "basic",
+            updated_at: new Date().toISOString(),
+          })
+        });
+
+        console.log("[Webhook] Update response status:", updateRes.status);
+        
+        if (updateRes.ok) {
+          console.log(`[Webhook] User ${customerEmail} payment status updated to is_paid=true.`);
+          
+          // Send transactional email via template system
+          // Fetch user from database to get real first name
+          const userRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(customerEmail)}&select=username,name`, {
+            headers: {
+              "apikey": serviceRoleKey,
+              "Authorization": `Bearer ${serviceRoleKey}`,
+            },
+          });
+
+          let firstName = customerEmail.split('@')[0]; // Fallback to email extraction
+          if (userRes.ok) {
+            const users = await userRes.json();
+            if (users && users.length > 0) {
+              // Prefer username, then name, then fallback to email extraction
+              firstName = users[0].username || users[0].name || firstName;
+            }
+          }
+          
+          console.log("[Webhook] Sending payment receipt email to:", customerEmail);
+          
+          // Download invoice PDF and convert to base64 for attachment
+          let attachments: { filename: string; content: string }[] = [];
+          if (invoicePdfDownloadUrl) {
+            try {
+              console.log(`[Webhook] Downloading invoice PDF from: ${invoicePdfDownloadUrl}`);
+              const pdfResponse = await fetch(invoicePdfDownloadUrl);
+              
+              if (pdfResponse.ok) {
+                const pdfBuffer = await pdfResponse.arrayBuffer();
+                const pdfBytes = new Uint8Array(pdfBuffer);
+                
+                // Convert to base64
+                let binary = '';
+                for (let i = 0; i < pdfBytes.length; i++) {
+                  binary += String.fromCharCode(pdfBytes[i]);
+                }
+                const pdfBase64 = btoa(binary);
+                
+                attachments = [{
+                  filename: `YieldCanary-Invoice-${invoiceNumber}.pdf`,
+                  content: pdfBase64,
+                }];
+                console.log(`[Webhook] Invoice PDF downloaded and encoded, size: ${pdfBytes.length} bytes`);
+              } else {
+                console.error(`[Webhook] Failed to download invoice PDF: ${pdfResponse.status}`);
+              }
+            } catch (pdfError) {
+              console.error("[Webhook] Error downloading invoice PDF:", pdfError);
+            }
+          }
+          
+          // Call the send-email edge function with PDF attachment
+          const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${serviceRoleKey}`,
+            },
+            body: JSON.stringify({
+              to: customerEmail,
+              templateId: 'payment_receipt',
+              data: {
+                first_name: firstName,
+                invoice_pdf_url: invoicePdfUrl,
+              },
+              attachments: attachments,
+            }),
+          });
+          
+          console.log("[Webhook] Email API response status:", emailRes.status);
+          
+          if (emailRes.ok) {
+            const emailResult = await emailRes.json();
+            console.log(`[Webhook] Payment receipt email sent successfully with ${attachments.length} attachment(s).`);
+          } else {
+            const errText = await emailRes.text();
+            console.error("[Webhook] Error sending payment receipt email:", errText);
+          }
+        } else {
+          const errText = await updateRes.text();
+          console.error(`[Webhook] Error updating user payment status:`, errText);
+        }
       }
     }
   }
@@ -158,6 +222,8 @@ Deno.serve(async (req) => {
     // Fetch customer email from Stripe API
     let email = "";
     let invoicePdfUrl = "";
+    let invoicePdfDownloadUrl = "";
+    let invoiceNumber = "";
 
     if (customerId) {
       const stripeRes = await fetch(`https://api.stripe.com/v1/customers/${customerId}`, {
@@ -182,6 +248,8 @@ Deno.serve(async (req) => {
           if (invoiceRes.ok) {
             const invoice = await invoiceRes.json();
             invoicePdfUrl = invoice.hosted_invoice_url || invoice.invoice_pdf || "";
+            invoicePdfDownloadUrl = invoice.invoice_pdf || "";
+            invoiceNumber = invoice.number || invoice.id || "";
             console.log("[Webhook] Invoice PDF URL retrieved:", invoicePdfUrl ? "yes" : "no");
           }
         } catch (invoiceError) {
@@ -235,8 +303,38 @@ Deno.serve(async (req) => {
         
         console.log(`[Webhook] Sending ${templateId} email to ${email} for event: ${event.type}`);
         
-        // Call the send-email edge function
-       
+        // Download invoice PDF for attachment (only for payment_receipt, not access_upgraded)
+        let attachments: { filename: string; content: string }[] = [];
+        if (templateId === 'payment_receipt' && invoicePdfDownloadUrl) {
+          try {
+            console.log(`[Webhook] Downloading invoice PDF from: ${invoicePdfDownloadUrl}`);
+            const pdfResponse = await fetch(invoicePdfDownloadUrl);
+            
+            if (pdfResponse.ok) {
+              const pdfBuffer = await pdfResponse.arrayBuffer();
+              const pdfBytes = new Uint8Array(pdfBuffer);
+              
+              // Convert to base64
+              let binary = '';
+              for (let i = 0; i < pdfBytes.length; i++) {
+                binary += String.fromCharCode(pdfBytes[i]);
+              }
+              const pdfBase64 = btoa(binary);
+              
+              attachments = [{
+                filename: `YieldCanary-Invoice-${invoiceNumber}.pdf`,
+                content: pdfBase64,
+              }];
+              console.log(`[Webhook] Invoice PDF downloaded and encoded, size: ${pdfBytes.length} bytes`);
+            } else {
+              console.error(`[Webhook] Failed to download invoice PDF: ${pdfResponse.status}`);
+            }
+          } catch (pdfError) {
+            console.error("[Webhook] Error downloading invoice PDF:", pdfError);
+          }
+        }
+        
+        // Call the send-email edge function with attachment
         const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
           method: "POST",
           headers: {
@@ -248,13 +346,14 @@ Deno.serve(async (req) => {
             templateId: templateId,
             data: {
               first_name: firstName,
-              invoice_pdf_url: invoicePdfUrl,  // Add invoice PDF URL
+              invoice_pdf_url: invoicePdfUrl,
             },
+            attachments: attachments,
           }),
         });
         
         if (emailRes.ok) {
-          console.log(`Transactional email (${templateId}) sent to ${email} via template.`);
+          console.log(`Transactional email (${templateId}) sent to ${email} with ${attachments.length} attachment(s).`);
         } else {
           const errText = await emailRes.text();
           console.error("Error sending transactional email:", errText);
@@ -262,6 +361,115 @@ Deno.serve(async (req) => {
       } else {
         const errText = await updateRes.text();
         console.error("Error updating user subscription:", errText);
+      }
+    }
+  }
+
+  // Handle subscription renewal (invoice.payment_succeeded)
+  if (event.type === "invoice.payment_succeeded") {
+    const invoice = event.data.object;
+    
+    // Only process subscription renewals (not first payment or one-time payments)
+    // billing_reason: "subscription_cycle" = renewal, "subscription_create" = first payment
+    if (invoice.subscription && invoice.billing_reason === "subscription_cycle") {
+      const customerId = typeof invoice.customer === "string"
+        ? invoice.customer
+        : invoice.customer?.id;
+
+      // Get invoice PDF URL directly from the event
+      let email = "";
+      let invoicePdfUrl = invoice.hosted_invoice_url || invoice.invoice_pdf || "";
+      const invoicePdfDownloadUrl = invoice.invoice_pdf || ""; // Direct PDF download URL
+
+      if (customerId) {
+        const stripeRes = await fetch(`https://api.stripe.com/v1/customers/${customerId}`, {
+          headers: {
+            "Authorization": `Bearer ${stripeSecret}`,
+          },
+        });
+        if (stripeRes.ok) {
+          const customer = await stripeRes.json();
+          email = customer.email;
+        }
+      }
+
+      if (email) {
+        console.log(`[Webhook] Subscription renewal payment succeeded for: ${email}`);
+        
+        // Fetch user from database to get real first name
+        const userRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=username,name`, {
+          headers: {
+            "apikey": serviceRoleKey,
+            "Authorization": `Bearer ${serviceRoleKey}`,
+          },
+        });
+
+        let firstName = email.split('@')[0]; // Fallback to email extraction
+        if (userRes.ok) {
+          const users = await userRes.json();
+          if (users && users.length > 0) {
+            firstName = users[0].username || users[0].name || firstName;
+          }
+        }
+        
+        console.log(`[Webhook] Sending renewal receipt email to: ${email}`);
+        
+        // Download invoice PDF and convert to base64 for attachment
+        let attachments: { filename: string; content: string }[] = [];
+        if (invoicePdfDownloadUrl) {
+          try {
+            console.log(`[Webhook] Downloading invoice PDF from: ${invoicePdfDownloadUrl}`);
+            const pdfResponse = await fetch(invoicePdfDownloadUrl);
+            
+            if (pdfResponse.ok) {
+              const pdfBuffer = await pdfResponse.arrayBuffer();
+              const pdfBytes = new Uint8Array(pdfBuffer);
+              
+              // Convert to base64 using Deno's built-in encoder
+              let binary = '';
+              for (let i = 0; i < pdfBytes.length; i++) {
+                binary += String.fromCharCode(pdfBytes[i]);
+              }
+              const pdfBase64 = btoa(binary);
+              
+              attachments = [{
+                filename: `YieldCanary-Invoice-${invoice.number || invoice.id}.pdf`,
+                content: pdfBase64,
+              }];
+              console.log(`[Webhook] Invoice PDF downloaded and encoded, size: ${pdfBytes.length} bytes`);
+            } else {
+              console.error(`[Webhook] Failed to download invoice PDF: ${pdfResponse.status}`);
+            }
+          } catch (pdfError) {
+            console.error("[Webhook] Error downloading invoice PDF:", pdfError);
+            // Continue without attachment - the link is still in the email
+          }
+        }
+        
+        // Send subscription renewal email with PDF attachment
+        const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${serviceRoleKey}`,
+          },
+          body: JSON.stringify({
+            to: email,
+            templateId: 'subscription_renewal',
+            data: {
+              first_name: firstName,
+              invoice_pdf_url: invoicePdfUrl, // Keep link as backup
+            },
+            attachments: attachments, // Attach PDF if downloaded successfully
+          }),
+        });
+        
+        if (emailRes.ok) {
+          console.log(`[Webhook] Renewal receipt email sent successfully to ${email} with ${attachments.length} attachment(s).`);
+        } else {
+          const errText = await emailRes.text();
+          console.error("[Webhook] Error sending renewal receipt email:", errText);
+        }
       }
     }
   }
