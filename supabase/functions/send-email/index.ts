@@ -57,7 +57,7 @@ const body = replacePlaceholders(template.body, data);
 // Send email via Resend
 
 const resendApiKey = Deno.env.get("RESEND_API_KEY") ?? "";
-  const resendFromEmail = Deno.env.get("RESEND_FROM_EMAIL") ?? "YieldCanary Support <support@yieldcanary.com>";
+  const resendFromEmail = Deno.env.get("RESEND_FROM_EMAIL") ?? "YieldCanary <support@yieldcanary.com>";
   // Use VITE_SUPABASE_SERVICE_ROLE_KEY for Supabase API calls if needed
   const supabaseServiceRoleKey = Deno.env.get("VITE_SUPABASE_SERVICE_ROLE_KEY") ?? "";
   

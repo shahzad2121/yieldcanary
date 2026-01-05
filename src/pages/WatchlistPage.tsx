@@ -21,10 +21,13 @@ const WatchlistPage = () => {
   const [statusFilter, setStatusFilter] = useState<CanaryStatus | 'all'>('all');
   const [userEmail, setUserEmail] = useState<string>('');
 
-  // For now, only 'free' and 'basic' plans are used
-  type Plan = 'free' | 'basic';
+  // Plan derivation: distinguish between 'free', 'basic', and 'advanced'
+  type Plan = 'free' | 'basic' | 'advanced';
   const subscriptionTier = subscriptionUser?.subscription_tier ?? null;
-  const plan: Plan = subscriptionTier === 'basic' ? 'basic' : 'free';
+  const plan: Plan = 
+    subscriptionTier === 'advanced' ? 'advanced' :
+    subscriptionTier === 'basic' ? 'basic' : 
+    'free';
   const isPaid = plan !== 'free';
 
   // Get user email from session (for header/avatar)
