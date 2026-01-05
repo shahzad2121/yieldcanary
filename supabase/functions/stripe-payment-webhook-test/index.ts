@@ -219,6 +219,22 @@ Deno.serve(async (req) => {
       ? subscription.customer
       : subscription.customer?.id;
 
+    // Step 1: Get the price ID from Stripe subscription to determine NEW tier
+    const priceId = subscription.items?.data?.[0]?.price?.id;
+    
+    // Step 2: Map price ID to tier (basic or advanced)
+    const basicMonthlyPrice = Deno.env.get("VITE_BASIC_MONTHLY_PRICE") || "";
+    const basicYearlyPrice = Deno.env.get("VITE_BASIC_YEARLY_PRICE") || "";
+    const advancedMonthlyPrice = Deno.env.get("VITE_ADVANCED_MONTHLY_PRICE") || "";
+    const advancedYearlyPrice = Deno.env.get("VITE_ADVANCED_YEARLY_PRICE") || "";
+    
+    let newTier = "basic"; // default
+    if (priceId === advancedMonthlyPrice || priceId === advancedYearlyPrice) {
+      newTier = "advanced";
+    } else if (priceId === basicMonthlyPrice || priceId === basicYearlyPrice) {
+      newTier = "basic";
+    }
+
     // Fetch customer email from Stripe API
     let email = "";
     let invoicePdfUrl = "";
@@ -259,7 +275,24 @@ Deno.serve(async (req) => {
     }
 
     if (email) {
-      // Update user's subscription status in Supabase
+      // Step 3: Get PREVIOUS tier from database (only for subscription.updated)
+      let previousTier = "free";
+      if (event.type === "customer.subscription.updated") {
+        const currentUserRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=subscription_tier`, {
+          headers: {
+            "apikey": serviceRoleKey,
+            "Authorization": `Bearer ${serviceRoleKey}`,
+          },
+        });
+        if (currentUserRes.ok) {
+          const currentUsers = await currentUserRes.json();
+          if (currentUsers && currentUsers.length > 0) {
+            previousTier = currentUsers[0].subscription_tier || "free";
+          }
+        }
+      }
+
+      // Step 4: Update user's subscription status in Supabase with CORRECT tier
       const updateRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
         method: "PATCH",
         headers: {
@@ -270,13 +303,20 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           is_paid: true,
-          subscription_tier: "basic", // TODO: map price to tier
+          subscription_tier: newTier, // Use the mapped tier, not hardcoded "basic"
           updated_at: new Date().toISOString(),
         })
       });
+      
       if (updateRes.ok) {
         console.log(`User ${email} subscription updated.`);
-        // Send transactional email via template system with conditional logic
+        
+        // Step 5: Only send access_upgraded email if basic → advanced upgrade
+        const shouldSendUpgradeEmail = 
+          event.type === "customer.subscription.updated" && 
+          previousTier === "basic" && 
+          newTier === "advanced";
+        
         // Fetch user from database to get real first name
         const userRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=username,name`, {
           headers: {
@@ -294,69 +334,75 @@ Deno.serve(async (req) => {
           }
         }
         
-        // Choose template based on event type
-        // - customer.subscription.created → payment_receipt (new subscription = payment confirmation)
-        // - customer.subscription.updated → access_upgraded (subscription change = access upgrade)
-        const templateId = event.type === "customer.subscription.created" 
-          ? 'payment_receipt' 
-          : 'access_upgraded';
-        
-        console.log(`[Webhook] Sending ${templateId} email to ${email} for event: ${event.type}`);
-        
-        // Download invoice PDF for attachment (only for payment_receipt, not access_upgraded)
-        let attachments: { filename: string; content: string }[] = [];
-        if (templateId === 'payment_receipt' && invoicePdfDownloadUrl) {
-          try {
-            console.log(`[Webhook] Downloading invoice PDF from: ${invoicePdfDownloadUrl}`);
-            const pdfResponse = await fetch(invoicePdfDownloadUrl);
-            
-            if (pdfResponse.ok) {
-              const pdfBuffer = await pdfResponse.arrayBuffer();
-              const pdfBytes = new Uint8Array(pdfBuffer);
-              
-              // Convert to base64
-              let binary = '';
-              for (let i = 0; i < pdfBytes.length; i++) {
-                binary += String.fromCharCode(pdfBytes[i]);
-              }
-              const pdfBase64 = btoa(binary);
-              
-              attachments = [{
-                filename: `YieldCanary-Invoice-${invoiceNumber}.pdf`,
-                content: pdfBase64,
-              }];
-              console.log(`[Webhook] Invoice PDF downloaded and encoded, size: ${pdfBytes.length} bytes`);
-            } else {
-              console.error(`[Webhook] Failed to download invoice PDF: ${pdfResponse.status}`);
-            }
-          } catch (pdfError) {
-            console.error("[Webhook] Error downloading invoice PDF:", pdfError);
-          }
+        // Choose template based on event type and upgrade condition
+        let templateId: string | null = null;
+        if (event.type === "customer.subscription.created") {
+          templateId = 'payment_receipt';
+        } else if (shouldSendUpgradeEmail) {
+          templateId = 'access_upgraded';
         }
         
-        // Call the send-email edge function with attachment
-        const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${serviceRoleKey}`,
-          },
-          body: JSON.stringify({
-            to: email,
-            templateId: templateId,
-            data: {
-              first_name: firstName,
-              invoice_pdf_url: invoicePdfUrl,
+        // Only send email if we have a template to send
+        if (templateId) {
+          console.log(`[Webhook] Sending ${templateId} email to ${email} for event: ${event.type}`);
+          
+          // Download invoice PDF for attachment (only for payment_receipt, not access_upgraded)
+          let attachments: { filename: string; content: string }[] = [];
+          if (templateId === 'payment_receipt' && invoicePdfDownloadUrl) {
+            try {
+              console.log(`[Webhook] Downloading invoice PDF from: ${invoicePdfDownloadUrl}`);
+              const pdfResponse = await fetch(invoicePdfDownloadUrl);
+              
+              if (pdfResponse.ok) {
+                const pdfBuffer = await pdfResponse.arrayBuffer();
+                const pdfBytes = new Uint8Array(pdfBuffer);
+                
+                // Convert to base64
+                let binary = '';
+                for (let i = 0; i < pdfBytes.length; i++) {
+                  binary += String.fromCharCode(pdfBytes[i]);
+                }
+                const pdfBase64 = btoa(binary);
+                
+                attachments = [{
+                  filename: `YieldCanary-Invoice-${invoiceNumber}.pdf`,
+                  content: pdfBase64,
+                }];
+                console.log(`[Webhook] Invoice PDF downloaded and encoded, size: ${pdfBytes.length} bytes`);
+              } else {
+                console.error(`[Webhook] Failed to download invoice PDF: ${pdfResponse.status}`);
+              }
+            } catch (pdfError) {
+              console.error("[Webhook] Error downloading invoice PDF:", pdfError);
+            }
+          }
+          
+          // Call the send-email edge function with attachment
+          const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${serviceRoleKey}`,
             },
-            attachments: attachments,
-          }),
-        });
-        
-        if (emailRes.ok) {
-          console.log(`Transactional email (${templateId}) sent to ${email} with ${attachments.length} attachment(s).`);
+            body: JSON.stringify({
+              to: email,
+              templateId: templateId,
+              data: {
+                first_name: firstName,
+                invoice_pdf_url: invoicePdfUrl,
+              },
+              attachments: attachments,
+            }),
+          });
+          
+          if (emailRes.ok) {
+            console.log(`Transactional email (${templateId}) sent to ${email} with ${attachments.length} attachment(s).`);
+          } else {
+            const errText = await emailRes.text();
+            console.error("Error sending transactional email:", errText);
+          }
         } else {
-          const errText = await emailRes.text();
-          console.error("Error sending transactional email:", errText);
+          console.log(`[Webhook] Skipping email - not a basic→advanced upgrade (previous: ${previousTier}, new: ${newTier})`);
         }
       } else {
         const errText = await updateRes.text();
@@ -367,14 +413,29 @@ Deno.serve(async (req) => {
 
   // Handle subscription renewal (invoice.payment_succeeded)
   if (event.type === "invoice.payment_succeeded") {
+    console.log(`[Webhook] invoice.payment_succeeded event received`);
     const invoice = event.data.object;
+    
+    // Extract subscription ID - can be direct or nested in parent.subscription_details
+    const subscriptionId = invoice.subscription || 
+                          (invoice.parent as any)?.subscription_details?.subscription ||
+                          null;
+    
+    console.log(`[Webhook] invoice.subscription (direct):`, invoice.subscription);
+    console.log(`[Webhook] invoice.subscription (nested):`, (invoice.parent as any)?.subscription_details?.subscription);
+    console.log(`[Webhook] Extracted subscriptionId:`, subscriptionId);
+    console.log(`[Webhook] invoice.billing_reason:`, invoice.billing_reason);
+    console.log(`[Webhook] invoice.customer:`, invoice.customer);
+    console.log(`[Webhook] invoice.id:`, invoice.id);
     
     // Only process subscription renewals (not first payment or one-time payments)
     // billing_reason: "subscription_cycle" = renewal, "subscription_create" = first payment
-    if (invoice.subscription && invoice.billing_reason === "subscription_cycle") {
+    if (subscriptionId && invoice.billing_reason === "subscription_cycle") {
+      console.log(`[Webhook] Processing renewal - conditions met`);
       const customerId = typeof invoice.customer === "string"
         ? invoice.customer
         : invoice.customer?.id;
+      console.log(`[Webhook] Extracted customerId:`, customerId);
 
       // Get invoice PDF URL directly from the event
       let email = "";
@@ -471,6 +532,8 @@ Deno.serve(async (req) => {
           console.error("[Webhook] Error sending renewal receipt email:", errText);
         }
       }
+    } else {
+      console.log(`[Webhook] Skipping - subscription: ${!!subscriptionId}, billing_reason: ${invoice.billing_reason}`);
     }
   }
 

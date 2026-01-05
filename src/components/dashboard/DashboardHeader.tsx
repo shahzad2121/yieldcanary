@@ -18,7 +18,7 @@ import { SettingsModal } from './SettingsModal';
 import { FeedbackModal } from '@/components/modals/FeedbackModal';
 
 interface DashboardHeaderProps {
-  plan: 'free' | 'basic';
+  plan: 'free' | 'basic' | 'advanced';
   isPaid: boolean;
   userEmail?: string;
   onUpgrade: () => void;

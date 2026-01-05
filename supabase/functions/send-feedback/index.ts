@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
 
   // Get Resend API key and from email
   const resendApiKey = Deno.env.get("RESEND_API_KEY") ?? "";
-  const resendFromEmail = Deno.env.get("RESEND_FROM_EMAIL") ?? "YieldCanary Support <support@yieldcanary.com>";
+  const resendFromEmail = Deno.env.get("RESEND_FROM_EMAIL") ?? "YieldCanary <support@yieldcanary.com>";
   
   if (!resendApiKey) {
     console.error("RESEND_API_KEY is not set in Supabase environment variables!");

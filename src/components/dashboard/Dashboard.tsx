@@ -18,10 +18,13 @@ export function Dashboard() {
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
 
-  // Plan derivation: for now we distinguish only between 'free' and 'basic'
-  type Plan = 'free' | 'basic';
+  // Plan derivation: distinguish between 'free', 'basic', and 'advanced'
+  type Plan = 'free' | 'basic' | 'advanced';
   const subscriptionTier = subscriptionUser?.subscription_tier ?? null;
-  const plan: Plan = subscriptionTier === 'basic' ? 'basic' : 'free';
+  const plan: Plan = 
+    subscriptionTier === 'advanced' ? 'advanced' :
+    subscriptionTier === 'basic' ? 'basic' : 
+    'free';
   const isPaid = plan !== 'free';
 
   // Get user email from session

@@ -34,7 +34,7 @@ import {
 
 interface ETFTableProps {
   etfs: ETF[];
-  plan: 'free' | 'basic';
+  plan: 'free' | 'basic' | 'advanced';
   isPaid: boolean;
   onUpgrade: () => void;
 }
