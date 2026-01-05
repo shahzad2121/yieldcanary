@@ -136,7 +136,7 @@ export function DashboardHeader({
               <div className="px-2 py-1.5">
                 <p className="text-xs sm:text-sm font-medium break-words">{userEmail}</p>
                 <p className="text-xs text-muted-foreground">
-                  {plan === 'free' ? 'Free Tier' : 'Pro Member'}
+                  {plan === 'free' ? 'Free Tier' : plan === 'advanced' ? 'Advanced Member' : 'Basic Member'}
                 </p>
               </div>
               <DropdownMenuSeparator />

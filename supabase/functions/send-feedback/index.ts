@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
     },
     body: JSON.stringify({
       from: resendFromEmail,
-      to: "rfish14@gmail.com",
+      to: "support@yieldcanary.com",
       subject: subject,
       html: htmlBody,
     })
