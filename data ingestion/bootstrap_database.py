@@ -49,13 +49,19 @@ DEFAULT_TICKERS = [
     "TSLY", "TSMY", "ULTY", "WNTR", "XOMO", "XYZY", "YBIT", "YMAG", "YMAX", "YQQQ",
     
     # Defiance ETFs
-    "QQQY", "JEPY", "IWMY", "SPYT", "WDTE", "USOY",
+    "YBMN", "QLDY", "SPYT", "GLDY", "USOY", "QQQY", "IWMY", "WDTE",
+    "QQQT", "MST", "HIMY", "AMDU", "ETHI", "HOOI", "PLT", "SMCC",
     
     # Roundhill ETFs  
-    "XDTE", "QDTE", "RDTE", "YBTC", "MDTE", "TDTE",
+    "XDTE", "QDTE", "RDTE", "XPAY", "YBTC", "YETH", "MAGY",
+    "AAPW", "AMDW", "ARMW", "AMZW", "AVGW", "BABW", "BRKW",
+    "COIW", "COSW", "GDXW", "GLDW", "GOOW", "HOOW", "METW",
+    "MSFW", "MSTW", "NFLW", "NVDW", "PLTW", "TSLW", "TSYW",
+    "UBEW", "UNHW", "WPAY",
     
     # REX Shares ETFs
-    "FEPI",
+    "FEPI", "AIPI", "CEPI", "COII", "MSII", "NVII", "TSII",
+    "HOII", "PLTI", "CWII", "LLII", "WMTI", "ULTI",
     
     # Kurv ETFs
     "TSLP", "NVDP", "MSFT", "AAPY", "AMZP", "GOGL", "NFLP", "METAP",
@@ -87,17 +93,10 @@ DEFAULT_TICKERS = [
     # Additional income ETFs
     "NUSI", "PUTW", "QRMI", "XRMI",
     
-    # More YieldMax additions
-    "AMDW", "AVGW", "AMZW", "BRKW", "GLDW", "METW", "MSFW", "NFLW", "UNHW",
-    "HOOW", "GOOW", "TSLW", "COIW",
-    
-    # Newer weekly income
-    "WNTR", "RDYY", "WPAY", "SOXY",
-    
     # Additional tickers
-    "BIGY", "CHAT", "MAGS", "METV", "WEED", "NERD", "QTUM", "SIXG",
-    "ARM", "AVGX", "BRKC", "HIMZ", "HOOX", "HOOY", "IONX", "LLYX",
-    "MSTX", "ORCX", "YQQQ", "SMST", "XYZY", "MAGC", "HUMN", "MEME", "UX", "XDIV"
+    "CHAT", "MAGS", "METV", "WEED", "NERD", "QTUM", "SIXG",
+    "ARM", "AVGX", "HIMZ", "HOOX", "IONX", "LLYX",
+    "MSTX", "ORCX", "SMST", "MAGC", "HUMN", "MEME", "UX", "XDIV"
 ]
 
 
