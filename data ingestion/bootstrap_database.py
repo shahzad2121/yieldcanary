@@ -41,10 +41,12 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # Default comprehensive ticker list - high-yield income ETFs
 DEFAULT_TICKERS = [
     # YieldMax ETFs
-    "TSLY", "NVDY", "CONY", "MSTY", "AMZY", "GOOY", "APLY", "DISO", "NFLY", "PYPY",
-    "FBY", "GDXY", "SQY", "MRNY", "AMDY", "SNOY", "BABO", "MARO", "PLTY", "XOMO",
-    "YMAX", "YMAG", "LFGY", "JPMO", "MSFO", "AIYY", "AIPI", "FIVY", "FEAT",
-    "OARK", "ABNY", "GPTY", "ULTY", "CRSH", "FIAT", "DIPS",
+    "ABNY", "AIYY", "AMDY", "AMZY", "APLY", "BABO", "BIGY", "BRKC", "CHPY", "CONY",
+    "CRCO", "CRSH", "CVNY", "DIPS", "DISO", "DRAY", "FBY", "FEAT", "FIAT", "FIVY",
+    "GDXY", "GMEY", "GOOY", "GPTY", "HIYY", "HOOY", "JPMO", "LFGY", "MARO", "MRNY",
+    "MSFO", "MSST", "MSTY", "NFLY", "NVDY", "NVIT", "OARK", "PLTY", "PYPY", "QDTY",
+    "RBLY", "RDTY", "RDYY", "RNTY", "SDTY", "SLTY", "SMCY", "SNOY", "SOXY", "TEST",
+    "TSLY", "TSMY", "ULTY", "WNTR", "XOMO", "XYZY", "YBIT", "YMAG", "YMAX", "YQQQ",
     
     # Defiance ETFs
     "QQQY", "JEPY", "IWMY", "SPYT", "WDTE", "USOY",
