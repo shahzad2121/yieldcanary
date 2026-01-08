@@ -64,6 +64,11 @@ Deno.serve(async (req) => {
       
       // Still update user's payment status in Supabase
       if (customerEmail) {
+        // Extract customer ID from session (can be string or object)
+        const sessionCustomerId = typeof session.customer === "string"
+          ? session.customer
+          : session.customer?.id || null;
+        
         const updateRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(customerEmail)}`, {
           method: "PATCH",
           headers: {
@@ -75,6 +80,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             is_paid: true,
             subscription_tier: "basic",
+            stripe_customer_id: sessionCustomerId,
             updated_at: new Date().toISOString(),
           })
         });
@@ -107,6 +113,11 @@ Deno.serve(async (req) => {
       }
 
       if (customerEmail) {
+        // Extract customer ID from session (can be string or object)
+        const sessionCustomerId = typeof session.customer === "string"
+          ? session.customer
+          : session.customer?.id || null;
+        
         // Update user's payment status in Supabase
         const updateRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(customerEmail)}`, {
           method: "PATCH",
@@ -119,6 +130,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             is_paid: true,
             subscription_tier: "basic",
+            stripe_customer_id: sessionCustomerId,
             updated_at: new Date().toISOString(),
           })
         });
@@ -215,6 +227,7 @@ Deno.serve(async (req) => {
   }
   if (["customer.subscription.created", "customer.subscription.updated"].includes(event.type)) {
     const subscription = event.data.object;
+    const subscriptionId = subscription.id;
     const customerId = typeof subscription.customer === "string"
       ? subscription.customer
       : subscription.customer?.id;
@@ -222,17 +235,44 @@ Deno.serve(async (req) => {
     // Step 1: Get the price ID from Stripe subscription to determine NEW tier
     const priceId = subscription.items?.data?.[0]?.price?.id;
     
-    // Step 2: Map price ID to tier (basic or advanced)
-    const basicMonthlyPrice = Deno.env.get("VITE_BASIC_MONTHLY_PRICE") || "";
-    const basicYearlyPrice = Deno.env.get("VITE_BASIC_YEARLY_PRICE") || "";
-    const advancedMonthlyPrice = Deno.env.get("VITE_ADVANCED_MONTHLY_PRICE") || "";
-    const advancedYearlyPrice = Deno.env.get("VITE_ADVANCED_YEARLY_PRICE") || "";
+    console.log(`[Webhook] Received priceId: ${priceId}`);
+    
+    // Step 2: Map price ID to tier (basic or advanced) - using hardcoded values to match checkout
+    const basicMonthlyPrice = "price_1SkSYWJYaJlmvTvCIy15xocG";
+    const basicYearlyPrice = "price_1Sn62YJYaJlmvTvCNWddZaeG";
+    const advancedMonthlyPrice = "price_1Sn63DJYaJlmvTvCOeOsgBlA";
+    const advancedYearlyPrice = "price_1SmkoxJYaJlmvTvCGynq0ujw";
     
     let newTier = "basic"; // default
     if (priceId === advancedMonthlyPrice || priceId === advancedYearlyPrice) {
       newTier = "advanced";
+      console.log(`[Webhook] Mapped priceId ${priceId} to tier: advanced`);
     } else if (priceId === basicMonthlyPrice || priceId === basicYearlyPrice) {
       newTier = "basic";
+      console.log(`[Webhook] Mapped priceId ${priceId} to tier: basic`);
+    } else {
+      console.warn(`[Webhook] WARNING: PriceId ${priceId} did not match any known price IDs. Defaulting to basic.`);
+    }
+
+    // Fetch full subscription details from Stripe API to get current_period_start/end
+    // (webhook payload may not include these fields)
+    let fullSubscription = subscription;
+    if (subscriptionId) {
+      try {
+        const subscriptionRes = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
+          headers: {
+            "Authorization": `Bearer ${stripeSecret}`,
+          },
+        });
+        if (subscriptionRes.ok) {
+          fullSubscription = await subscriptionRes.json();
+          console.log("[Webhook] Fetched full subscription details from Stripe API");
+        } else {
+          console.warn("[Webhook] Failed to fetch full subscription, using webhook payload");
+        }
+      } catch (subError) {
+        console.error("[Webhook] Error fetching subscription:", subError);
+      }
     }
 
     // Fetch customer email from Stripe API
@@ -293,6 +333,38 @@ Deno.serve(async (req) => {
       }
 
       // Step 4: Update user's subscription status in Supabase with CORRECT tier
+      // Extract subscription dates from Stripe (Unix timestamps in seconds)
+      // Try full subscription first, then fallback to items.data[0], then webhook payload
+      const periodStart = fullSubscription.current_period_start 
+        || fullSubscription.items?.data?.[0]?.current_period_start
+        || subscription.current_period_start
+        || null;
+      const periodEnd = fullSubscription.current_period_end
+        || fullSubscription.items?.data?.[0]?.current_period_end
+        || subscription.current_period_end
+        || null;
+      
+      const subscriptionStart = periodStart
+        ? new Date(periodStart * 1000).toISOString()
+        : null;
+      const subscriptionEnd = periodEnd
+        ? new Date(periodEnd * 1000).toISOString()
+        : null;
+      
+      console.log("[Webhook] Subscription dates - start:", subscriptionStart, "end:", subscriptionEnd);
+      console.log(`[Webhook] Updating database - email: ${email}, previousTier: ${previousTier}, newTier: ${newTier}, eventType: ${event.type}`);
+      
+      const updateData = {
+        is_paid: true,
+        subscription_tier: newTier, // Use the mapped tier, not hardcoded "basic"
+        stripe_customer_id: customerId || null,
+        subscription_start: subscriptionStart,
+        subscription_end: subscriptionEnd,
+        updated_at: new Date().toISOString(),
+      };
+      
+      console.log(`[Webhook] Database update payload:`, JSON.stringify(updateData, null, 2));
+      
       const updateRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
         method: "PATCH",
         headers: {
@@ -301,15 +373,13 @@ Deno.serve(async (req) => {
           "Content-Type": "application/json",
           "Prefer": "return=representation"
         },
-        body: JSON.stringify({
-          is_paid: true,
-          subscription_tier: newTier, // Use the mapped tier, not hardcoded "basic"
-          updated_at: new Date().toISOString(),
-        })
+        body: JSON.stringify(updateData),
       });
       
       if (updateRes.ok) {
-        console.log(`User ${email} subscription updated.`);
+        const updatedUser = await updateRes.json();
+        console.log(`[Webhook] ✅ User ${email} subscription updated successfully.`);
+        console.log(`[Webhook] Updated tier in DB: ${updatedUser[0]?.subscription_tier || 'N/A'}, Previous: ${previousTier}, New: ${newTier}`);
         
         // Step 5: Only send access_upgraded email if basic → advanced upgrade
         const shouldSendUpgradeEmail = 
@@ -346,9 +416,9 @@ Deno.serve(async (req) => {
         if (templateId) {
           console.log(`[Webhook] Sending ${templateId} email to ${email} for event: ${event.type}`);
           
-          // Download invoice PDF for attachment (only for payment_receipt, not access_upgraded)
+          // Download invoice PDF for attachment (for both payment_receipt and access_upgraded)
           let attachments: { filename: string; content: string }[] = [];
-          if (templateId === 'payment_receipt' && invoicePdfDownloadUrl) {
+          if ((templateId === 'payment_receipt' || templateId === 'access_upgraded') && invoicePdfDownloadUrl) {
             try {
               console.log(`[Webhook] Downloading invoice PDF from: ${invoicePdfDownloadUrl}`);
               const pdfResponse = await fetch(invoicePdfDownloadUrl);
@@ -406,7 +476,9 @@ Deno.serve(async (req) => {
         }
       } else {
         const errText = await updateRes.text();
-        console.error("Error updating user subscription:", errText);
+        console.error(`[Webhook] ❌ Error updating user subscription for ${email}:`, errText);
+        console.error(`[Webhook] Update response status: ${updateRes.status}`);
+        console.error(`[Webhook] Attempted to update with tier: ${newTier}, priceId: ${priceId}`);
       }
     }
   }

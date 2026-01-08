@@ -94,7 +94,7 @@ const Landing = () => {
       await redirectToCheckout(plan, email);
     } catch (error) {
       console.error('Checkout failed:', error);
-      alert('Failed to start checkout. Please try again.');
+      // Error is already handled and shown as toast in redirectToCheckout
     } finally {
       setLoading(null);
     }

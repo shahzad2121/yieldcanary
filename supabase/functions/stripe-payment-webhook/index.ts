@@ -221,6 +221,7 @@ Deno.serve(async (req) => {
 
     // Step 1: Get the price ID from Stripe subscription to determine NEW tier
     const priceId = subscription.items?.data?.[0]?.price?.id;
+    const subscriptionId = subscription.id;
     
     // Step 2: Map price ID to tier (basic or advanced)
     const basicMonthlyPrice = Deno.env.get("VITE_BASIC_MONTHLY_PRICE") || "";
@@ -233,6 +234,24 @@ Deno.serve(async (req) => {
       newTier = "advanced";
     } else if (priceId === basicMonthlyPrice || priceId === basicYearlyPrice) {
       newTier = "basic";
+    }
+
+    // Fetch full subscription details from Stripe API to get current_period_start/end
+    // (webhook payload may not include these fields)
+    let fullSubscription = subscription;
+    if (subscriptionId) {
+      try {
+        const subscriptionRes = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
+          headers: {
+            "Authorization": `Bearer ${stripeSecret}`,
+          },
+        });
+        if (subscriptionRes.ok) {
+          fullSubscription = await subscriptionRes.json();
+        }
+      } catch (subError) {
+        console.error("[Webhook] Error fetching subscription:", subError);
+      }
     }
 
     // Fetch customer email from Stripe API
@@ -293,6 +312,24 @@ Deno.serve(async (req) => {
       }
 
       // Step 4: Update user's subscription status in Supabase with CORRECT tier
+      // Extract subscription dates from Stripe (Unix timestamps in seconds)
+      // Try full subscription first, then fallback to items.data[0], then webhook payload
+      const periodStart = fullSubscription.current_period_start 
+        || fullSubscription.items?.data?.[0]?.current_period_start
+        || subscription.current_period_start
+        || null;
+      const periodEnd = fullSubscription.current_period_end
+        || fullSubscription.items?.data?.[0]?.current_period_end
+        || subscription.current_period_end
+        || null;
+      
+      const subscriptionStart = periodStart
+        ? new Date(periodStart * 1000).toISOString()
+        : null;
+      const subscriptionEnd = periodEnd
+        ? new Date(periodEnd * 1000).toISOString()
+        : null;
+
       const updateRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
         method: "PATCH",
         headers: {
@@ -304,6 +341,9 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           is_paid: true,
           subscription_tier: newTier, // Use the mapped tier, not hardcoded "basic"
+          stripe_customer_id: customerId || null,
+          subscription_start: subscriptionStart,
+          subscription_end: subscriptionEnd,
           updated_at: new Date().toISOString(),
         })
       });
@@ -346,9 +386,9 @@ Deno.serve(async (req) => {
         if (templateId) {
           console.log(`[Webhook] Sending ${templateId} email to ${email} for event: ${event.type}`);
           
-          // Download invoice PDF for attachment (only for payment_receipt, not access_upgraded)
+          // Download invoice PDF for attachment (for both payment_receipt and access_upgraded)
           let attachments: { filename: string; content: string }[] = [];
-          if (templateId === 'payment_receipt' && invoicePdfDownloadUrl) {
+          if ((templateId === 'payment_receipt' || templateId === 'access_upgraded') && invoicePdfDownloadUrl) {
             try {
               console.log(`[Webhook] Downloading invoice PDF from: ${invoicePdfDownloadUrl}`);
               const pdfResponse = await fetch(invoicePdfDownloadUrl);

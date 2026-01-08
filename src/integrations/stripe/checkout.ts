@@ -1,5 +1,6 @@
 import { stripePromise } from './client';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 export type PricingPlan = 'basic_monthly' | 'basic_yearly' | 'advanced_monthly' | 'advanced_yearly' | 'one_dollar';
 
@@ -76,7 +77,11 @@ export async function redirectToCheckout(plan: PricingPlan, email?: string) {
   } catch (error) {
     console.error('Checkout error:', error);
     const message = error instanceof Error ? error.message : 'Failed to start checkout';
-    alert(`Checkout Error: ${message}`);
+    toast({
+      variant: 'destructive',
+      title: 'Checkout Error',
+      description: message,
+    });
     throw error;
   }
 }
