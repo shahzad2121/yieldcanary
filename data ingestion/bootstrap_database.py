@@ -64,39 +64,28 @@ DEFAULT_TICKERS = [
     "HOII", "PLTI", "CWII", "LLII", "WMTI", "ULTI",
     
     # Kurv ETFs
-    "TSLP", "NVDP", "MSFT", "AAPY", "AMZP", "GOGL", "NFLP", "METAP",
-    "AAPU", "NVDU", "TSLU", "MSFU", "AMZU", "GOGU",
+    "KYLD", "KQQQ", "KGLD", "KSLV", "AMZP", "AAPY", "GOOP", "MSFY", "NFLP", "TSLP",
     
     # First Trust / Global X / Other
-    "JEPI", "JEPQ", "XYLD", "QYLD", "RYLD", "DIVO", "SVOL",
-    "QYLG", "XYLG", "RYLG",
+    "JEPI", "JEPQ", "XYLD", "QYLD", "RYLD", "SDIV",
     
-    # Newer high-yield ETFs
-    "SPYI", "QQQI", "IWMI",
-    "CSHI", "BNDI",
+    # Neos ETFs
+    "SPYI", "QQQI", "IWMI", "NIHI", "IYRI", "IAUI", "BTCI",
     
     # Amplify / Simplify
-    "YYY", "SPHY", "ZHDG",
-    
-    # Weekly payers
-    "WKLY", "PMAY", "PJUN", "PAUG", "PSEP", "POCT", "PNOV", "PDEC",
-    
-    # Bitcoin/Crypto
-    "BITO", "BITX", "BITI",
-    
-    # Leveraged income
-    "TQQQ", "SQQQ", "UVXY", "SVXY",
-    
-    # Sector specific
-    "QQQM", "SCHD", "VYM", "DVY", "HDV",
-    
-    # Additional income ETFs
-    "NUSI", "PUTW", "QRMI", "XRMI",
-    
-    # Additional tickers
-    "CHAT", "MAGS", "METV", "WEED", "NERD", "QTUM", "SIXG",
-    "ARM", "AVGX", "HIMZ", "HOOX", "IONX", "LLYX",
-    "MSTX", "ORCX", "SMST", "MAGC", "HUMN", "MEME", "UX", "XDIV"
+    "YYY", "SVOL", "HIGH", "BUCK", "MAXI",
+
+    # ProShares High Income ETFs
+    "ISPY", "IQQQ", "ITWO",
+
+    # Goldman Sachs ETFs (premium income)
+    "GPIX", "GPIQ",
+
+    # TappAlpha ETFs (daily covered call income)
+    "TDAQ", "TSPY",
+
+    # Tuttle Capital ETFs
+    "MAGO", "MSTK", "BITK",
 ]
 
 
