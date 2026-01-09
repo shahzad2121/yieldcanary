@@ -49,7 +49,7 @@ export function UpgradeModal({ isOpen, onClose, onUpgrade }: UpgradeModalProps) 
       await redirectToCheckout(plan, email);
     } catch (error) {
       console.error('Upgrade failed:', error);
-      alert('Failed to start upgrade. Please try again.');
+      // Error is already handled and shown as toast in redirectToCheckout
     } finally {
       setLoading(null);
     }
