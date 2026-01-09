@@ -86,6 +86,11 @@ DEFAULT_TICKERS = [
 
     # Tuttle Capital ETFs
     "MAGO", "MSTK", "BITK",
+
+    # GraniteShares YieldBOOST ETFs (high-yield weekly option income)
+    "AMYY", "AZYY", "BBYY", "XBTY", "COYY", "NUGY", "HMYY", "HOYY",
+    "IOYY", "MAAY", "FBYY", "MTYY", "NVYY", "PLYY", "QBY", "TQQY",
+    "RGYY", "RTYY", "SEMY", "YBST", "SMYY", "YSPY", "YBTY", "TSYY",
 ]
 
 
