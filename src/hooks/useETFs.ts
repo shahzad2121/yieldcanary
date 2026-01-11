@@ -42,6 +42,8 @@ function transformRowToETF(row: any): ETF {
     takeHomeCashReturn1Y: row.take_home_cash_return_1y,
     takeHomeCashReturnYTD: row.take_home_cash_return_ytd,
     takeHomeCashReturnSinceInception: row.take_home_cash_return_since_inception,
+    // Monthly distribution data
+    lastMonthDistribution: row.last_month_distribution,
   };
 }
 

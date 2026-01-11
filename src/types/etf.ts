@@ -35,6 +35,9 @@ export interface ETF {
   takeHomeCashReturn1Y: number;
   takeHomeCashReturnYTD: number;
   takeHomeCashReturnSinceInception: number;
+  
+  // Monthly distribution data
+  lastMonthDistribution: number | null;
 }
 
 export interface User {
