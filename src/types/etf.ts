@@ -1,4 +1,5 @@
 export type CanaryStatus = 'Healthy' | 'Dying' | 'Dead';
+export type PayoutFrequency = 'Weekly' | 'Monthly' | 'Quarterly';
 
 export interface ETF {
   id: string;
@@ -16,6 +17,7 @@ export interface ETF {
   canaryStatus: CanaryStatus;
   aum: number;
   expenseRatio: number;
+  payoutFrequency: PayoutFrequency | null;
   
   // Return columns
   totalReturn1Y: number;
