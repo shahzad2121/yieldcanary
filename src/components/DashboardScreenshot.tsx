@@ -53,7 +53,7 @@ export function DashboardScreenshot({
   const [hoveredBadge, setHoveredBadge] = useState<string | null>(null);
   
   // Use theme-based image if imageSrc is not provided
-  const finalImageSrc = imageSrc || (theme === 'light' ? '/dashboard-light.png' : '/dashboard.png');
+  const finalImageSrc = imageSrc || (theme === 'light' ? '/dashboard-2-light.png' : '/dashboard-2-dark.png');
 
   // Feature badges matching existing homepage content
   const featureBadges: FeatureBadge[] = [
