@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Sidebar,
@@ -9,8 +9,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarFooter,
 } from '@/components/ui/sidebar';
-import { Bird, LayoutDashboard, Star } from 'lucide-react';
+import { Bird, LayoutDashboard, Star, HelpCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { HelpModal } from '@/components/modals/HelpModal';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -19,10 +22,23 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>('');
 
   const path = location.pathname;
   const isDashboard = path === '/dashboard';
   const isWatchlist = path === '/watchlist';
+
+  // Get user email from session
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    };
+    getUser();
+  }, []);
 
   return (
     <SidebarProvider>
@@ -59,10 +75,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
+        <SidebarFooter>
+          <SidebarMenuButton onClick={() => setIsHelpOpen(true)}>
+            <HelpCircle className="h-4 w-4" />
+            <span>Help</span>
+          </SidebarMenuButton>
+        </SidebarFooter>
       </Sidebar>
-      <SidebarInset>
+      <SidebarInset className="min-w-0 overflow-x-hidden">
         {children}
       </SidebarInset>
+      <HelpModal
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+        userEmail={userEmail}
+      />
     </SidebarProvider>
   );
 }

@@ -9,6 +9,7 @@ import time
 import requests
 from datetime import datetime, timedelta
 from typing import Optional
+from collections import Counter
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
@@ -757,6 +758,107 @@ def populate_weekly_data(tickers: list, fmp: FMPClient):
     print(f"  ✓ Weekly data: {success} ETFs, {total_records} total records")
 
 
+def determine_payout_frequency(weekly_rows: list[dict]) -> Optional[str]:
+    """
+    Determines payout frequency based on spacing between dividend weeks.
+    weekly_rows = rows for ONE ETF from weekly_data table
+    Returns: 'Weekly', 'Monthly', 'Quarterly', or None
+    """
+    # 1. Extract weeks with actual payouts
+    payout_dates = sorted(
+        [
+            datetime.fromisoformat(row["date"])
+            for row in weekly_rows
+            if row.get("dividend") not in (None, "", 0, "0", "0.0", 0.0)
+        ]
+    )
+
+    # Not enough data to determine behavior
+    if len(payout_dates) < 3:
+        return None
+
+    # 2. Calculate gaps in weeks between payouts
+    week_gaps = []
+    for i in range(1, len(payout_dates)):
+        delta_weeks = (payout_dates[i] - payout_dates[i - 1]).days // 7
+        if delta_weeks > 0:
+            week_gaps.append(delta_weeks)
+
+    if not week_gaps:
+        return None
+
+    # 3. Find most common spacing
+    most_common_gap, _ = Counter(week_gaps).most_common(1)[0]
+
+    # 4. Classify frequency
+    if most_common_gap <= 2:
+        return "Weekly"
+    elif 3 <= most_common_gap <= 6:
+        return "Monthly"
+    elif 10 <= most_common_gap <= 14:
+        return "Quarterly"
+    else:
+        return None
+
+
+def populate_payout_frequencies():
+    """
+    Calculate and update payout_frequency for all ETFs based on weekly_data.
+    Runs AFTER populate_weekly_data() has completed.
+    """
+    print("\n" + "="*60)
+    print("STEP 6: Calculating payout frequencies...")
+    print("="*60)
+
+    # Get ticker -> UUID mapping
+    ticker_id_map = get_etf_id_map()
+    
+    today = datetime.now()
+    one_year_ago = today - timedelta(days=365)
+    
+    updated = 0
+    skipped = 0
+    
+    for ticker, ticker_id in ticker_id_map.items():
+        try:
+            # Fetch weekly_data for this ETF (last year)
+            result = (
+                supabase
+                .table('weekly_data')
+                .select('date, dividend')
+                .eq('ticker_id', ticker_id)
+                .gte('date', one_year_ago.strftime('%Y-%m-%d'))
+                .order('date', desc=False)
+                .execute()
+            )
+            
+            weekly_rows = result.data or []
+            
+            if not weekly_rows:
+                skipped += 1
+                continue
+            
+            # Determine frequency
+            payout_frequency = determine_payout_frequency(weekly_rows)
+            
+            # Update ETF record
+            supabase.table('etfs').update({
+                'payout_frequency': payout_frequency
+            }).eq('id', ticker_id).execute()
+            
+            updated += 1
+            if updated % 50 == 0:
+                print(f"    Progress: {updated} ETFs updated...")
+                
+        except Exception as e:
+            print(f"    Warning: Failed to calculate frequency for {ticker}: {e}")
+            skipped += 1
+    
+    print(f"  ✓ Payout frequency updated for {updated} ETFs")
+    if skipped > 0:
+        print(f"  ○ Skipped {skipped} ETFs (insufficient data)")
+
+
 def recalculate_headline_yield_from_weekly_data():
     """
     Recalculate headline_yield_ttm for all ETFs using the weekly_data table.
@@ -930,7 +1032,10 @@ def main():
     # Step 5: Populate weekly data
     populate_weekly_data(tickers, fmp)
     
-    # Step 6: Recalculate headline yield from weekly_data so it uses
+    # Step 6: Calculate payout frequencies (NEW)
+    populate_payout_frequencies()
+    
+    # Step 7: Recalculate headline yield from weekly_data so it uses
     # the canonical dividend history stored in Supabase.
     recalculate_headline_yield_from_weekly_data()
     

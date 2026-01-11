@@ -21,6 +21,7 @@ function transformRowToETF(row: any): ETF {
     canaryStatus: row.canary_health as 'Healthy' | 'Dying' | 'Dead',
     aum: row.aum,
     expenseRatio: row.expense_ratio,
+    payoutFrequency: row.payout_frequency as 'Weekly' | 'Monthly' | 'Quarterly' | null,
     // Add all required price/dividend fields for client-side calculations
     price1YAgo: row.price_1y_ago,
     dividendsLast12Mo: row.dividends_last_12mo,
@@ -91,14 +92,15 @@ export function useETFs() {
           queryClient.setQueryData<ETF[]>(['etfs'], (oldData) => {
             if (!oldData) return oldData;
 
-            // Find the updated ETF and update only the price fields
+            // Find the updated ETF and update price fields and payout frequency
             return oldData.map((etf) => {
               if (etf.ticker === payload.new.ticker) {
-                // Update only price-related fields, keep everything else
+                // Update price-related fields and payout frequency
                 return {
                   ...etf,
                   latestAdjClose: payload.new.latest_adj_close ?? etf.latestAdjClose,
                   latestDate: payload.new.latest_date ?? etf.latestDate,
+                  payoutFrequency: payload.new.payout_frequency ?? etf.payoutFrequency,
                   // Optionally update updated_at if you want to track when it was updated
                 };
               }
