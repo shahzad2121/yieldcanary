@@ -859,6 +859,92 @@ def populate_payout_frequencies():
         print(f"  ○ Skipped {skipped} ETFs (insufficient data)")
 
 
+def populate_last_month_distributions():
+    """
+    Calculate and update last_month_distribution for all ETFs based on weekly_data.
+    
+    This calculates the most recent complete calendar month's total distribution.
+    For example, if today is January 15, it calculates December's total.
+    """
+    print("\n" + "="*60)
+    print("STEP 7: Calculating last month distributions...")
+    print("="*60)
+
+    # Get ticker -> UUID mapping
+    ticker_id_map = get_etf_id_map()
+    
+    today = datetime.now()
+    
+    # Find the most recent complete calendar month
+    # If today is Jan 15, most recent complete month is December
+    if today.day == 1:
+        # If today is the 1st, use the month before last
+        last_month_start = (today.replace(day=1) - timedelta(days=1)).replace(day=1)
+        last_month_end = today.replace(day=1) - timedelta(days=1)
+    else:
+        # Otherwise, use last month
+        last_month_start = today.replace(day=1) - timedelta(days=1)
+        last_month_start = last_month_start.replace(day=1)
+        last_month_end = today.replace(day=1) - timedelta(days=1)
+    
+    start_str = last_month_start.strftime('%Y-%m-%d')
+    end_str = last_month_end.strftime('%Y-%m-%d')
+    
+    updated = 0
+    skipped = 0
+    
+    for ticker, ticker_id in ticker_id_map.items():
+        try:
+            # Fetch weekly_data for this ETF for the last complete month
+            result = (
+                supabase
+                .table('weekly_data')
+                .select('date, dividend')
+                .eq('ticker_id', ticker_id)
+                .gte('date', start_str)
+                .lte('date', end_str)
+                .order('date', desc=False)
+                .execute()
+            )
+            
+            weekly_rows = result.data or []
+            
+            if not weekly_rows:
+                skipped += 1
+                continue
+            
+            # Sum all dividends in that month
+            total_distribution = 0.0
+            for row in weekly_rows:
+                div = row.get('dividend')
+                if div is not None and div != 0:
+                    total_distribution += float(div)
+            
+            # Update ETF record
+            if total_distribution > 0:
+                supabase.table('etfs').update({
+                    'last_month_distribution': round(total_distribution, 4)
+                }).eq('id', ticker_id).execute()
+                updated += 1
+            else:
+                # Set to None if no distributions
+                supabase.table('etfs').update({
+                    'last_month_distribution': None
+                }).eq('id', ticker_id).execute()
+                skipped += 1
+                
+            if updated % 50 == 0:
+                print(f"    Progress: {updated} ETFs updated...")
+                
+        except Exception as e:
+            print(f"    Warning: Failed to calculate last month distribution for {ticker}: {e}")
+            skipped += 1
+    
+    print(f"  ✓ Last month distribution updated for {updated} ETFs")
+    if skipped > 0:
+        print(f"  ○ Skipped {skipped} ETFs (no distribution data for last month)")
+
+
 def recalculate_headline_yield_from_weekly_data():
     """
     Recalculate headline_yield_ttm for all ETFs using the weekly_data table.
@@ -871,7 +957,7 @@ def recalculate_headline_yield_from_weekly_data():
     FMP API response used earlier in process_etf().
     """
     print("\n" + "="*60)
-    print("STEP 6: Recalculating Headline Yield (TTM) from weekly_data...")
+    print("STEP 7: Recalculating Headline Yield (TTM) from weekly_data...")
     print("="*60)
 
     today = datetime.now().date()
@@ -1032,10 +1118,13 @@ def main():
     # Step 5: Populate weekly data
     populate_weekly_data(tickers, fmp)
     
-    # Step 6: Calculate payout frequencies (NEW)
+    # Step 6: Calculate payout frequencies
     populate_payout_frequencies()
     
-    # Step 7: Recalculate headline yield from weekly_data so it uses
+    # Step 7: Calculate last month distributions
+    populate_last_month_distributions()
+    
+    # Step 8: Recalculate headline yield from weekly_data so it uses
     # the canonical dividend history stored in Supabase.
     recalculate_headline_yield_from_weekly_data()
     

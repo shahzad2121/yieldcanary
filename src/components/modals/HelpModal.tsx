@@ -168,6 +168,17 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
             </p>
           </div>
 
+          {/* Monthly Spendable Cash Yield */}
+          <div>
+            <h3 className="font-semibold text-sm mb-2">Monthly Spendable Cash Yield</h3>
+            <p className="text-sm text-muted-foreground mb-2">
+              Estimated spendable cash from last month's distribution after taxes — uses your tax rate setting.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              This metric shows only the after-tax cash distribution from the most recent complete month that you could actually spend (not reinvested). Price change is not included (unrealized until sold). Formula: (Last month's distribution after tax) ÷ current price × 100. Shows "N/A" if no full month data is available yet.
+            </p>
+          </div>
+
           {/* Price */}
           <div>
             <h3 className="font-semibold text-sm mb-2">Price</h3>

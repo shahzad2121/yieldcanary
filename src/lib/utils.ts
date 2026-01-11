@@ -54,6 +54,18 @@ export function calcTakeHomeCashReturnInception({ latest_adj_close, price_at_inc
   return round4(result * 100);
 }
 
+export function calcMonthlySpendableCashYield({ lastMonthDistribution, currentPrice, taxRate }: { lastMonthDistribution: number | null, currentPrice: number | null, taxRate: number }): number | null {
+  if (!lastMonthDistribution || !currentPrice || currentPrice <= 0) {
+    return null;
+  }
+  
+  // After-tax distribution
+  const afterTaxDistribution = lastMonthDistribution * (1 - taxRate / 100);
+  
+  // Calculate yield: (after-tax distribution / price) × 100
+  return round4((afterTaxDistribution / currentPrice) * 100);
+}
+
 function round4(x: number): number {
   return Math.round(x * 10000) / 10000;
 }

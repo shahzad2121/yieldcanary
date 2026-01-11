@@ -37,6 +37,7 @@ import {
   calcTakeHomeCashReturn1Y,
   calcTakeHomeCashReturnYTD,
   calcTakeHomeCashReturnInception,
+  calcMonthlySpendableCashYield,
 } from '@/lib/utils';
 
 interface ETFTableProps {
@@ -46,7 +47,7 @@ interface ETFTableProps {
   onUpgrade: () => void;
 }
 
-type SortKey = keyof ETF;
+type SortKey = keyof ETF | 'monthlySpendableCashYield';
 type SortDirection = 'asc' | 'desc';
 
 // Default sort configuration - Take-Home Cash Return descending as per client requirement
@@ -62,6 +63,7 @@ const COLUMN_TOOLTIPS: Record<string, string> = {
   trueIncomeYield: "Real sustainable yield after subtracting destructive Return of Capital (ROC) from headline distributions.",
   totalReturn1Y: "Price change over the last 12 months (capital appreciation only).",
   takeHomeCashReturn1Y: "Estimated after-tax cash distributions over the last year. This uses your personal tax rate from settings (default 20%).",
+  monthlySpendableCashYield: "Estimated spendable cash from last month's distribution after taxes — uses your tax rate setting. Price change not included (unrealized until sold).",
   latestAdjClose: "Current share price.",
   headlineYieldTTM: "Advertised trailing 12-month yield (total distributions ÷ current price) — includes all payouts.",
   payoutFrequency: "How often the ETF pays distributions (Weekly, Monthly, Quarterly).",
@@ -80,6 +82,7 @@ const COLUMN_CONFIG = {
   trueIncomeYield: { width: 'w-32', className: '' },
   totalReturn1Y: { width: 'w-32', className: '' },
   takeHomeCashReturn: { width: 'min-w-[150px]', className: '' },
+  monthlySpendableCashYield: { width: 'min-w-[180px]', className: '' },
   price: { width: 'w-24', className: 'font-mono' },
   headlineYield: { width: 'w-28', className: 'font-mono' },
   payoutFrequency: { width: 'w-32', className: '' },
@@ -174,6 +177,11 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
           dividends_since_inception: etf.dividendsSinceInception,
           taxRate,
         }),
+        monthlySpendableCashYield: calcMonthlySpendableCashYield({
+          lastMonthDistribution: etf.lastMonthDistribution,
+          currentPrice: etf.latestAdjClose,
+          taxRate,
+        }),
       };
     }),
     [etfs, taxRate]
@@ -196,8 +204,8 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
       }
       
       // Sort ALL ETFs together by the selected column
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
+      const aVal = sortKey === 'monthlySpendableCashYield' ? a.monthlySpendableCashYield : (a as any)[sortKey];
+      const bVal = sortKey === 'monthlySpendableCashYield' ? b.monthlySpendableCashYield : (b as any)[sortKey];
       
       // Handle null/undefined values - push them to the end
       if (aVal === null || aVal === undefined) {
@@ -309,6 +317,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
       'True Income Yield',
       'Total Return 1Y',
       'Take-Home Cash 1Y',
+      'Monthly Spendable Cash Yield',
       'Latest Price',
       'Headline Yield',
       'Payout Frequency',
@@ -325,6 +334,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
       etf.trueIncomeYield ?? '',
       etf.totalReturn1Y ?? '',
       etf.takeHomeCashReturn1Y ?? '',
+      etf.monthlySpendableCashYield !== null ? `${etf.monthlySpendableCashYield.toFixed(2)}%` : 'N/A',
       etf.latestAdjClose ?? '',
       etf.headlineYieldTTM ?? '',
       etf.payoutFrequency ?? '',
@@ -454,6 +464,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
                 <SortableHeader label="True Income Yield" sortKeyProp="trueIncomeYield" icon={Percent} className={COLUMN_CONFIG.trueIncomeYield.width} isKiller />
                 <SortableHeader label="Total Return 1Y" sortKeyProp="totalReturn1Y" icon={TrendingUp} className={COLUMN_CONFIG.totalReturn1Y.width} isKiller />
                 <SortableHeader label="Take-Home Cash Return" sortKeyProp="takeHomeCashReturn1Y" icon={Banknote} className={`${COLUMN_CONFIG.takeHomeCashReturn.width} text-start`} />
+                <SortableHeader label="Monthly Spendable Cash Yield" sortKeyProp="monthlySpendableCashYield" icon={Banknote} className={`${COLUMN_CONFIG.monthlySpendableCashYield.width} text-start`} />
                 <SortableHeader label="Price" sortKeyProp="latestAdjClose" className={COLUMN_CONFIG.price.width} />
                 <SortableHeader label="Headline Yield" sortKeyProp="headlineYieldTTM" className={COLUMN_CONFIG.headlineYield.width} />
                 <SortableHeader label="Payout Frequency" sortKeyProp="payoutFrequency" className={COLUMN_CONFIG.payoutFrequency.width} />
@@ -482,6 +493,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
                     <TableCell className={`${COLUMN_CONFIG.trueIncomeYield.width} text-sm p-0`}><BlurredCell value={formatPercent(etf.trueIncomeYield)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className={`${COLUMN_CONFIG.totalReturn1Y.width} text-sm`}><BlurredCell value={formatReturn1Y(etf, etf.totalReturn1Y, etf.totalReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className={`${COLUMN_CONFIG.takeHomeCashReturn.width} ${COLUMN_CONFIG.takeHomeCashReturn.className} text-sm`}><BlurredCell value={formatReturn1Y(etf, etf.takeHomeCashReturn1Y, etf.takeHomeCashReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
+                    <TableCell className={`${COLUMN_CONFIG.monthlySpendableCashYield.width} ${COLUMN_CONFIG.monthlySpendableCashYield.className} text-sm`}><BlurredCell value={etf.monthlySpendableCashYield !== null ? `${etf.monthlySpendableCashYield.toFixed(2)}%` : 'N/A'} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className={`${COLUMN_CONFIG.price.width} ${COLUMN_CONFIG.price.className} text-muted-foreground text-sm`}>${etf.latestAdjClose ? etf.latestAdjClose.toFixed(2) : '0.00'}</TableCell>
                     <TableCell className={`${COLUMN_CONFIG.headlineYield.width} ${COLUMN_CONFIG.headlineYield.className} text-muted-foreground text-sm`}>{formatPercent(etf.headlineYieldTTM)}</TableCell>
                     <TableCell className={`${COLUMN_CONFIG.payoutFrequency.width} text-sm text-muted-foreground`}>{etf.payoutFrequency || 'N/A'}</TableCell>
