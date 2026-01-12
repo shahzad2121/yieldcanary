@@ -251,15 +251,15 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
           </div>
 
           {/* Transition Text */}
-          <div className="border-t border-border pt-4">
+          {/* <div className="border-t border-border pt-4">
             <p className="text-sm text-muted-foreground">
               Have questions or feedback? Use the form below!
             </p>
-          </div>
+          </div> */}
 
           {/* Contact Support Section */}
           <div className="border-t border-border pt-6 p-2 space-y-4">
-            <h3 className="font-semibold text-sm">Contact Support</h3>
+            <h3 className="font-semibold text-lg">Contact Support</h3>
             <div className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="help-name">Name</Label>
