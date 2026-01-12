@@ -1,4 +1,4 @@
-name: Real-Time ETF Price Update (2-Minute Polling)
+name: Real-Time ETF Price Update
 
 on:
   schedule:
@@ -9,7 +9,7 @@ on:
     # We'll check market hours in the workflow step to ensure we only run during market hours
     
     # Run every 2 minutes on weekdays (the market check step will filter)
-    - cron: '*/2 * * * 1-5'  # Every 2 minutes, Monday-Friday
+    - cron: '*/10 * * * 1-5'  # Every 2 minutes, Monday-Friday
     
   workflow_dispatch:  # Allow manual trigger
 
