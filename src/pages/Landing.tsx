@@ -354,7 +354,7 @@ const Landing = () => {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8 sm:mb-12">
               <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-foreground mb-2 sm:mb-4">
-                Pricing for every investor
+                Pricing For Every Investor!
               </h2>
               <p className="text-sm xs:text-base sm:text-lg text-muted-foreground px-2">
                 Stop guessing which high-yield ETFs are actually safe.<br />
