@@ -299,7 +299,7 @@ const Landing = () => {
               <FeatureCard 
                 icon={<Shield className="h-6 xs:h-7 sm:h-8 w-6 xs:w-7 sm:w-8" />}
                 title="Live ROC %"
-                description="Monthly updates from actual 19a-1 filings. No guessing, no estimates."
+                description="ROC % estimated from recent NAV erosion + distribution trends. Updated weekly — no guesswork, just real data."
               />
             </div>
           </div>
