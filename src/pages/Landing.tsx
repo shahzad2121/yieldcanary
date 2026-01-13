@@ -354,7 +354,7 @@ const Landing = () => {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8 sm:mb-12">
               <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-foreground mb-2 sm:mb-4">
-                Pricing For Every Investor!
+                Pricing For Every Investor
               </h2>
               <p className="text-sm xs:text-base sm:text-lg text-muted-foreground px-2">
                 Stop guessing which high-yield ETFs are actually safe.<br />
@@ -382,14 +382,15 @@ const Landing = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               <PricingCard 
                 name="Free"
-                description="For anyone to get started"
+                description="For anyone to get started."
                 price="$0"
                 period="/ month"
                 features={[
-                  "View all ETF tickers",
-                  "Canary Status visible",
-                  "4 sample ETFs fully unlocked",
-                  "Basic filtering & search",
+                  "Explore 200+ high-yield ETFs for free",
+                  "Instant Canary Status on every fund",
+                  "4 high-profile ETFs completely unblurred",
+                  "Search, filter, and sort the full list",
+                  "Get a taste of true income after ROC",
                 ]}
                 buttonText="Get Started"
                 buttonVariant="outline"
@@ -398,14 +399,16 @@ const Landing = () => {
               />
               <PricingCard 
                 name="Basic"
-                description="Full access to the core Decay Radar"
+                description="Unlock the full dashboard & real income insights."
                 price={isYearly ? "$89" : "$9"}
                 period={isYearly ? "/ year" : "/ month"}
                 features={[
-                  "True Income Yield revealed",
+                  "True Income Yield revealed (real sustainable income after ROC)",
                   "ROC % + ROC Health",
-                  "Alive / Watch / Dead Canary status",
-                  "Death Clock (years left)",
+                  "Alive / Dying / Dead Canary status",
+                  "Death Clock (projected years to ~50% NAV erosion)",
+                  "Create custom Watchlist to track your favorite ETFs",
+                  "Export CSV data for any filtered view",
                   "Monthly updates included",
                   "Cancel anytime",
                 ]}
@@ -416,17 +419,19 @@ const Landing = () => {
               />
               <PricingCard 
                 name="Advanced"
-                description="Never miss another dying fund"
+                description="Unlock weekly alerts, exclusive insights, and priority support."
                 price={isYearly ? "$189" : "$19"}
                 period={isYearly ? "/ year" : "/ month"}
                 teaserText={!isYearly ? "Lock in $19/month now – going to $49/month when released" : undefined}
                 features={[
                   "Everything in Basic +",
-                  'Weekly "Dead Canary Alert" emails',
-                  "Priority email support",
-                  "Early access to new ETFs",
+                  'Weekly update emails (high-risk funds & big movers)',
+                  "Monthly newsletter (top picks, market insights, updates)",
+                  "Priority access to the YieldCanary founder",
                   "Portfolio linking (coming soon)",
-                  "Monthly YieldCanary Newsletter",
+                  "Custom notifications & buy alerts (coming soon)",
+                  "Visual charts & scenario calculator (coming soon)",
+                  ""Ask Canary" custom AI bot to ask any questions about high-yield funds (coming soon)",
                 ]}
                 buttonText="Start Advanced"
                 buttonVariant="outline"
