@@ -431,7 +431,7 @@ const Landing = () => {
                   "Portfolio linking (coming soon)",
                   "Custom notifications & buy alerts (coming soon)",
                   "Visual charts & scenario calculator (coming soon)",
-                  ""Ask Canary" custom AI bot to ask any questions about high-yield funds (coming soon)",
+                  "'Ask Canary' custom AI bot to ask any questions about high-yield funds (coming soon)",
                 ]}
                 buttonText="Start Advanced"
                 buttonVariant="outline"
