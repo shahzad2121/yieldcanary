@@ -86,7 +86,7 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[650px] max-h-[90vh] mx-1 flex flex-col">
         <DialogHeader>
           <DialogTitle>YieldCanary Help Center</DialogTitle>
           <DialogDescription>
@@ -296,10 +296,21 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
                 />
               </div>
             </div>
+            
+            {/* Buttons inside scrollable content for mobile */}
+            <div className="flex flex-col sm:hidden gap-3 pt-4">
+              <Button onClick={handleSubmit} disabled={loading || !message.trim() || !email.trim()} className="w-full">
+                {loading ? 'Sending...' : 'Send Message'}
+              </Button>
+              <Button variant="outline" onClick={onClose} disabled={loading} className="w-full">
+                Close
+              </Button>
+            </div>
           </div>
         </div>
 
-        <DialogFooter>
+        {/* Buttons in footer for desktop */}
+        <DialogFooter className="hidden sm:flex">
           <Button variant="outline" onClick={onClose} disabled={loading}>
             Close
           </Button>
