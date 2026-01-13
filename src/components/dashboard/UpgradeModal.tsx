@@ -12,19 +12,25 @@ interface UpgradeModalProps {
 }
 
 const basicFeatures = [
-  'True Income Yield revealed',
+  'True Income Yield revealed (real sustainable income after ROC)',
   'ROC % + ROC Health',
-  'Alive / Watch / Dead Canary status',
-  'Death Clock (years left)',
+  'Alive / Dying / Dead Canary status',
+  'Death Clock (projected years to ~50% NAV erosion)',
+  'Create a custom Watchlist to track your favorite ETFs',
+  'Export CSV data for any filtered view',
   'Monthly updates included',
+  'Cancel anytime',
 ];
 
 const advancedFeatures = [
   'Everything in Basic +',
-  'Weekly "Dead Canary Alert" emails',
-  'Priority email support',
-  'Early access to new ETFs',
-  'CSV export functionality',
+  'Weekly update emails (high-risk funds & big movers)',
+  'Monthly newsletter (top picks, market insights, updates)',
+  'Priority access to the YieldCanary founder',
+  'Portfolio linking (coming soon)',
+  'Custom notifications & buy alerts (coming soon)',
+  'Visual charts & scenario calculator (coming soon)',
+  ''Ask Canary' custom AI bot to ask any questions about high-yield funds (coming soon)',
 ];
 
 export function UpgradeModal({ isOpen, onClose, onUpgrade }: UpgradeModalProps) {
