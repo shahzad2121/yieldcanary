@@ -407,7 +407,7 @@ const Landing = () => {
                   "ROC % + ROC Health",
                   "Alive / Dying / Dead Canary status",
                   "Death Clock (projected years to ~50% NAV erosion)",
-                  "Create custom Watchlist to track your favorite ETFs",
+                  "Create a custom Watchlist to track your favorite ETFs",
                   "Export CSV data for any filtered view",
                   "Monthly updates included",
                   "Cancel anytime",
