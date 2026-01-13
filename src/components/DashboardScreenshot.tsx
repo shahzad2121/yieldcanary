@@ -74,7 +74,7 @@ export function DashboardScreenshot({
     {
       icon: <AlertTriangle className="h-5 w-5" />,
       title: 'Canary Status',
-      description: 'Healthy / Dying / Dead status at a glance',
+      description: 'Healthy / Dying / Dead status at a glance.',
       position: 'bottom-left',
       columnTarget: 'canary-status',
     },
