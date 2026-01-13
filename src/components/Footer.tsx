@@ -30,38 +30,38 @@ const TikTokIcon = ({ className }: { className?: string }) => (
 
 export function Footer({ showDataDisclaimer = false }: FooterProps) {
   return (
-    <footer className="border-t border-border py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+    <footer className="border-t border-border py-2 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        {/* Legal Links */}
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mb-4 sm:mb-6">
+        {/* Legal Links - Centered */}
+        <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 gap-y-2 mb-6 sm:mb-8">
           <Link
             to="/legal/terms"
             className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Terms of Service
           </Link>
-          <span className="text-muted-foreground">•</span>
+          <span className="text-muted-foreground text-xs">•</span>
           <Link
             to="/legal/privacy"
             className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Privacy Policy
           </Link>
-          <span className="text-muted-foreground">•</span>
+          <span className="text-muted-foreground text-xs">•</span>
           <Link
             to="/legal/refund"
             className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Refund Policy
           </Link>
-          <span className="text-muted-foreground">•</span>
+          <span className="text-muted-foreground text-xs">•</span>
           <Link
             to="/legal/cookies"
             className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Cookie Policy
           </Link>
-          <span className="text-muted-foreground">•</span>
+          <span className="text-muted-foreground text-xs">•</span>
           <Link
             to="/legal/do-not-sell"
             className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -70,63 +70,56 @@ export function Footer({ showDataDisclaimer = false }: FooterProps) {
           </Link>
         </div>
 
-        {/* Optional Data Disclaimer (for dashboard) */}
-        {showDataDisclaimer && (
-          <p className="text-center text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3">
-            Data updated daily. ROC data from 19a-1 filings.
-          </p>
-        )}
+        {/* Social Media Icons - Centered */}
+        <div className="flex items-center justify-center gap-4 sm:gap-5 mb-6 sm:mb-8">
+          <a
+            href="https://x.com/yieldcanary"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Follow us on X (Twitter)"
+            className="text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-110 group"
+          >
+            <XIcon className="h-5 w-5 sm:h-6 sm:w-6 group-hover:social-icon-glow" />
+          </a>
+          <a
+            href="https://www.youtube.com/@ryan_fish"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Subscribe to our YouTube channel"
+            className="text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-110 group"
+          >
+            <Youtube className="h-5 w-5 sm:h-6 sm:w-6 group-hover:social-icon-glow" />
+          </a>
+          <a
+            href="https://www.tiktok.com/@yieldcanary"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Follow us on TikTok"
+            className="text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-110 group"
+          >
+            <TikTokIcon className="h-5 w-5 sm:h-6 sm:w-6 group-hover:social-icon-glow" />
+          </a>
+          <a
+            href="https://www.instagram.com/yieldcanary"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Follow us on Instagram"
+            className="text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-110 group"
+          >
+            <Instagram className="h-5 w-5 sm:h-6 sm:w-6 group-hover:social-icon-glow" />
+          </a>
+        </div>
 
-        {/* Bottom Row: Logo | Social Icons | Copyright */}
+        {/* Bottom Row: Logo | Copyright */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           {/* Left: Logo */}
-          <div className="flex items-center gap-2 order-1">
-            <span className="text-lg xs:text-xl">🐤</span>
-            <span className="text-sm xs:text-base font-bold text-foreground">YieldCanary</span>
-          </div>
-
-          {/* Middle: Social Media Icons */}
-          <div className="flex items-center gap-3 sm:gap-4 order-2">
-            <a
-              href="https://x.com/yieldcanary"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Follow us on X (Twitter)"
-              className="text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-110 group"
-            >
-              <XIcon className="h-5 w-5 group-hover:social-icon-glow" />
-            </a>
-            <a
-              href="https://www.youtube.com/@ryan_fish"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Subscribe to our YouTube channel"
-              className="text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-110 group"
-            >
-              <Youtube className="h-5 w-5 group-hover:social-icon-glow" />
-            </a>
-            <a
-              href="https://www.tiktok.com/@yieldcanary"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Follow us on TikTok"
-              className="text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-110 group"
-            >
-              <TikTokIcon className="h-5 w-5 group-hover:social-icon-glow" />
-            </a>
-            <a
-              href="https://www.instagram.com/yieldcanary"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Follow us on Instagram"
-              className="text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-110 group"
-            >
-              <Instagram className="h-5 w-5 group-hover:social-icon-glow" />
-            </a>
+          <div className="flex items-center gap-2">
+            <span className="text-lg sm:text-xl">🐤</span>
+            <span className="text-sm sm:text-base font-bold text-foreground">YieldCanary</span>
           </div>
 
           {/* Right: Copyright */}
-          <p className="text-xs xs:text-sm text-muted-foreground text-center sm:text-right order-3">
+          <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-right">
             © 2026 YieldCanary. All rights reserved.
           </p>
         </div>
