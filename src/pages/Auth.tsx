@@ -12,6 +12,7 @@ import { sendTransactionalEmail } from "@/lib/sendTransactionalEmail";
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -236,6 +237,12 @@ export default function Auth() {
           return;
         }
 
+        if (!firstName) {
+          setError("Please provide your first name");
+          setLoading(false);
+          return;
+        }
+
         if (!username) {
           setError("Please provide a username");
           setLoading(false);
@@ -278,7 +285,7 @@ export default function Auth() {
         }
         console.log("Sign up successful:", data.user?.email);
         
-        // Store username and tax_rate in Supabase users table
+        // Store username, first name, and tax_rate in Supabase users table
         if (data.user?.email && username) {
           try {
             // Use upsert to handle duplicate email gracefully
@@ -288,6 +295,7 @@ export default function Auth() {
                 {
                   email: data.user.email,
                   username: username,
+                  name: firstName,
                   tax_rate: finalTaxRate,
                 },
                 { onConflict: 'email' }
@@ -296,20 +304,20 @@ export default function Auth() {
             if (insertError) {
               console.error("Error storing user profile:", insertError);
             } else {
-              console.log("User profile stored with username:", username);
+              console.log("User profile stored with username:", username, "and first name:", firstName);
             }
           } catch (profileError) {
             console.error("Failed to store user profile:", profileError);
           }
         }
         
-        // Send welcome email with username
+        // Send welcome email with first name
         if (data.user?.email) {
           try {
             await sendTransactionalEmail({
               to: data.user.email,
               templateId: 'welcome_verify',
-              data: { first_name: username || email.split('@')[0] },
+              data: { first_name: firstName || username || email.split('@')[0] },
             });
             console.log("Welcome email sent to:", data.user.email);
           } catch (emailError) {
@@ -322,11 +330,13 @@ export default function Auth() {
         if (data.user && !data.session) {
           setSuccessMessage("Check your email to verify your account, then you can sign in.");
           setEmail("");
+          setFirstName("");
           setPassword("");
         } else {
           // Auto-sign in if no email verification needed
           setSuccessMessage("Account created! Signing you in...");
           setEmail("");
+          setFirstName("");
           setPassword("");
           setTimeout(() => setIsLogin(true), 1000);
         }
@@ -357,7 +367,7 @@ export default function Auth() {
           <ChevronLeft className="h-4 w-4 xs:h-5 xs:w-5" />
         </Button>
       </div>
-      <div className="absolute top-3 xs:top-4 right-3 xs:right-4">
+      <div className="absolute top-3 xs:top-4 right-3 xs:top-4">
         <button
           onClick={toggleTheme}
           className="p-1.5 xs:p-2 rounded-lg hover:bg-muted transition-colors"
@@ -418,6 +428,21 @@ export default function Auth() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="text-sm h-9 xs:h-10"
+              />
+            </div>
+          )}
+
+          {!isLogin && !isResettingPassword && (
+            <div className="space-y-1.5 xs:space-y-2">
+              <Label htmlFor="firstName" className="text-xs xs:text-sm">First Name</Label>
+              <Input
+                id="firstName"
+                type="text"
+                placeholder="John"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required={!isLogin}
                 className="text-sm h-9 xs:h-10"
               />
             </div>
