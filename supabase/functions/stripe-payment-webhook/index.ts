@@ -141,8 +141,8 @@ Deno.serve(async (req) => {
           if (userRes.ok) {
             const users = await userRes.json();
             if (users && users.length > 0) {
-              // Prefer username, then name, then fallback to email extraction
-              firstName = users[0].username || users[0].name || firstName;
+              // Prefer name (first name), then username, then fallback to email extraction
+              firstName = users[0].name || users[0].username || firstName;
             }
           }
           
@@ -369,8 +369,8 @@ Deno.serve(async (req) => {
         if (userRes.ok) {
           const users = await userRes.json();
           if (users && users.length > 0) {
-            // Prefer username, then name, then fallback to email extraction
-            firstName = users[0].username || users[0].name || firstName;
+            // Prefer name (first name), then username, then fallback to email extraction
+            firstName = users[0].name || users[0].username || firstName;
           }
         }
         
@@ -499,7 +499,8 @@ Deno.serve(async (req) => {
         if (userRes.ok) {
           const users = await userRes.json();
           if (users && users.length > 0) {
-            firstName = users[0].username || users[0].name || firstName;
+            // Prefer name (first name), then username, then fallback to email extraction
+            firstName = users[0].name || users[0].username || firstName;
           }
         }
         
