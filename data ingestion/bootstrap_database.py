@@ -77,7 +77,7 @@ DEFAULT_TICKERS = [
     "YYY", "SVOL", "HIGH", "BUCK", "MAXI",
 
     # ProShares High Income ETFs
-    "ISPY", "IQQQ", "ITWO", "EETH",
+    "ISPY", "IQQQ", "ITWO", "EETH","BITO",
 
     # Goldman Sachs ETFs (premium income)
     "GPIX", "GPIQ",
