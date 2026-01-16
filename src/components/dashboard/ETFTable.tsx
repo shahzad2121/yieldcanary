@@ -127,6 +127,39 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
     setIsDefaultView(true);
   };
 
+  // Helper function to check if ETF is less than 1 year old
+  const isLessThanOneYear = (inceptionDate: string): boolean => {
+    if (!inceptionDate) return false;
+    const today = new Date();
+    const inception = new Date(inceptionDate);
+    const ageInDays = (today.getTime() - inception.getTime()) / (1000 * 60 * 60 * 24);
+    return ageInDays < 365;
+  };
+
+  // Helper function to get sort value for 1Y columns (uses YTD fallback when appropriate)
+  // This ensures sorting matches what's displayed
+  const getSortValue1Y = (
+    etf: any,
+    value1Y: number | null,
+    valueYTD: number | null
+  ): number | null => {
+    const isNew = isLessThanOneYear(etf.inceptionDate);
+    const hasNo1YData = value1Y === null || value1Y === undefined || value1Y === 0;
+    
+    // Rule 1: If ETF is less than 1 year old, ALWAYS use YTD (even if 1Y has a value)
+    if (isNew) {
+      return valueYTD;
+    }
+    
+    // Rule 2: If ETF is older but has no 1Y data, use YTD as fallback
+    if (hasNo1YData) {
+      return valueYTD;
+    }
+    
+    // Rule 3: For older ETFs with valid 1Y data, use 1Y value
+    return value1Y;
+  };
+
   // Calculate take-home fields dynamically with user tax rate
   const etfsWithTakeHome = useMemo(() =>
     etfs.map((etf) => {
@@ -204,8 +237,24 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
       }
       
       // Sort ALL ETFs together by the selected column
-      const aVal = sortKey === 'monthlySpendableCashYield' ? a.monthlySpendableCashYield : (a as any)[sortKey];
-      const bVal = sortKey === 'monthlySpendableCashYield' ? b.monthlySpendableCashYield : (b as any)[sortKey];
+      // For 1Y columns, use YTD fallback to match display logic
+      let aVal: any, bVal: any;
+      
+      if (sortKey === 'takeHomeCashReturn1Y') {
+        // Use YTD fallback for new ETFs or ETFs without 1Y data
+        aVal = getSortValue1Y(a, a.takeHomeCashReturn1Y, a.takeHomeCashReturnYTD);
+        bVal = getSortValue1Y(b, b.takeHomeCashReturn1Y, b.takeHomeCashReturnYTD);
+      } else if (sortKey === 'totalReturn1Y') {
+        // Use YTD fallback for new ETFs or ETFs without 1Y data
+        aVal = getSortValue1Y(a, a.totalReturn1Y, a.totalReturnYTD);
+        bVal = getSortValue1Y(b, b.totalReturn1Y, b.totalReturnYTD);
+      } else if (sortKey === 'monthlySpendableCashYield') {
+        aVal = a.monthlySpendableCashYield;
+        bVal = b.monthlySpendableCashYield;
+      } else {
+        aVal = (a as any)[sortKey];
+        bVal = (b as any)[sortKey];
+      }
       
       // Handle null/undefined values - push them to the end
       if (aVal === null || aVal === undefined) {
@@ -247,15 +296,6 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
   };
 
   const isUnlocked = (ticker: string) => isPaid || FREE_UNLOCKED_TICKERS.includes(ticker);
-
-  // Helper function to check if ETF is less than 1 year old
-  const isLessThanOneYear = (inceptionDate: string): boolean => {
-    if (!inceptionDate) return false;
-    const today = new Date();
-    const inception = new Date(inceptionDate);
-    const ageInDays = (today.getTime() - inception.getTime()) / (1000 * 60 * 60 * 24);
-    return ageInDays < 365;
-  };
 
   // Helper function to format 1Y return with YTD fallback for new ETFs
   const formatReturn1Y = (
