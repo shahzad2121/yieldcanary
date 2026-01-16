@@ -51,7 +51,7 @@ DEFAULT_TICKERS = [
     
     # Defiance ETFs
     "YBMN", "QLDY", "SPYT", "GLDY", "USOY", "QQQY", "IWMY", "WDTE",
-    "QQQT", "MST", "HIMY", "AMDU", "ETHI", "HOOI", "PLT", "SMCC",
+    "QQQT", "MST", "HIMY", "AMDU", "ETHI", "HOOI", "PLT", "SMCC", "JEPY",
     
     # Roundhill ETFs  
     "XDTE", "QDTE", "RDTE", "XPAY", "YBTC", "YETH", "MAGY",
@@ -71,7 +71,7 @@ DEFAULT_TICKERS = [
     "JEPI", "JEPQ", "XYLD", "QYLD", "RYLD", "SDIV",
     
     # Neos ETFs
-    "SPYI", "QQQI", "IWMI", "NIHI", "IYRI", "IAUI", "BTCI",
+    "SPYI", "QQQI", "IWMI", "NIHI", "IYRI", "IAUI", "BTCI", "NEHI",
     
     # Amplify / Simplify
     "YYY", "SVOL", "HIGH", "BUCK", "MAXI",
@@ -87,6 +87,12 @@ DEFAULT_TICKERS = [
 
     # Tuttle Capital ETFs
     "MAGO", "MSTK", "BITK",
+
+    # Westwood Holdings ETFs
+    "MDST",
+
+    # Calamos Investments ETFs
+    "CAIE",
 
     # GraniteShares YieldBOOST ETFs (high-yield weekly option income)
     "AMYY", "AZYY", "BBYY", "XBTY", "COYY", "NUGY", "HMYY", "HOYY",
