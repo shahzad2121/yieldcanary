@@ -228,7 +228,7 @@ const Landing = () => {
         <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-4 sm:mb-6">
-              The smartest way to invest in high-yield funds.
+              The smartest way to track high-yield ETFs.
             </h1>
             <p className="text-base xs:text-lg sm:text-xl text-muted-foreground mb-2 sm:mb-4 px-2">
               Most high-yield ETFs quietly give you your own money back and call it income.
@@ -299,7 +299,7 @@ const Landing = () => {
               <FeatureCard 
                 icon={<Shield className="h-6 xs:h-7 sm:h-8 w-6 xs:w-7 sm:w-8" />}
                 title="Live ROC %"
-                description="Monthly updates from actual 19a-1 filings. No guessing, no estimates."
+                description="ROC % estimated from recent NAV erosion + distribution trends. Updated weekly — no guesswork, just real data."
               />
             </div>
           </div>
