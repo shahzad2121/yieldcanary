@@ -1,7 +1,7 @@
 name: Real-Time ETF Price Update
 
 on:
-  schedule:
+  # schedule:
     # Run every 2 minutes during market hours (9:30 AM - 4:00 PM ET)
     # Market hours in UTC: 1:30 PM - 8:00 PM UTC (9:30 AM - 4:00 PM ET)
     # Every 2 minutes on weekdays (Monday-Friday)
