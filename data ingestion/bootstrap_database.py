@@ -98,6 +98,12 @@ DEFAULT_TICKERS = [
     "AMYY", "AZYY", "BBYY", "XBTY", "COYY", "NUGY", "HMYY", "HOYY",
     "IOYY", "MAAY", "FBYY", "MTYY", "NVYY", "PLYY", "QBY", "TQQY",
     "RGYY", "RTYY", "SEMY", "YBST", "SMYY", "YSPY", "YBTY", "TSYY",
+
+    # VistaShares Target 15™ ETFs (options income, high yield)
+    "OMAH", "QUSA", "ACKY", "DRKY", "SIOO",
+
+    # Strategy B
+    "STRC",
 ]
 
 
