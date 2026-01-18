@@ -1,7 +1,7 @@
 name: Real-Time ETF Price Update
 
 on:
-  schedule:
+  # schedule:
     # Run every 2 minutes during market hours (9:30 AM - 4:00 PM ET)
     # Market hours in UTC: 1:30 PM - 8:00 PM UTC (9:30 AM - 4:00 PM ET)
     # Every 2 minutes on weekdays (Monday-Friday)
@@ -9,7 +9,7 @@ on:
     # We'll check market hours in the workflow step to ensure we only run during market hours
     
     # Run every 2 minutes on weekdays (the market check step will filter)
-    - cron: '*/10 * * * 1-5'  # Every 2 minutes, Monday-Friday
+    # - cron: '*/10 * * * 1-5'  Every 2 minutes, Monday-Friday
     
   workflow_dispatch:  # Allow manual trigger
 

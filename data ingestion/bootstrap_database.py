@@ -6,6 +6,7 @@ def display_take_home_returns_for_all_users(etf_data):
 import os
 import sys
 import time
+import traceback
 import requests
 from datetime import datetime, timedelta
 from typing import Optional
@@ -1112,36 +1113,81 @@ def main():
     print(f"\nTickers to process: {len(tickers)}")
     print(f"Sample: {', '.join(tickers[:10])}...")
     
+    # Set bootstrap flag to prevent cron jobs from running during bootstrap
+    print("\n" + "="*60)
+    print("Setting bootstrap flag (prevents cron updates during rebuild)...")
+    print("="*60)
+    try:
+        supabase.table('system_flags').upsert({
+            'key': 'bootstrap_running',
+            'value': True,
+            'updated_at': datetime.now().isoformat()
+        }, on_conflict='key').execute()
+        print("  ✓ Bootstrap flag set")
+    except Exception as e:
+        print(f"  ⚠ Warning: Failed to set bootstrap flag: {e}")
+        print("  Continuing anyway (cron jobs may run during bootstrap)")
+    
     # Initialize FMP client
     fmp = FMPClient(FMP_API_KEY)
     
-    # Step 1: Clear database
-    clear_database()
-    
-    # Step 2: Insert tickers
-    insert_tickers(tickers)
-    
-    # Step 3: Populate ETF data (with ROC estimation)
-    success, failed, health_counts = populate_etf_data(tickers, fmp)
-    
-    # Step 4: Populate 19a-1 notices (ROC data)
-    populate_notices_19a1(tickers)
+    # Wrap ALL bootstrap steps in try/finally to guarantee flag is cleared
+    # This ensures cron jobs always resume, even if bootstrap fails
+    try:
+        # Step 1: Clear database
+        clear_database()
+        
+        # Step 2: Insert tickers
+        insert_tickers(tickers)
+        
+        # Step 3: Populate ETF data (with ROC estimation)
+        success, failed, health_counts = populate_etf_data(tickers, fmp)
+        
+        # Step 4: Populate 19a-1 notices (ROC data)
+        populate_notices_19a1(tickers)
 
-    # Step 5: Populate weekly data
-    populate_weekly_data(tickers, fmp)
-    
-    # Step 6: Calculate payout frequencies
-    populate_payout_frequencies()
-    
-    # Step 7: Calculate last month distributions
-    populate_last_month_distributions()
-    
-    # Step 8: Recalculate headline yield from weekly_data so it uses
-    # the canonical dividend history stored in Supabase.
-    recalculate_headline_yield_from_weekly_data()
-    
-    # Print summary
-    print_summary(success, failed, health_counts, len(tickers))
+        # Step 5: Populate weekly data
+        populate_weekly_data(tickers, fmp)
+        
+        # Step 6: Calculate payout frequencies
+        populate_payout_frequencies()
+        
+        # Step 7: Calculate last month distributions
+        populate_last_month_distributions()
+        
+        # Step 8: Recalculate headline yield from weekly_data so it uses
+        # the canonical dividend history stored in Supabase.
+        recalculate_headline_yield_from_weekly_data()
+        
+        # Print summary (only if everything succeeded)
+        print_summary(success, failed, health_counts, len(tickers))
+        
+    except KeyboardInterrupt:
+        print("\n\n⚠️  Bootstrap interrupted by user (Ctrl+C)")
+        raise  # Re-raise to ensure finally block runs
+    except Exception as e:
+        print(f"\n\n❌ Bootstrap failed with error: {e}")
+        traceback.print_exc()
+        raise  # Re-raise to ensure finally block runs
+    finally:
+        # ALWAYS clear bootstrap flag, no matter what happens
+        # This is critical - if flag isn't cleared, cron jobs will never run again
+        print("\n" + "="*60)
+        print("Clearing bootstrap flag (cron jobs can resume)...")
+        print("="*60)
+        try:
+            supabase.table('system_flags').upsert({
+                'key': 'bootstrap_running',
+                'value': False,
+                'updated_at': datetime.now().isoformat()
+            }, on_conflict='key').execute()
+            print("  ✓ Bootstrap flag cleared")
+        except Exception as e:
+            print(f"  ❌ CRITICAL: Failed to clear bootstrap flag: {e}")
+            print("  ⚠️  Manual reset REQUIRED:")
+            print("     UPDATE system_flags SET value = false WHERE key = 'bootstrap_running';")
+            # Still raise the exception so user knows something went wrong
+            raise
 
 
 if __name__ == "__main__":
