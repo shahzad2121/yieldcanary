@@ -46,7 +46,8 @@ export default function RefundPolicy() {
               <h2 className="text-xl font-semibold mb-3">3. Subscription Cancellations</h2>
               <p className="text-muted-foreground mb-4">
                 You may cancel your subscription at any time. Cancellation will take effect at the end of your current
-                billing period. You will continue to have access until the end of the paid period.
+                billing period. You will continue to have access until the end of the paid period. If you are eligible for a refund upon cancellation, 
+                any refund will be prorated based on the unused portion of the current billing period (calculated from the effective cancellation date to the end of the paid period).
               </p>
             </section>
 
