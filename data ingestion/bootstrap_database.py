@@ -52,7 +52,7 @@ DEFAULT_TICKERS = [
     
     # Defiance ETFs
     "YBMN", "QLDY", "SPYT", "GLDY", "USOY", "QQQY", "IWMY", "WDTE",
-    "QQQT", "MST", "HIMY", "AMDU", "ETHI", "HOOI", "PLT", "SMCC", "JEPY",
+    "QQQT", "MST", "JEPY",
     
     # Roundhill ETFs  
     "XDTE", "QDTE", "RDTE", "XPAY", "YBTC", "YETH", "MAGY",
