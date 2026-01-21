@@ -105,6 +105,9 @@ DEFAULT_TICKERS = [
 
     # Strategy B
     "STRC",
+
+    # PIMCO High-Yield Income ETFs
+    "PDI", "PTY", "PDO",
 ]
 
 
