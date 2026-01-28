@@ -82,7 +82,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </SidebarMenuButton>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset className="min-w-0 overflow-x-hidden">
+      <SidebarInset className="min-w-0">
         {children}
       </SidebarInset>
       <HelpModal

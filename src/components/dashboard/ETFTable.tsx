@@ -14,6 +14,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   ChevronDown, 
   ChevronUp, 
@@ -28,6 +35,7 @@ import {
 import { ETF, FREE_UNLOCKED_TICKERS } from '@/types/etf';
 import { CanaryStatusBadge } from './CanaryStatusBadge';
 import { BlurredCell } from './BlurredCell';
+import { DASHBOARD_HEADER_HEIGHT_MOBILE } from './DashboardHeader';
 import { useUserTaxRate } from '@/hooks/useUserTaxRate';
 import { useWatchlist } from '@/hooks/useWatchlist';
 import {
@@ -71,6 +79,24 @@ const COLUMN_TOOLTIPS: Record<string, string> = {
   aum: "Assets Under Management (total fund size in USD).",
   expenseRatio: "Annual expense ratio (management fees as % of assets).",
 };
+
+// Sort keys and labels for mobile dropdown (matches desktop table columns)
+const MOBILE_SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'ticker', label: 'Ticker' },
+  { key: 'name', label: 'Name' },
+  { key: 'canaryStatus', label: 'Canary Status' },
+  { key: 'deathClock', label: 'Death Clock' },
+  { key: 'trueIncomeYield', label: 'True Income Yield' },
+  { key: 'totalReturn1Y', label: 'Total Return 1Y' },
+  { key: 'takeHomeCashReturn1Y', label: 'Take-Home Cash Return' },
+  { key: 'monthlySpendableCashYield', label: 'Monthly Spendable Cash Yield' },
+  { key: 'latestAdjClose', label: 'Price' },
+  { key: 'headlineYieldTTM', label: 'Headline Yield' },
+  { key: 'payoutFrequency', label: 'Payout Frequency' },
+  { key: 'rocPercent', label: 'ROC %' },
+  { key: 'aum', label: 'AUM' },
+  { key: 'expenseRatio', label: 'Expense' },
+];
 
 // Column configuration: width and base className for each column
 const COLUMN_CONFIG = {
@@ -550,7 +576,57 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
       </div>
 
       {/* Mobile Card View - Visible on md and below */}
-      <div className="md:hidden space-y-2">
+      <div className="md:hidden space-y-4">
+        {/* Mobile sorting: dropdown + direction toggle (sticky below header) */}
+        <div
+          className="sticky z-40 flex items-center gap-2 border-b border-border bg-background pb-2"
+          style={{ top: DASHBOARD_HEADER_HEIGHT_MOBILE }}
+        >
+          <Select
+            value={sortKey}
+            onValueChange={(value) => handleSort(value as SortKey)}
+          >
+            <SelectTrigger className="flex-1 h-9 text-xs">
+              <SelectValue placeholder="Sort by..." />
+            </SelectTrigger>
+            <SelectContent>
+              {MOBILE_SORT_OPTIONS.map(({ key, label }) => (
+                <SelectItem key={key} value={key} className="text-xs">
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 w-9 p-0 shrink-0"
+            onClick={() => {
+              setIsDefaultView(false);
+              setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+            }}
+            aria-label={sortDirection === 'asc' ? 'Sort descending' : 'Sort ascending'}
+          >
+            {sortDirection === 'asc' ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+          {!isPaid && !isDefaultView && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs h-9 px-2 shrink-0"
+              onClick={handleResetToDefault}
+            >
+              <RotateCcw className="h-3 w-3" />
+              <span className="hidden xs:inline">Reset</span>
+            </Button>
+          )}
+        </div>
+
+        <div className="space-y-2">
         {sortedETFs.map((etf) => {
           const unlocked = isUnlocked(etf.ticker);
           return (
@@ -621,6 +697,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
             </div>
           );
         })}
+        </div>
       </div>
 
       {/* Free tier CTA */}
