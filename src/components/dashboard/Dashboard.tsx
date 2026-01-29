@@ -12,7 +12,7 @@ import { Footer } from '@/components/Footer';
 
 export function Dashboard() {
   const { etfs, loading, error } = useETFs();
-  const { user: subscriptionUser, loading: userLoading } = useUserSubscription();
+  const { user: subscriptionUser, loading: userLoading, isTrialing, trialEndsAt } = useUserSubscription();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<CanaryStatus | 'all'>('all');
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -73,7 +73,7 @@ export function Dashboard() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-destructive">Error loading ETFs: {error}</p>
+          <p className="text-destructive">Error loading ETFs: {error instanceof Error ? error.message : String(error)}</p>
         </div>
       </div>
     );
@@ -84,6 +84,8 @@ export function Dashboard() {
       <DashboardHeader
         plan={plan}
         isPaid={isPaid}
+        isTrialing={isTrialing}
+        trialEndsAt={trialEndsAt}
         userEmail={userEmail}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}

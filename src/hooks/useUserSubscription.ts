@@ -9,16 +9,23 @@ export interface UserSubscription {
   subscription_tier: string | null;
   subscription_start: string | null;
   subscription_end: string | null;
+  trial_ends_at?: string | null;
   created_at: string;
   updated_at: string;
 }
 
-
+/** True when user is paid and trial_ends_at is in the future. */
+export function isOnTrial(u: UserSubscription | null): boolean {
+  if (!u?.is_paid || !u.trial_ends_at) return false;
+  return new Date(u.trial_ends_at) > new Date();
+}
 
 export function useUserSubscription() {
   const [user, setUser] = useState<UserSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const isTrialing = isOnTrial(user);
 
   useEffect(() => {
     const fetchUserSubscription = async () => {
@@ -65,5 +72,5 @@ export function useUserSubscription() {
     return () => subscription?.unsubscribe();
   }, []);
 
-  return { user, loading, error };
+  return { user, loading, error, isTrialing, trialEndsAt: user?.trial_ends_at ?? null };
 }

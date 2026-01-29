@@ -3,12 +3,36 @@
 // This enables autocomplete, go to definition, etc.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+import {
+  getSupabaseConfig,
+  getUserByEmail,
+  getUserIdByEmail,
+  getStripeCustomerEmail,
+  updateUserSubscriptionFromStripe,
+  downgradeUserToFree,
+  sendTransactionalEmail,
+  createPriceIdToTierMapper,
+  type EmailType,
+} from "./stripe-webhook-helpers.ts";
 
 // Deno-compatible Stripe webhook handler using fetch
 const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY_TEST") ?? "";
 const stripeWebhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET_TEST") ?? "";
-const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-const serviceRoleKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+const { supabaseUrl, serviceRoleKey } = getSupabaseConfig();
+
+// Test environment price IDs (hardcoded to match checkout)
+const basicMonthlyPrice = "price_1SkSYWJYaJlmvTvCIy15xocG";
+const basicYearlyPrice = "price_1Sn62YJYaJlmvTvCNWddZaeG";
+const advancedMonthlyPrice = "price_1Sn63DJYaJlmvTvCOeOsgBlA";
+const advancedYearlyPrice = "price_1SmkoxJYaJlmvTvCGynq0ujw";
+
+// Create price ID to tier mapper
+const priceIdToTier = createPriceIdToTierMapper(
+  basicMonthlyPrice,
+  basicYearlyPrice,
+  advancedMonthlyPrice,
+  advancedYearlyPrice
+);
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -23,23 +47,22 @@ Deno.serve(async (req) => {
     });
   }
 
-  console.log("[Stripe Webhook] Event received");
-  console.log("[Webhook] SERVICE_ROLE_KEY present:", serviceRoleKey ? "yes" : "NO - MISSING!");
-  console.log("[Webhook] SUPABASE_URL:", supabaseUrl);
-  console.log("[Webhook] STRIPE_SECRET_KEY present:", stripeSecret ? "yes" : "NO - MISSING!");
+  console.log("[Stripe Webhook] [FLOW] Event received (TEST webhook)");
+  console.log("[Webhook] [FLOW] SERVICE_ROLE_KEY present:", serviceRoleKey ? "yes" : "NO - MISSING!");
+  console.log("[Webhook] [FLOW] SUPABASE_URL:", supabaseUrl ? "set" : "MISSING");
+  console.log("[Webhook] [FLOW] STRIPE_SECRET_KEY present:", stripeSecret ? "yes" : "NO - MISSING!");
   
   // Parse raw body and signature
   const sig = req.headers.get("stripe-signature");
   const rawBody = await req.text();
 
-  console.log("[Webhook] Stripe signature present:", sig ? "yes" : "NO - MISSING!");
+  console.log("[Webhook] [FLOW] Stripe signature present:", sig ? "yes" : "NO - MISSING!");
 
   // Parse event (skip signature verification for now to debug)
   let event;
   try {
     event = JSON.parse(rawBody);
-    console.log("[Webhook] Event type:", event.type);
-    console.log("[Webhook] Event ID:", event.id);
+    console.log("[Webhook] [FLOW] Event type:", event.type, "Event ID:", event.id);
   } catch (err) {
     console.error("[Webhook] Error parsing Stripe event:", err);
     return new Response(JSON.stringify({ error: "Invalid Stripe event" }), { 
@@ -49,22 +72,21 @@ Deno.serve(async (req) => {
   }
 
   // Handle one-time payment (checkout.session.completed)
-  // For subscriptions, customer.subscription.created will send the email
+  // For subscriptions, customer.subscription.created will handle it
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
     const customerEmail = session.customer_email;
     const mode = session.mode; // "subscription" or "payment"
 
-    console.log("[Webhook] Checkout completed for:", customerEmail, "Mode:", mode);
+    console.log("[Webhook] [FLOW] checkout.session.completed - email:", customerEmail, "mode:", mode, "subscription:", session.subscription || "n/a");
 
     // For subscriptions, skip email - customer.subscription.created will handle it
     // Only send email for one-time payments (mode === "payment")
     if (mode === "subscription") {
-      console.log("[Webhook] Subscription checkout - skipping email (customer.subscription.created will send it)");
+      console.log("[Webhook] [FLOW] Subscription checkout - user will be updated by customer.subscription.created (may be trialing)");
       
-      // Still update user's payment status in Supabase
+      // Still update user's payment status in Supabase (minimal update, full update happens in subscription.created)
       if (customerEmail) {
-        // Extract customer ID from session (can be string or object)
         const sessionCustomerId = typeof session.customer === "string"
           ? session.customer
           : session.customer?.id || null;
@@ -113,7 +135,6 @@ Deno.serve(async (req) => {
       }
 
       if (customerEmail) {
-        // Extract customer ID from session (can be string or object)
         const sessionCustomerId = typeof session.customer === "string"
           ? session.customer
           : session.customer?.id || null;
@@ -140,25 +161,10 @@ Deno.serve(async (req) => {
         if (updateRes.ok) {
           console.log(`[Webhook] User ${customerEmail} payment status updated to is_paid=true.`);
           
-          // Send transactional email via template system
-          // Fetch user from database to get real first name
-          const userRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(customerEmail)}&select=username,name`, {
-            headers: {
-              "apikey": serviceRoleKey,
-              "Authorization": `Bearer ${serviceRoleKey}`,
-            },
-          });
-
-          let firstName = customerEmail.split('@')[0]; // Fallback to email extraction
-          if (userRes.ok) {
-            const users = await userRes.json();
-            if (users && users.length > 0) {
-              // Prefer name (first name), then username, then fallback to email extraction
-              firstName = users[0].name || users[0].username || firstName;
-            }
-          }
-          
-          console.log("[Webhook] Sending payment receipt email to:", customerEmail);
+          // Get user ID and first name for email
+          const user = await getUserByEmail(supabaseUrl, serviceRoleKey, customerEmail, "id,name,username");
+          const userId = user?.id;
+          const firstName = user?.name || user?.username || customerEmail.split('@')[0];
           
           // Download invoice PDF and convert to base64 for attachment
           let attachments: { filename: string; content: string }[] = [];
@@ -191,32 +197,21 @@ Deno.serve(async (req) => {
             }
           }
           
-          // Call the send-email edge function with PDF attachment
-          const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${serviceRoleKey}`,
-            },
-            body: JSON.stringify({
-              to: customerEmail,
-              templateId: 'payment_receipt',
-              data: {
+          // Send email using helper function (logs automatically)
+          if (userId) {
+            await sendTransactionalEmail(
+              supabaseUrl,
+              serviceRoleKey,
+              userId,
+              customerEmail,
+              'payment_receipt' as EmailType, // Using payment_receipt as email type for one-time payments
+              'payment_receipt',
+              {
                 first_name: firstName,
                 invoice_pdf_url: invoicePdfUrl,
               },
-              attachments: attachments,
-            }),
-          });
-          
-          console.log("[Webhook] Email API response status:", emailRes.status);
-          
-          if (emailRes.ok) {
-            const emailResult = await emailRes.json();
-            console.log(`[Webhook] Payment receipt email sent successfully with ${attachments.length} attachment(s).`);
-          } else {
-            const errText = await emailRes.text();
-            console.error("[Webhook] Error sending payment receipt email:", errText);
+              attachments
+            );
           }
         } else {
           const errText = await updateRes.text();
@@ -225,6 +220,52 @@ Deno.serve(async (req) => {
       }
     }
   }
+  // ----- customer.subscription.deleted: downgrade user when subscription is removed -----
+  if (event.type === "customer.subscription.deleted") {
+    const subscription = event.data.object;
+    const customerId = typeof subscription.customer === "string"
+      ? subscription.customer
+      : subscription.customer?.id;
+    console.log("[Webhook] [FLOW] customer.subscription.deleted - subscriptionId:", subscription.id, "customerId:", customerId);
+
+    const email = customerId ? await getStripeCustomerEmail(customerId, stripeSecret) : null;
+
+    if (email) {
+      console.log("[Webhook] [TRIAL/DOWNGRADE] Downgrading user (subscription deleted):", email);
+      
+      // Downgrade user using helper
+      const downgraded = await downgradeUserToFree(supabaseUrl, serviceRoleKey, email);
+      
+      if (downgraded) {
+        console.log("[Webhook] [TRIAL/DOWNGRADE] User downgraded to free:", email);
+        
+        // Send subscription cancelled email
+        const user = await getUserByEmail(supabaseUrl, serviceRoleKey, email, "id,name,username,subscription_tier");
+        if (user?.id) {
+          const firstName = user.name || user.username || email.split('@')[0];
+          const previousTier = user.subscription_tier || "free";
+          
+          await sendTransactionalEmail(
+            supabaseUrl,
+            serviceRoleKey,
+            user.id,
+            email,
+            'subscription_cancelled',
+            'subscription_cancelled',
+            {
+              first_name: firstName,
+              tier: previousTier,
+            }
+          );
+        }
+      } else {
+        console.error("[Webhook] [TRIAL/DOWNGRADE] Failed to downgrade user:", email);
+      }
+    } else {
+      console.warn("[Webhook] [FLOW] customer.subscription.deleted: could not resolve email for customerId:", customerId);
+    }
+  }
+
   if (["customer.subscription.created", "customer.subscription.updated"].includes(event.type)) {
     const subscription = event.data.object;
     const subscriptionId = subscription.id;
@@ -235,24 +276,11 @@ Deno.serve(async (req) => {
     // Step 1: Get the price ID from Stripe subscription to determine NEW tier
     const priceId = subscription.items?.data?.[0]?.price?.id;
     
-    console.log(`[Webhook] Received priceId: ${priceId}`);
+    console.log(`[Webhook] [FLOW] subscription event - priceId: ${priceId}, subscriptionId: ${subscriptionId}`);
     
-    // Step 2: Map price ID to tier (basic or advanced) - using hardcoded values to match checkout
-    const basicMonthlyPrice = "price_1SkSYWJYaJlmvTvCIy15xocG";
-    const basicYearlyPrice = "price_1Sn62YJYaJlmvTvCNWddZaeG";
-    const advancedMonthlyPrice = "price_1Sn63DJYaJlmvTvCOeOsgBlA";
-    const advancedYearlyPrice = "price_1SmkoxJYaJlmvTvCGynq0ujw";
-    
-    let newTier = "basic"; // default
-    if (priceId === advancedMonthlyPrice || priceId === advancedYearlyPrice) {
-      newTier = "advanced";
-      console.log(`[Webhook] Mapped priceId ${priceId} to tier: advanced`);
-    } else if (priceId === basicMonthlyPrice || priceId === basicYearlyPrice) {
-      newTier = "basic";
-      console.log(`[Webhook] Mapped priceId ${priceId} to tier: basic`);
-    } else {
-      console.warn(`[Webhook] WARNING: PriceId ${priceId} did not match any known price IDs. Defaulting to basic.`);
-    }
+    // Step 2: Map price ID to tier using helper function
+    const newTier = priceIdToTier(priceId);
+    console.log(`[Webhook] Mapped priceId ${priceId} to tier: ${newTier}`);
 
     // Fetch full subscription details from Stripe API to get current_period_start/end
     // (webhook payload may not include these fields)
@@ -266,7 +294,7 @@ Deno.serve(async (req) => {
         });
         if (subscriptionRes.ok) {
           fullSubscription = await subscriptionRes.json();
-          console.log("[Webhook] Fetched full subscription details from Stripe API");
+          console.log("[Webhook] [FLOW] Fetched full subscription from Stripe API");
         } else {
           console.warn("[Webhook] Failed to fetch full subscription, using webhook payload");
         }
@@ -275,217 +303,232 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch customer email from Stripe API
-    let email = "";
+    const subStatus = fullSubscription.status || subscription.status || "";
+    const trialStart = fullSubscription.trial_start ?? subscription.trial_start;
+    const trialEnd = fullSubscription.trial_end ?? subscription.trial_end;
+    console.log("[Webhook] [FLOW] Subscription status:", subStatus, "trial_start:", trialStart ? new Date(trialStart * 1000).toISOString() : "none", "trial_end:", trialEnd ? new Date(trialEnd * 1000).toISOString() : "none");
+
+    const isActiveOrTrialing = subStatus === "active" || subStatus === "trialing";
+    if (!isActiveOrTrialing) {
+      console.log("[Webhook] [TRIAL/DOWNGRADE] Subscription not active/trialing (status=" + subStatus + ") - will downgrade user if we have email");
+    }
+
+    // Fetch customer email from Stripe API using helper
+    const email = customerId ? await getStripeCustomerEmail(customerId, stripeSecret) : null;
+    
+    // Fetch invoice PDF URL from subscription's latest invoice
     let invoicePdfUrl = "";
     let invoicePdfDownloadUrl = "";
     let invoiceNumber = "";
-
-    if (customerId) {
-      const stripeRes = await fetch(`https://api.stripe.com/v1/customers/${customerId}`, {
-        headers: {
-          "Authorization": `Bearer ${stripeSecret}`,
-        },
-      });
-      if (stripeRes.ok) {
-        const customer = await stripeRes.json();
-        email = customer.email;
-      }
-
-      // Fetch invoice PDF URL from subscription's latest invoice
-      const invoiceId = subscription.latest_invoice;
-      if (invoiceId && typeof invoiceId === 'string') {
-        try {
-          const invoiceRes = await fetch(`https://api.stripe.com/v1/invoices/${invoiceId}`, {
-            headers: {
-              "Authorization": `Bearer ${stripeSecret}`,
-            },
-          });
-          if (invoiceRes.ok) {
-            const invoice = await invoiceRes.json();
-            invoicePdfUrl = invoice.hosted_invoice_url || invoice.invoice_pdf || "";
-            invoicePdfDownloadUrl = invoice.invoice_pdf || "";
-            invoiceNumber = invoice.number || invoice.id || "";
-            console.log("[Webhook] Invoice PDF URL retrieved:", invoicePdfUrl ? "yes" : "no");
-          }
-        } catch (invoiceError) {
-          console.error("[Webhook] Error fetching invoice:", invoiceError);
+    const invoiceId = subscription.latest_invoice;
+    if (customerId && invoiceId && typeof invoiceId === 'string') {
+      try {
+        const invoiceRes = await fetch(`https://api.stripe.com/v1/invoices/${invoiceId}`, {
+          headers: {
+            "Authorization": `Bearer ${stripeSecret}`,
+          },
+        });
+        if (invoiceRes.ok) {
+          const invoice = await invoiceRes.json();
+          invoicePdfUrl = invoice.hosted_invoice_url || invoice.invoice_pdf || "";
+          invoicePdfDownloadUrl = invoice.invoice_pdf || "";
+          invoiceNumber = invoice.number || invoice.id || "";
+          console.log("[Webhook] Invoice PDF URL retrieved:", invoicePdfUrl ? "yes" : "no");
         }
+      } catch (invoiceError) {
+        console.error("[Webhook] Error fetching invoice:", invoiceError);
       }
     }
 
     if (email) {
       // Step 3: Get PREVIOUS tier from database (only for subscription.updated)
       let previousTier = "free";
+      let previousStatus: string | null = null;
+      let wasTrialing = false;
       if (event.type === "customer.subscription.updated") {
-        const currentUserRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=subscription_tier`, {
-          headers: {
-            "apikey": serviceRoleKey,
-            "Authorization": `Bearer ${serviceRoleKey}`,
-          },
-        });
-        if (currentUserRes.ok) {
-          const currentUsers = await currentUserRes.json();
-          if (currentUsers && currentUsers.length > 0) {
-            previousTier = currentUsers[0].subscription_tier || "free";
-          }
+        const user = await getUserByEmail(supabaseUrl, serviceRoleKey, email, "subscription_tier,subscription_status,trial_ends_at");
+        if (user) {
+          previousTier = user.subscription_tier || "free";
+          previousStatus = user.subscription_status || null;
+          // Access trial_ends_at from the raw user object (not typed in User interface)
+          wasTrialing = previousStatus === "trialing" && !!(user as any).trial_ends_at;
         }
       }
+      console.log("[Webhook] [FLOW] previousTier:", previousTier, "previousStatus:", previousStatus, "newTier:", newTier, "isActiveOrTrialing:", isActiveOrTrialing);
 
-      // Step 4: Update user's subscription status in Supabase with CORRECT tier
-      // Extract subscription dates from Stripe (Unix timestamps in seconds)
-      // Try full subscription first, then fallback to items.data[0], then webhook payload
-      const periodStart = fullSubscription.current_period_start 
-        || fullSubscription.items?.data?.[0]?.current_period_start
-        || subscription.current_period_start
-        || null;
-      const periodEnd = fullSubscription.current_period_end
-        || fullSubscription.items?.data?.[0]?.current_period_end
-        || subscription.current_period_end
-        || null;
-      
-      const subscriptionStart = periodStart
-        ? new Date(periodStart * 1000).toISOString()
-        : null;
-      const subscriptionEnd = periodEnd
-        ? new Date(periodEnd * 1000).toISOString()
-        : null;
-      
-      console.log("[Webhook] Subscription dates - start:", subscriptionStart, "end:", subscriptionEnd);
-      console.log(`[Webhook] Updating database - email: ${email}, previousTier: ${previousTier}, newTier: ${newTier}, eventType: ${event.type}`);
-      
-      const updateData = {
-        is_paid: true,
-        subscription_tier: newTier, // Use the mapped tier, not hardcoded "basic"
-        stripe_customer_id: customerId || null,
-        subscription_start: subscriptionStart,
-        subscription_end: subscriptionEnd,
-        updated_at: new Date().toISOString(),
-      };
-      
-      console.log(`[Webhook] Database update payload:`, JSON.stringify(updateData, null, 2));
-      
-      const updateRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
-        method: "PATCH",
-        headers: {
-          "apikey": serviceRoleKey,
-          "Authorization": `Bearer ${serviceRoleKey}`,
-          "Content-Type": "application/json",
-          "Prefer": "return=representation"
-        },
-        body: JSON.stringify(updateData),
-      });
-      
-      if (updateRes.ok) {
-        const updatedUser = await updateRes.json();
-        console.log(`[Webhook] ✅ User ${email} subscription updated successfully.`);
-        console.log(`[Webhook] Updated tier in DB: ${updatedUser[0]?.subscription_tier || 'N/A'}, Previous: ${previousTier}, New: ${newTier}`);
+      if (isActiveOrTrialing) {
+        // Step 4a: Grant access (active or trialing) - update user with tier and period dates
+        const periodStart = fullSubscription.current_period_start 
+          || fullSubscription.items?.data?.[0]?.current_period_start
+          || subscription.current_period_start
+          || null;
+        const periodEnd = fullSubscription.current_period_end
+          || fullSubscription.items?.data?.[0]?.current_period_end
+          || subscription.current_period_end
+          || null;
         
-        // Step 5: Only send access_upgraded email if basic → advanced upgrade
-        const shouldSendUpgradeEmail = 
-          event.type === "customer.subscription.updated" && 
-          previousTier === "basic" && 
-          newTier === "advanced";
+        const subscriptionStart = periodStart
+          ? new Date(periodStart * 1000).toISOString()
+          : null;
+        const subscriptionEnd = periodEnd
+          ? new Date(periodEnd * 1000).toISOString()
+          : null;
+
+        const trialEndsAt = subStatus === "trialing" && trialEnd
+          ? new Date(trialEnd * 1000).toISOString()
+          : null;
         
-        // Fetch user from database to get real first name
-        const userRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=username,name`, {
-          headers: {
-            "apikey": serviceRoleKey,
-            "Authorization": `Bearer ${serviceRoleKey}`,
+        console.log("[Webhook] [FLOW] Granting access - subscription_start:", subscriptionStart, "subscription_end:", subscriptionEnd, "status:", subStatus, "trial_ends_at:", trialEndsAt);
+        
+        // Use helper function to update subscription
+        const updated = await updateUserSubscriptionFromStripe(
+          supabaseUrl,
+          serviceRoleKey,
+          email,
+          {
+            id: subscriptionId,
+            status: subStatus,
+            customer: customerId || "",
+            items: subscription.items,
+            trial_start: trialStart,
+            trial_end: trialEnd,
+            current_period_start: periodStart,
+            current_period_end: periodEnd,
           },
-        });
-
-        let firstName = email.split('@')[0]; // Fallback to email extraction
-        if (userRes.ok) {
-          const users = await userRes.json();
-          if (users && users.length > 0) {
-            // Prefer name (first name), then username, then fallback to email extraction
-            firstName = users[0].name || users[0].username || firstName;
-          }
-        }
+          priceIdToTier
+        );
         
-        // Choose template based on event type and upgrade condition
-        let templateId: string | null = null;
-        if (event.type === "customer.subscription.created") {
-          templateId = 'payment_receipt';
-        } else if (shouldSendUpgradeEmail) {
-          templateId = 'access_upgraded';
-        }
-        
-        // Only send email if we have a template to send
-        if (templateId) {
-          console.log(`[Webhook] Sending ${templateId} email to ${email} for event: ${event.type}`);
+        if (updated) {
+          console.log("[Webhook] ✅ User", email, "subscription updated (access granted). Tier:", newTier, "Previous:", previousTier);
           
-          // Download invoice PDF for attachment (for both payment_receipt and access_upgraded)
-          let attachments: { filename: string; content: string }[] = [];
-          if ((templateId === 'payment_receipt' || templateId === 'access_upgraded') && invoicePdfDownloadUrl) {
-            try {
-              console.log(`[Webhook] Downloading invoice PDF from: ${invoicePdfDownloadUrl}`);
-              const pdfResponse = await fetch(invoicePdfDownloadUrl);
-              
-              if (pdfResponse.ok) {
-                const pdfBuffer = await pdfResponse.arrayBuffer();
-                const pdfBytes = new Uint8Array(pdfBuffer);
+          // Get user details for emails
+          const user = await getUserByEmail(supabaseUrl, serviceRoleKey, email, "id,name,username,subscription_status,trial_converted_to_paid");
+          const userId = user?.id;
+          const firstName = user?.name || user?.username || email.split('@')[0];
+          
+          if (userId) {
+            // Download invoice PDF for attachment
+            let attachments: { filename: string; content: string }[] = [];
+            if (invoicePdfDownloadUrl) {
+              try {
+                console.log(`[Webhook] Downloading invoice PDF from: ${invoicePdfDownloadUrl}`);
+                const pdfResponse = await fetch(invoicePdfDownloadUrl);
                 
-                // Convert to base64
-                let binary = '';
-                for (let i = 0; i < pdfBytes.length; i++) {
-                  binary += String.fromCharCode(pdfBytes[i]);
+                if (pdfResponse.ok) {
+                  const pdfBuffer = await pdfResponse.arrayBuffer();
+                  const pdfBytes = new Uint8Array(pdfBuffer);
+                  
+                  // Convert to base64
+                  let binary = '';
+                  for (let i = 0; i < pdfBytes.length; i++) {
+                    binary += String.fromCharCode(pdfBytes[i]);
+                  }
+                  const pdfBase64 = btoa(binary);
+                  
+                  attachments = [{
+                    filename: `YieldCanary-Invoice-${invoiceNumber}.pdf`,
+                    content: pdfBase64,
+                  }];
+                  console.log(`[Webhook] Invoice PDF downloaded and encoded, size: ${pdfBytes.length} bytes`);
+                } else {
+                  console.error(`[Webhook] Failed to download invoice PDF: ${pdfResponse.status}`);
                 }
-                const pdfBase64 = btoa(binary);
-                
-                attachments = [{
-                  filename: `YieldCanary-Invoice-${invoiceNumber}.pdf`,
-                  content: pdfBase64,
-                }];
-                console.log(`[Webhook] Invoice PDF downloaded and encoded, size: ${pdfBytes.length} bytes`);
-              } else {
-                console.error(`[Webhook] Failed to download invoice PDF: ${pdfResponse.status}`);
+              } catch (pdfError) {
+                console.error("[Webhook] Error downloading invoice PDF:", pdfError);
               }
-            } catch (pdfError) {
-              console.error("[Webhook] Error downloading invoice PDF:", pdfError);
+            }
+            
+            // Handle trial started email (subscription.created with trialing status)
+            if (event.type === "customer.subscription.created" && subStatus === "trialing") {
+              await sendTransactionalEmail(
+                supabaseUrl,
+                serviceRoleKey,
+                userId,
+                email,
+                'trial_started',
+                'trial_started',
+                {
+                  first_name: firstName,
+                  trial_end_date: trialEndsAt ? new Date(trialEndsAt).toLocaleDateString() : "",
+                }
+              );
+            }
+            
+            // Handle trial converted to paid (subscription.updated: trialing → active)
+            if (event.type === "customer.subscription.updated" && wasTrialing && subStatus === "active" && !user?.trial_converted_to_paid) {
+              await sendTransactionalEmail(
+                supabaseUrl,
+                serviceRoleKey,
+                userId,
+                email,
+                'trial_converted_to_paid',
+                'trial_converted_to_paid',
+                {
+                  first_name: firstName,
+                  tier: newTier,
+                }
+              );
+            }
+            
+            // Handle payment receipt (subscription.created, not trialing) or upgrade email
+            const shouldSendUpgradeEmail = 
+              event.type === "customer.subscription.updated" && 
+              previousTier === "basic" && 
+              newTier === "advanced";
+            
+            if (event.type === "customer.subscription.created" && subStatus !== "trialing") {
+              // Payment receipt for non-trial subscription creation
+              await sendTransactionalEmail(
+                supabaseUrl,
+                serviceRoleKey,
+                userId,
+                email,
+                'payment_receipt' as EmailType,
+                'payment_receipt',
+                {
+                  first_name: firstName,
+                  invoice_pdf_url: invoicePdfUrl,
+                },
+                attachments
+              );
+            } else if (shouldSendUpgradeEmail) {
+              // Upgrade email
+              await sendTransactionalEmail(
+                supabaseUrl,
+                serviceRoleKey,
+                userId,
+                email,
+                'access_upgraded' as EmailType,
+                'access_upgraded',
+                {
+                  first_name: firstName,
+                  invoice_pdf_url: invoicePdfUrl,
+                },
+                attachments
+              );
             }
           }
-          
-          // Call the send-email edge function with attachment
-          const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${serviceRoleKey}`,
-            },
-            body: JSON.stringify({
-              to: email,
-              templateId: templateId,
-              data: {
-                first_name: firstName,
-                invoice_pdf_url: invoicePdfUrl,
-              },
-              attachments: attachments,
-            }),
-          });
-          
-          if (emailRes.ok) {
-            console.log(`Transactional email (${templateId}) sent to ${email} with ${attachments.length} attachment(s).`);
-          } else {
-            const errText = await emailRes.text();
-            console.error("Error sending transactional email:", errText);
-          }
         } else {
-          console.log(`[Webhook] Skipping email - not a basic→advanced upgrade (previous: ${previousTier}, new: ${newTier})`);
+          console.error(`[Webhook] ❌ Error updating user subscription for ${email}`);
         }
       } else {
-        const errText = await updateRes.text();
-        console.error(`[Webhook] ❌ Error updating user subscription for ${email}:`, errText);
-        console.error(`[Webhook] Update response status: ${updateRes.status}`);
-        console.error(`[Webhook] Attempted to update with tier: ${newTier}, priceId: ${priceId}`);
+        // Step 4b: Downgrade - subscription canceled / past_due / unpaid
+        console.log("[Webhook] [TRIAL/DOWNGRADE] Downgrading user (subscription status=" + subStatus + "):", email);
+        
+        const downgraded = await downgradeUserToFree(supabaseUrl, serviceRoleKey, email);
+        
+        if (downgraded) {
+          console.log("[Webhook] [TRIAL/DOWNGRADE] User downgraded to free:", email);
+        } else {
+          console.error("[Webhook] [TRIAL/DOWNGRADE] Failed to downgrade:", email);
+        }
       }
     }
   }
 
   // Handle subscription renewal (invoice.payment_succeeded)
   if (event.type === "invoice.payment_succeeded") {
-    console.log(`[Webhook] invoice.payment_succeeded event received`);
+    console.log(`[Webhook] [FLOW] invoice.payment_succeeded received`);
     const invoice = event.data.object;
     
     // Extract subscription ID - can be direct or nested in parent.subscription_details
@@ -610,6 +653,44 @@ Deno.serve(async (req) => {
     }
   }
 
+  // ----- invoice.payment_failed: send payment failed email (downgrade happens via subscription.updated/deleted) -----
+  if (event.type === "invoice.payment_failed") {
+    const invoice = event.data.object;
+    const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+    const subscriptionId = invoice.subscription;
+    
+    console.log("[Webhook] [FLOW] invoice.payment_failed - invoiceId:", invoice.id, "customerId:", customerId, "subscription:", subscriptionId || "none");
+    
+    // Only send email for subscription payments (not one-time payments)
+    if (subscriptionId && customerId) {
+      const email = await getStripeCustomerEmail(customerId, stripeSecret);
+      
+      if (email) {
+        const user = await getUserByEmail(supabaseUrl, serviceRoleKey, email, "id,name,username");
+        const userId = user?.id;
+        
+        if (userId) {
+          const firstName = user?.name || user?.username || email.split('@')[0];
+          
+          await sendTransactionalEmail(
+            supabaseUrl,
+            serviceRoleKey,
+            userId,
+            email,
+            'payment_failed',
+            'payment_failed',
+            {
+              first_name: firstName,
+              invoice_id: invoice.id,
+              amount_due: invoice.amount_due ? (invoice.amount_due / 100).toFixed(2) : "0.00",
+            }
+          );
+        }
+      }
+    }
+  }
+
+  console.log("[Webhook] [FLOW] Returning 200 for event type:", event.type);
   return new Response(JSON.stringify({ received: true }), { 
     status: 200,
     headers: { "Content-Type": "application/json" }

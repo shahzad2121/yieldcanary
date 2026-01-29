@@ -23,6 +23,8 @@ export const DASHBOARD_HEADER_HEIGHT_MOBILE = '6.25rem';
 interface DashboardHeaderProps {
   plan: 'free' | 'basic' | 'advanced';
   isPaid: boolean;
+  isTrialing?: boolean;
+  trialEndsAt?: string | null;
   userEmail?: string;
   onUpgrade: () => void;
   searchQuery: string;
@@ -32,6 +34,8 @@ interface DashboardHeaderProps {
 export function DashboardHeader({
   plan,
   isPaid,
+  isTrialing = false,
+  trialEndsAt = null,
   userEmail = 'user@example.com',
   onUpgrade,
   searchQuery,
@@ -57,7 +61,7 @@ export function DashboardHeader({
             onClick={() => navigate('/')}
             className="flex items-center gap-1.5 hover:opacity-80 transition-opacity flex-shrink-0"
           >
-            <Bird className="h-5 w-5 sm:h-8 sm:w-8 text-foreground flex-shrink-0" />
+            <Bird className="h-4 w-4 sm:h-8 sm:w-8 text-foreground flex-shrink-0" />
             <span className="text-sm sm:text-xl font-bold tracking-tight text-foreground whitespace-nowrap">
               YieldCanary
             </span>
@@ -84,7 +88,7 @@ export function DashboardHeader({
           <Button
             variant="ghost"
             onClick={() => setIsFeedbackOpen(true)}
-            className="text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4"
+            className="text-xs sm:text-sm h-8 sm:h-10 px-0 sm:px-4"
             aria-label="Send feedback"
           >
             Feedback
@@ -97,9 +101,9 @@ export function DashboardHeader({
             aria-label="Toggle theme"
           >
             {theme === 'dark' ? (
-              <Sun className="h-4 w-4" />
+              <Sun className="h-3 w-3 sm:h-4 sm:w-4" />
             ) : (
-              <Moon className="h-4 w-4" />
+              <Moon className="h-3 w-3 sm:h-4 sm:w-4" />
             )}
           </button>
 
@@ -108,8 +112,8 @@ export function DashboardHeader({
             <Button
               onClick={onUpgrade}
               variant="outline"
-              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4"              >
-              <Crown className="h-3 w-3 sm:h-4 sm:w-4" />
+              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-7 sm:h-10 px-2 sm:px-4"              >
+              <Crown className="h-2 w-2 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Upgrade</span>
             </Button>
           )}
@@ -141,6 +145,11 @@ export function DashboardHeader({
                 <p className="text-xs text-muted-foreground">
                   {plan === 'free' ? 'Free Tier' : plan === 'advanced' ? 'Advanced Member' : 'Basic Member'}
                 </p>
+                {isTrialing && trialEndsAt && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Trial ends {new Date(trialEndsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                )}
               </div>
               <DropdownMenuSeparator />
               {plan !== 'free' && (

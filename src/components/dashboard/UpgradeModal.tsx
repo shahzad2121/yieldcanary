@@ -4,6 +4,7 @@ import { Check, Crown, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { redirectToCheckout } from '@/integrations/stripe/checkout';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ export function UpgradeModal({ isOpen, onClose, onUpgrade }: UpgradeModalProps) 
   const [loading, setLoading] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<'basic' | 'advanced'>('basic');
   const [isYearly, setIsYearly] = useState(false);
+  const { toast } = useToast();
 
   const handleUpgradeClick = async (plan: 'basic_monthly' | 'basic_yearly' | 'advanced_monthly' | 'advanced_yearly') => {
     try {
@@ -47,7 +49,11 @@ export function UpgradeModal({ isOpen, onClose, onUpgrade }: UpgradeModalProps) 
       const email = session?.user?.email;
 
       if (!email) {
-        alert('Unable to find user email. Please sign in again.');
+        toast({
+          variant: 'destructive',
+          title: 'Sign-in required',
+          description: 'Unable to find user email. Please sign in again.',
+        });
         onClose();
         return;
       }
@@ -165,7 +171,7 @@ export function UpgradeModal({ isOpen, onClose, onUpgrade }: UpgradeModalProps) 
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
-            Cancel anytime • Secure checkout
+          7-day free trial • Card required for trial
           </p>
         </div>
       </DialogContent>

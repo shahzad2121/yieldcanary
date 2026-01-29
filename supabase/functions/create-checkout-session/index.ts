@@ -247,6 +247,12 @@ Deno.serve(async (req) => {
       bodyParams["invoice_creation[enabled]"] = "true";
     }
 
+    // Enable 7-day free trial for subscriptions (mirrors test environment behavior)
+    if (mode === "subscription") {
+      bodyParams["subscription_data[trial_period_days]"] = "7";
+      console.log("[Checkout] [TRIAL] 7-day free trial enabled for subscription (card required, first charge after trial)");
+    }
+
     const checkoutRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
       method: "POST",
       headers: {
