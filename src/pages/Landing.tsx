@@ -236,6 +236,9 @@ const Landing = () => {
             <p className="text-base xs:text-lg sm:text-xl font-semibold text-foreground mb-6 sm:mb-8 px-2">
               We name the dying ones — and show exactly how many years they have left.
             </p>
+             <p className="text-base xs:text-lg sm:text-xl text-muted-foreground mb-2 sm:mb-4 px-2">
+              YieldCanary delivers the confidence and peace of mind every income investor deserves.
+            </p>
             <div className="flex flex-col xs:flex-row gap-3 sm:gap-4 justify-center">
               <Link to="/auth">
                 <Button size="lg" className="text-sm sm:text-base px-6 sm:px-8 w-full xs:w-auto">
