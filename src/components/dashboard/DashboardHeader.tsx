@@ -17,6 +17,9 @@ import { useTheme } from '@/hooks/useTheme';
 import { SettingsModal } from './SettingsModal';
 import { FeedbackModal } from '@/components/modals/FeedbackModal';
 
+/** Mobile sticky header height (nav h-14 + search row h-9 + pb-2). Use for sticky elements that sit below the header. */
+export const DASHBOARD_HEADER_HEIGHT_MOBILE = '6.25rem';
+
 interface DashboardHeaderProps {
   plan: 'free' | 'basic' | 'advanced';
   isPaid: boolean;
