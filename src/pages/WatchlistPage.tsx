@@ -14,7 +14,7 @@ import { CanaryStatus } from '@/types/etf';
 
 const WatchlistPage = () => {
   const { etfs, loading: etfsLoading, error: etfsError } = useETFs();
-  const { user: subscriptionUser, loading: userLoading } = useUserSubscription();
+  const { user: subscriptionUser, loading: userLoading, isTrialing, trialEndsAt } = useUserSubscription();
   const { watchlistTickers, loading: watchlistLoading } = useWatchlist();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -99,6 +99,8 @@ const WatchlistPage = () => {
         <DashboardHeader
           plan={plan}
           isPaid={isPaid}
+          isTrialing={isTrialing}
+          trialEndsAt={trialEndsAt}
           userEmail={userEmail}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}

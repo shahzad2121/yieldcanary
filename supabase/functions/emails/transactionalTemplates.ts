@@ -1,5 +1,18 @@
+import { trialEmailTemplates } from "./trialTemplates.ts";
+
 export type TransactionalEmailTemplate = {
-  id: 'welcome_verify' | 'payment_receipt' | 'subscription_renewal' | 'access_upgraded' | 'access_expired' | 'password_reset';
+  id:
+    | 'welcome_verify'
+    | 'payment_receipt'
+    | 'subscription_renewal'
+    | 'access_upgraded'
+    | 'access_expired'
+    | 'password_reset'
+    | 'trial_started'
+    | 'trial_ending_reminder'
+    | 'trial_converted_to_paid'
+    | 'payment_failed'
+    | 'subscription_cancelled';
   title: string;
   subject: string;
   previewText?: string;
@@ -1426,4 +1439,6 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
 </body>
 </html>`,
   },
+  // Import and merge trial email templates
+  ...trialEmailTemplates,
 ];

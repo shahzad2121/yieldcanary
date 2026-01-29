@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Footer } from '@/components/Footer';
 import { MarketingStats } from '@/components/MarketingStats';
 import { DashboardScreenshot } from '@/components/DashboardScreenshot';
+import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,7 @@ const Landing = () => {
   const { theme, toggleTheme } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const [paymentStatus, setPaymentStatus] = useState<'success' | 'cancelled' | null>(null);
+  const { toast } = useToast();
 
   // Load user session on mount
   useEffect(() => {
@@ -85,7 +87,11 @@ const Landing = () => {
 
       if (!email) {
         // Redirect to auth if not logged in
-        alert('Please sign in first to upgrade your plan.');
+        toast({
+          variant: 'destructive',
+          title: 'Sign-in required',
+          description: 'Please sign in first to upgrade your plan.',
+        });
         navigate('/auth');
         return;
       }
@@ -239,7 +245,7 @@ const Landing = () => {
             <div className="flex flex-col xs:flex-row gap-3 sm:gap-4 justify-center">
               <Link to="/auth">
                 <Button size="lg" className="text-sm sm:text-base px-6 sm:px-8 w-full xs:w-auto">
-                  Get Started Free
+                  Start 7 Day Free Trial
                 </Button>
               </Link>
               <Button 
@@ -312,8 +318,8 @@ const Landing = () => {
           exampleText="$100,000 in TSLY at its inception: $80,000 in principal loss"
           disclaimer="Assuming distributions were spent as income"
           description="Join thousands of investors who use YieldCanary to identify dying funds before they erode their portfolio value."
-          ctaText="Get Started Free"
-          ctaLink="/auth"
+          ctaText="Start 7-Day Free Trial"
+          ctaLink="#pricing"
           enableParticles={true}
           enableCounter={true}
         />
@@ -360,6 +366,9 @@ const Landing = () => {
                 Stop guessing which high-yield ETFs are actually safe.<br />
                 Choose the plan that fits your portfolio.
               </p>
+              <p className="text-xs xs:text-sm text-muted-foreground mt-2 sm:mt-3 px-2">
+                7-day free trial on all paid plans. Card required. Cancel anytime.
+              </p>
             </div>
             
             <div className="flex justify-center gap-2 xs:gap-3 mb-8 sm:mb-12">
@@ -403,6 +412,7 @@ const Landing = () => {
                 price={isYearly ? "$89" : "$9"}
                 period={isYearly ? "/ year" : "/ month"}
                 features={[
+                  "7-day free trial — cancel anytime",
                   "True Income Yield revealed (real sustainable income after ROC)",
                   "ROC % + ROC Health",
                   "Alive / Dying / Dead Canary status",
@@ -410,9 +420,8 @@ const Landing = () => {
                   "Create a custom Watchlist to track your favorite ETFs",
                   "Export CSV data for any filtered view",
                   "Monthly updates included",
-                  "Cancel anytime",
                 ]}
-                buttonText="Start Basic"
+                buttonText="Start 7-Day Free Trial"
                 featured
                 onCheckout={() => handleCheckout(isYearly ? 'basic_yearly' : 'basic_monthly')}
                 isLoading={loading === (isYearly ? 'basic_yearly' : 'basic_monthly')}
@@ -424,6 +433,7 @@ const Landing = () => {
                 period={isYearly ? "/ year" : "/ month"}
                 teaserText={!isYearly ? "Lock in $19/month now – going to $49/month when released" : undefined}
                 features={[
+                  "7-day free trial — cancel anytime",
                   "Everything in Basic +",
                   'Weekly update emails (high-risk funds & big movers)',
                   "Monthly newsletter (top picks, market insights, updates)",
@@ -433,7 +443,7 @@ const Landing = () => {
                   "Visual charts & scenario calculator (coming soon)",
                   "'Ask Canary' custom AI bot to ask any questions about high-yield funds (coming soon)",
                 ]}
-                buttonText="Start Advanced"
+                buttonText="Start 7-Day Free Trial"
                 buttonVariant="outline"
                 onCheckout={() => handleCheckout(isYearly ? 'advanced_yearly' : 'advanced_monthly')}
                 isLoading={loading === (isYearly ? 'advanced_yearly' : 'advanced_monthly')}

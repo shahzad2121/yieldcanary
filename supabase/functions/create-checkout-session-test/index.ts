@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     const priceData = await priceRes.json();
     const mode = priceData.type === "recurring" ? "subscription" : "payment";
 
-    console.log(`[Checkout] Mode: ${mode}`);
+    console.log(`[Checkout] [FLOW] priceId=${priceId}, type=${priceData.type}, mode=${mode}, email=${email}`);
 
     /* --------------------------------------------------
        2️⃣ P0 — SMART SUBSCRIPTION VALIDATION
@@ -291,7 +291,13 @@ Deno.serve(async (req) => {
       bodyParams["invoice_creation[enabled]"] = "true";
     }
 
-    console.log("[Checkout] Creating session with params:", bodyParams);
+    // 7-day free trial for subscriptions (test mode)
+    if (mode === "subscription") {
+      bodyParams["subscription_data[trial_period_days]"] = "7";
+      console.log("[Checkout] [TRIAL] 7-day free trial enabled for subscription (card required, first charge after trial)");
+    }
+
+    console.log("[Checkout] Creating session with params:", JSON.stringify({ ...bodyParams }, null, 2));
 
     const checkoutRes = await fetch(
       "https://api.stripe.com/v1/checkout/sessions",
@@ -311,6 +317,7 @@ Deno.serve(async (req) => {
     }
 
     const session = await checkoutRes.json();
+    console.log(`[Checkout] [FLOW] Session created: sessionId=${session.id}, mode=${session.mode || mode}`);
 
     return new Response(JSON.stringify({ sessionId: session.id }), {
       status: 200,
