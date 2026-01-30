@@ -47,7 +47,7 @@ export async function redirectToCheckout(plan: PricingPlan, email?: string) {
       headers['Authorization'] = `Bearer ${session.access_token}`;
     }
 
-    const response = await fetch(`${supabaseUrl}/functions/v1/create-checkout-session-test`, {
+    const response = await fetch(`${supabaseUrl}/functions/v1/create-checkout-session`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
