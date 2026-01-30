@@ -305,11 +305,25 @@ export function MarketingStats({
 
             {/* CTA Button */}
             {ctaText && ctaLink && (
-              <Link to={ctaLink}>
-                <Button size="lg" variant="outline" className="electric-glow">
+              ctaLink.startsWith('#') ? (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="electric-glow"
+                  onClick={() => {
+                    const id = ctaLink!.slice(1);
+                    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
                   {ctaText}
                 </Button>
-              </Link>
+              ) : (
+                <Link to={ctaLink}>
+                  <Button size="lg" variant="outline" className="electric-glow">
+                    {ctaText}
+                  </Button>
+                </Link>
+              )
             )}
           </div>
         </div>
