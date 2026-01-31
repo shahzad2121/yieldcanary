@@ -19,3 +19,8 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/create-checkout-session-test/deno.json"
 entrypoint = "./functions/create-checkout-session-test/index.ts"
+[functions.tolt-webhook]
+enabled = true
+verify_jwt = false
+import_map = "./functions/tolt-webhook/deno.json"
+entrypoint = "./functions/tolt-webhook/index.ts"
