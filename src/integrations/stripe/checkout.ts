@@ -47,15 +47,23 @@ export async function redirectToCheckout(plan: PricingPlan, email?: string) {
       headers['Authorization'] = `Bearer ${session.access_token}`;
     }
 
+    // Tolt affiliate: send referral ID so backend can set 30-day trial and Stripe metadata
+    const toltReferral =
+      typeof (window as unknown as { tolt_referral?: string }).tolt_referral === 'string'
+        ? (window as unknown as { tolt_referral: string }).tolt_referral.trim()
+        : '';
+    const body: { priceId: string; email?: string; successUrl: string; cancelUrl: string; tolt_referral?: string } = {
+      priceId,
+      email,
+      successUrl: `${window.location.origin}/?payment=success`,
+      cancelUrl: `${window.location.origin}/?payment=cancelled`,
+    };
+    if (toltReferral) body.tolt_referral = toltReferral;
+
     const response = await fetch(`${supabaseUrl}/functions/v1/create-checkout-session`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        priceId,
-        email,
-        successUrl: `${window.location.origin}/?payment=success`,
-        cancelUrl: `${window.location.origin}/?payment=cancelled`,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
