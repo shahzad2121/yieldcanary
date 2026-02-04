@@ -9,6 +9,7 @@ import { ParticleBackground } from "@/components/ParticleBackground";
 import { useAutoLogout } from "@/hooks/useAutoLogout";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { CookieConsent } from "@/components/CookieConsent";
+import { ToltScript } from "@/components/ToltScript";
 import Landing from "./pages/Landing";
 import DashboardPage from "./pages/DashboardPage";
 import WatchlistPage from "./pages/WatchlistPage";
@@ -19,6 +20,7 @@ import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import RefundPolicy from "./pages/legal/RefundPolicy";
 import CookiePolicy from "./pages/legal/CookiePolicy";
 import DoNotSellMyInfo from "./pages/legal/DoNotSellMyInfo";
+import Affiliates from "./pages/Affiliates";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,7 @@ const App = () => {
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <ParticleBackground />
+            <ToltScript />
             <Toaster />
             <Sonner />
             <BrowserRouter>
@@ -52,6 +55,7 @@ const App = () => {
                 <Route path="/legal/refund" element={<RefundPolicy />} />
                 <Route path="/legal/cookies" element={<CookiePolicy />} />
                 <Route path="/legal/do-not-sell" element={<DoNotSellMyInfo />} />
+                <Route path="/affiliates" element={<Affiliates />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

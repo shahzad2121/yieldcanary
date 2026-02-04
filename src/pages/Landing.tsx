@@ -190,9 +190,15 @@ const Landing = () => {
                   <Link to="/auth" className="hidden xs:inline">
                     <Button variant="ghost" className="text-xs sm:text-sm px-2 xs:px-3 sm:px-4 h-8 xs:h-9 sm:h-10">Login</Button>
                   </Link>
-                  <Link to="/auth">
-                    <Button className="text-xs sm:text-sm px-2 xs:px-3 sm:px-4 h-8 xs:h-9 sm:h-10">Start 7 Day Free Trial</Button>
-                  </Link>
+                  <Button
+                    className="text-xs sm:text-sm px-2 xs:px-3 sm:px-4 h-8 xs:h-9 sm:h-10"
+                    onClick={() => {
+                      const pricingSection = document.getElementById('pricing');
+                      pricingSection?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
+                    Start 7 Day Free Trial
+                  </Button>
                 </>
               )}
             </div>
@@ -243,11 +249,16 @@ const Landing = () => {
               We name the dying ones — and show exactly how many years they have left.
             </p>
             <div className="flex flex-col xs:flex-row gap-3 sm:gap-4 justify-center">
-              <Link to="/auth">
-                <Button size="lg" className="text-sm sm:text-base px-6 sm:px-8 w-full xs:w-auto">
-                  Start 7 Day Free Trial
-                </Button>
-              </Link>
+              <Button
+                size="lg"
+                className="text-sm sm:text-base px-6 sm:px-8 w-full xs:w-auto"
+                onClick={() => {
+                  const pricingSection = document.getElementById('pricing');
+                  pricingSection?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Start 7 Day Free Trial
+              </Button>
               <Button 
                 size="lg" 
                 variant="outline" 

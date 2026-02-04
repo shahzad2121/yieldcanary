@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { priceId, email, successUrl, cancelUrl } = await req.json();
+    const { priceId, email, successUrl, cancelUrl, tolt_referral: toltReferral } = await req.json();
 
     if (!priceId) {
       return new Response(JSON.stringify({ error: "Missing priceId" }), { 
@@ -247,10 +247,44 @@ Deno.serve(async (req) => {
       bodyParams["invoice_creation[enabled]"] = "true";
     }
 
-    // Enable 7-day free trial for subscriptions (mirrors test environment behavior)
+    // Trial: 30 days for affiliate (Tolt referral), 7 days otherwise. Send Tolt ID to Stripe metadata for attribution.
+    const isAffiliate = typeof toltReferral === "string" && toltReferral.trim().length > 0;
     if (mode === "subscription") {
-      bodyParams["subscription_data[trial_period_days]"] = "7";
-      console.log("[Checkout] [TRIAL] 7-day free trial enabled for subscription (card required, first charge after trial)");
+      const trialDays = isAffiliate ? "30" : "7";
+      bodyParams["subscription_data[trial_period_days]"] = trialDays;
+      if (isAffiliate) {
+        bodyParams["subscription_data[metadata][tolt_referral]"] = toltReferral.trim();
+        console.log("[Checkout] [TRIAL] 30-day affiliate trial; tolt_referral sent to Stripe metadata");
+      } else {
+        console.log("[Checkout] [TRIAL] 7-day free trial enabled for subscription (card required, first charge after trial)");
+      }
+    }
+    if (isAffiliate && (typeof toltReferral === "string" && toltReferral.trim())) {
+      bodyParams["metadata[tolt_referral]"] = toltReferral.trim();
+    }
+
+    // Persist affiliate attribution on user record when we have email and referral
+    if (email && isAffiliate && typeof toltReferral === "string" && toltReferral.trim()) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const serviceRoleKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+      if (supabaseUrl && serviceRoleKey) {
+        await fetch(
+          `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`,
+          {
+            method: "PATCH",
+            headers: {
+              apikey: serviceRoleKey,
+              Authorization: `Bearer ${serviceRoleKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              tolt_referral_id: toltReferral.trim(),
+              is_affiliate_user: true,
+              affiliate_signup_date: new Date().toISOString(),
+            }),
+          }
+        );
+      }
     }
 
     const checkoutRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {

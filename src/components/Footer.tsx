@@ -68,6 +68,13 @@ export function Footer({ showDataDisclaimer = false }: FooterProps) {
           >
             Do Not Sell My Info
           </Link>
+          <span className="text-muted-foreground text-xs">•</span>
+          <Link
+            to="/affiliates"
+            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Affiliates
+          </Link>
         </div>
 
         {/* Social Media Icons - Centered */}
