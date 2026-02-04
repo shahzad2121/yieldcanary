@@ -108,6 +108,9 @@ DEFAULT_TICKERS = [
 
     # PIMCO High-Yield Income ETFs
     "PDI", "PTY", "PDO",
+
+    # Nicholas Wealth XFunds
+    "FIAX", "GIAX", "BLOX",
 ]
 
 

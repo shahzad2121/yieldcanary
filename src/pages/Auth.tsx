@@ -454,7 +454,7 @@ export default function Auth() {
               <Input
                 id="username"
                 type="text"
-                placeholder="your_username"
+                placeholder="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required={!isLogin}
@@ -489,7 +489,7 @@ export default function Auth() {
             <Input
               id="password"
               type="password"
-              placeholder="••••••••"
+              placeholder="••••••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -504,7 +504,7 @@ export default function Auth() {
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="••••••••"
+                placeholder="••••••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
