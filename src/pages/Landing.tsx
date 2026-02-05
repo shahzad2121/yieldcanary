@@ -117,7 +117,7 @@ const Landing = () => {
       
       <div className="min-h-screen bg-background">
         {/* Navigation */}
-        <nav className="border-b border-border">
+        <nav className="sticky top-0 z-50 border-b border-border bg-background">
           <div className="max-w-7xl mx-auto px-2 xs:px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <span className="text-lg xs:text-xl sm:text-2xl">🐤</span>
