@@ -14,6 +14,8 @@ from collections import Counter
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
+from split_detection import detect_splits, adjust_prices_for_splits
+
 # Load environment variables
 load_dotenv('.env.local')
 
@@ -303,33 +305,63 @@ def estimate_roc_from_nav_erosion(
     latest_price: Optional[float],
     total_dividends: float,
     years_since_inception: float,
-    min_months: int = 3  # Reduced from 6 to capture more ETFs
+    min_months: int = 3
 ) -> Optional[float]:
     """
     Estimate ROC percentage based on NAV erosion.
-    
-    Now uses 3-month minimum (down from 6) to capture newer ETFs.
+
+    Now uses 3-month minimum (down from 6) to capture more ETFs.
+
+    Returns:
+        - 0.0% if too new (< 3 months) - assume healthy until proven otherwise
+        - 0.0% if no NAV erosion (price increased and fully funded)
+        - 0.0% if no dividends (no distributions = no ROC)
+        - Calculated % if NAV erosion detected
+        - None only if data is missing/invalid
+
+    Key changes from original:
+        - Returns 0.0 instead of None for new ETFs (eliminates "Unknown" status)
+        - Returns 0.0 instead of None for no-dividend ETFs
+        - Handles "underfunded distributions" (price up but < dividends paid)
     """
+    # Data validation - can't calculate without prices
     if not price_at_inception or not latest_price:
         return None
-    
+
+    # Too new → Default to 0% (assume healthy until proven otherwise)
     if years_since_inception < (min_months / 12):
-        return None
-    
+        return 0.0  # Changed from None to eliminate "Unknown" status
+
+    # No dividends → 0% ROC (no distributions = no return of capital)
     if total_dividends <= 0:
-        return None
-    
+        return 0.0  # Changed from None
+
     price_change = latest_price - price_at_inception
-    
+
+    # Case 1: Price declined (NAV erosion)
     if price_change < 0:
         nav_erosion = abs(price_change)
         annual_nav_erosion = nav_erosion / years_since_inception
         annual_dividends = total_dividends / years_since_inception
-        
+
         if annual_dividends > 0:
             roc_estimate = min((annual_nav_erosion / annual_dividends) * 100, 100)
             return round(roc_estimate, 2)
-    
+
+    # Case 2: Price increased
+    else:
+        # Check if distributions exceeded price gains (underfunded)
+        # Example: Price +$8, Dividends $26 → $18 came from ROC
+        annual_price_gain = price_change / years_since_inception
+        annual_dividends = total_dividends / years_since_inception
+
+        if annual_dividends > annual_price_gain:
+            # Distributions partially funded by ROC
+            shortfall = annual_dividends - annual_price_gain
+            roc_estimate = min((shortfall / annual_dividends) * 100, 100)
+            return round(roc_estimate, 2)
+
+    # Case 3: Fully funded by gains (no ROC)
     return 0.0
 
 
@@ -365,6 +397,46 @@ def clear_database():
         print(f"  ✓ Cleared etfs: {count} rows deleted")
     except Exception as e:
         print(f"  ✗ Error clearing etfs: {e}")
+
+
+def validate_etf_data(ticker: str, profile: Optional[dict], etf_info: Optional[dict], prices: list) -> tuple:
+    """
+    Validate that FMP has sufficient data for this ETF.
+
+    Returns invalid tickers that should be skipped:
+    - No inception date (can't calculate ROC or returns)
+    - No price history (can't calculate anything)
+    - No basic profile data (ticker doesn't exist in FMP)
+
+    Args:
+        ticker: ETF ticker symbol
+        profile: FMP profile data
+        etf_info: FMP ETF info data
+        prices: List of historical prices
+
+    Returns:
+        (is_valid: bool, skip_reason: str or None)
+    """
+    # Check inception date
+    has_inception = False
+    if etf_info and etf_info.get('inceptionDate'):
+        has_inception = True
+    elif profile and profile.get('ipoDate'):
+        has_inception = True
+
+    if not has_inception:
+        return False, "No inception date"
+
+    # Check price history
+    if not prices or len(prices) == 0:
+        return False, "No price history"
+
+    # Check for at least some basic data
+    if not profile and not etf_info:
+        return False, "No profile data"
+
+    # Valid ETF
+    return True, None
 
 
 def insert_tickers(tickers: list):
@@ -407,7 +479,27 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
     # Get historical prices (up to 5 years for inception price)
     five_years_ago = (today - timedelta(days=1825)).strftime('%Y-%m-%d')
     prices = fmp.get_historical_prices(ticker, from_date=five_years_ago)
-    
+
+    # Validate ETF data - skip if insufficient
+    is_valid, skip_reason = validate_etf_data(ticker, profile, etf_info, prices)
+    if not is_valid:
+        print(f"    ⊗ {ticker}: {skip_reason} - SKIPPING")
+        return None  # Signal to skip this ETF
+
+    # Detect and correct stock splits
+    splits = detect_splits(prices, threshold=1.5)
+    if splits:
+        print(f"    ⚠️  {ticker}: Detected {len(splits)} split(s)")
+        for split in splits:
+            split_type = split['type'].upper()
+            ratio = split['ratio']
+            date = split['date']
+            print(f"       {split_type} split on {date} ({ratio:.2f}:1)")
+
+        # Apply split corrections to all prices
+        prices = adjust_prices_for_splits(prices, splits)
+        print(f"    ✅ {ticker}: Applied split adjustments")
+
     # Get dividends
     dividends = fmp.get_dividends(ticker)
     
@@ -622,35 +714,54 @@ def populate_etf_data(tickers: list, fmp: FMPClient):
     print("\n" + "="*60)
     print(f"STEP 3: Populating data for {len(tickers)} ETFs...")
     print("="*60)
-    
+
     success = 0
     failed = 0
+    skipped_tickers = []
     health_counts = {'Healthy': 0, 'Dying': 0, 'Dead': 0, 'Unknown': 0}
-    
+
     for i, ticker in enumerate(tickers, 1):
         print(f"\n[{i}/{len(tickers)}] Processing {ticker}...")
-        
+
         try:
             etf_data = process_etf(ticker, fmp)
-            
+
+            # Skip if validation failed
+            if etf_data is None:
+                skipped_tickers.append(ticker)
+                failed += 1
+                continue
+
             # Upsert to database
             supabase.table('etfs').upsert(etf_data, on_conflict='ticker').execute()
-            
+
             health = etf_data.get('canary_health', 'Unknown')
             health_counts[health] = health_counts.get(health, 0) + 1
-            
+
             roc = etf_data.get('roc_latest')
             if roc is not None:
                 print(f"    ✓ {ticker}: ROC={roc}%, Health={health}")
             else:
                 print(f"    ○ {ticker}: No ROC data, Health={health}")
-            
+
             success += 1
-            
+
         except Exception as e:
             print(f"    ✗ Error processing {ticker}: {e}")
             failed += 1
-    
+
+    # Show which tickers were skipped
+    if skipped_tickers:
+        print(f"\n{'='*60}")
+        print(f"⚠️  SKIPPED TICKERS ({len(skipped_tickers)} total)")
+        print(f"{'='*60}")
+        print("These tickers were skipped due to insufficient FMP data:")
+        for t in skipped_tickers[:25]:
+            print(f"  • {t}")
+        if len(skipped_tickers) > 25:
+            print(f"  ... and {len(skipped_tickers) - 25} more")
+        print(f"\nTip: Remove these from DEFAULT_TICKERS list to clean up")
+
     return success, failed, health_counts
 
 
@@ -1072,14 +1183,17 @@ def print_summary(success: int, failed: int, health_counts: dict, total_tickers:
     print("\n" + "="*60)
     print("BOOTSTRAP COMPLETE")
     print("="*60)
-    print(f"\nTotal tickers: {total_tickers}")
+    print(f"\nTotal tickers attempted: {total_tickers}")
     print(f"Successfully processed: {success}")
-    print(f"Failed: {failed}")
+    print(f"Failed/Skipped: {failed}")
     print(f"\nCanary Health Summary:")
     print(f"  🟢 Healthy (ROC < 20%):  {health_counts.get('Healthy', 0)}")
     print(f"  🟡 Dying (ROC 20-40%):   {health_counts.get('Dying', 0)}")
     print(f"  🔴 Dead (ROC >= 40%):    {health_counts.get('Dead', 0)}")
     print(f"  ⚪ Unknown (no ROC):     {health_counts.get('Unknown', 0)}")
+    print(f"\nETFs stored in database: {success}")
+    if failed > 0:
+        print(f"⚠️  {failed} tickers were skipped (see log above)")
 
 
 def main():
