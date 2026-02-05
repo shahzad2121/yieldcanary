@@ -193,6 +193,29 @@
     @apply bg-card/80 backdrop-blur-xl border border-border/50;
   }
 
+  /* ETF desktop table scroll container and sticky header (layout-only, no color changes) */
+  .etf-desktop-table-scroll {
+    position: relative;
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: auto;
+  }
+
+  .etf-desktop-header-cell {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: inherit;
+  }
+
+  .etf-desktop-header-cell-first {
+    border-top-left-radius: 0.75rem; /* match rounded-xl */
+  }
+
+  .etf-desktop-header-cell-last {
+    border-top-right-radius: 0.75rem; /* match rounded-xl */
+  }
+
   /* Custom scrollbar styling */
   .custom-scrollbar {
     scrollbar-width: thin;

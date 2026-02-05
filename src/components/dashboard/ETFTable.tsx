@@ -457,7 +457,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
 
     return (
       <TableHead 
-        className={`cursor-pointer hover:bg-muted transition-colors ${className}`}
+        className={`cursor-pointer hover:bg-muted transition-colors etf-desktop-header-cell ${className}`}
         onClick={() => handleSort(sortKeyProp)}
       >
         {tooltipText ? (
@@ -516,13 +516,13 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
       </div>
 
       {/* Desktop Table - Hidden on mobile */}
-      <div className="hidden md:block rounded-xl border border-border bg-background overflow-hidden">
+      <div className="hidden md:block rounded-xl border mx-3 border-border bg-background">
         <TooltipProvider delayDuration={300}>
-          <div className="overflow-x-auto custom-scrollbar">
+          <div className="custom-scrollbar etf-desktop-table-scroll">
             <Table className="[&>div>table]:!w-auto">
               <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead className={COLUMN_CONFIG.star.width} />
+              <TableRow className="bg-muted hover:bg-muted/90">
+                <TableHead className={`${COLUMN_CONFIG.star.width} etf-desktop-header-cell etf-desktop-header-cell-first`} />
                 <SortableHeader label="Ticker" className={COLUMN_CONFIG.ticker.width} sortKeyProp="ticker" />
                 <SortableHeader label="Name" sortKeyProp="name" className={COLUMN_CONFIG.name.width} />
                 <SortableHeader label="Canary Status" sortKeyProp="canaryStatus" className={COLUMN_CONFIG.canaryStatus.width} isKiller />
@@ -536,7 +536,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
                 <SortableHeader label="Payout Frequency" sortKeyProp="payoutFrequency" className={COLUMN_CONFIG.payoutFrequency.width} />
                 <SortableHeader label="ROC %" sortKeyProp="rocPercent" className={COLUMN_CONFIG.rocPercent.width} />
                 <SortableHeader label="AUM" sortKeyProp="aum" className={COLUMN_CONFIG.aum.width} />
-                <SortableHeader label="Expense" sortKeyProp="expenseRatio" className={COLUMN_CONFIG.expenseRatio.width} />
+                <SortableHeader label="Expense" sortKeyProp="expenseRatio" className={`${COLUMN_CONFIG.expenseRatio.width} etf-desktop-header-cell-last`} />
               </TableRow>
             </TableHeader>
             <TableBody>
