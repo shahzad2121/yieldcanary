@@ -9,8 +9,8 @@ export const trialEmailTemplates: TransactionalEmailTemplate[] = [
   {
     id: 'trial_started',
     title: 'Trial Started',
-    subject: 'Your 7-Day Free Trial Has Started - Welcome to YieldCanary Pro!',
-    previewText: 'Explore all Pro features for 7 days, no credit card required.',
+    subject: 'Your {{trial_days|7}}-Day Free Trial Has Started - Welcome to YieldCanary Pro!',
+    previewText: 'Explore all Pro features for {{trial_days|7}} days, no credit card required.',
     body: `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -241,14 +241,14 @@ export const trialEmailTemplates: TransactionalEmailTemplate[] = [
   <div class="container">
     <div class="header">
       <h1>🎉 Your Free Trial Has Started!</h1>
-      <p>7 Days of Full Pro Access</p>
+      <p>{{trial_days|7}} Days of Full Pro Access</p>
     </div>
     
     <div class="content">
       <p class="greeting">Hey, {{first_name|there!}}!</p>
       
       <p class="intro-text">
-        Great news! Your <strong>7-day free trial</strong> of YieldCanary Pro is now active. 
+        Great news! Your <strong>{{trial_days|7}}-day free trial</strong> of YieldCanary Pro is now active. 
         You have full access to all premium features — no credit card charged during the trial period.
       </p>
       

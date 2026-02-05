@@ -440,6 +440,9 @@ Deno.serve(async (req) => {
             
             // Handle trial started email (subscription.created with trialing status)
             if (event.type === "customer.subscription.created" && subStatus === "trialing") {
+              const trialDays = (trialStart != null && trialEnd != null)
+                ? String(Math.round((trialEnd - trialStart) / 86400))
+                : "7";
               await sendTransactionalEmail(
                 supabaseUrl,
                 serviceRoleKey,
@@ -450,6 +453,7 @@ Deno.serve(async (req) => {
                 {
                   first_name: firstName,
                   trial_end_date: trialEndsAt ? new Date(trialEndsAt).toLocaleDateString() : "",
+                  trial_days: trialDays,
                 }
               );
             }

@@ -288,7 +288,7 @@ def calculate_death_clock(roc_percent: Optional[float]) -> Optional[float]:
     return round(50 / roc_percent, 2)
 
 
-def clamp_numeric(value: Optional[float], max_val: float = 999.9999, min_val: float = -999.9999) -> Optional[float]:
+def clamp_numeric(value: Optional[float], max_val: float = 9.9999, min_val: float = -9.9999) -> Optional[float]:
     """Clamp numeric values to fit database NUMERIC(10,6) constraints for percentage values.
     
     Database columns with precision 10, scale 6 can store up to 9999.999999.

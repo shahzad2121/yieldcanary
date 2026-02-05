@@ -67,8 +67,10 @@ export function useETFs() {
         throw new Error(fetchError.message);
       }
 
-      // Transform database records to ETF type
-      return (data || []).map(transformRowToETF);
+      // Transform database records to ETF type, exclude Unknown status from UI
+      return (data || [])
+        .filter((row) => row.canary_health !== 'Unknown')
+        .map(transformRowToETF);
     },
     staleTime: Infinity, // Data never goes stale (we update via Realtime)
     gcTime: Infinity, // Keep in cache forever
