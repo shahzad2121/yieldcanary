@@ -297,6 +297,9 @@ export default function Auth() {
                   username: username,
                   name: firstName,
                   tax_rate: finalTaxRate,
+                  subscription_tier: 'free',
+                  is_paid: false,
+                  subscription_status: 'free',
                 },
                 { onConflict: 'email' }
               );
