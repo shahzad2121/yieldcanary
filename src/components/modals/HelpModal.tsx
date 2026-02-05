@@ -65,7 +65,7 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
 
       toast({
         title: 'Message sent',
-        description: 'Thank you for contacting us! We\'ll get back to you soon.',
+        description: 'Thank you for contacting us! All support tickets are responded to within 1 business day.',
       });
       
       setName('');
@@ -295,6 +295,9 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
                   required
                 />
               </div>
+              <p className="text-xs text-muted-foreground">
+                All support tickets are responded to within 1 business day.
+              </p>
             </div>
             
             {/* Buttons inside scrollable content for mobile */}
