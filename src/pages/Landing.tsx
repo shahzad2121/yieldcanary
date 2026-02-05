@@ -187,14 +187,18 @@ const Landing = () => {
                 </div>
               ) : (
                 <>
-                  <Link to="/auth" className="hidden xs:inline">
+                  <Link to="/auth">
                     <Button variant="ghost" className="text-xs sm:text-sm px-2 xs:px-3 sm:px-4 h-8 xs:h-9 sm:h-10">Login</Button>
                   </Link>
-                  <Link to="/auth">
-                    <Button className="text-xs sm:text-sm px-2 xs:px-3 sm:px-4 h-8 xs:h-9 sm:h-10">
-                      Start 7 Day Free Trial
-                    </Button>
-                  </Link>
+                  <Button
+                    className="text-xs sm:text-sm px-2 xs:px-3 sm:px-4 h-8 xs:h-9 sm:h-10"
+                    onClick={() => {
+                      const pricingSection = document.getElementById('pricing');
+                      pricingSection?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
+                    Start 7 Day Free Trial
+                  </Button>
                 </>
               )}
             </div>
