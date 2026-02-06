@@ -579,7 +579,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
       <div className="md:hidden space-y-4">
         {/* Mobile sorting: dropdown + direction toggle (sticky below header) */}
         <div
-          className="sticky z-40 flex items-center gap-2 border-b border-border bg-background pb-2"
+          className="sticky z-40 flex items-center gap-2 border-b border-border bg-background py-2"
           style={{ top: DASHBOARD_HEADER_HEIGHT_MOBILE }}
         >
           <Select
