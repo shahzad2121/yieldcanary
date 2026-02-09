@@ -86,7 +86,7 @@ DEFAULT_TICKERS = [
     "GPIX", "GPIQ",
 
     # TappAlpha ETFs (daily covered call income)
-    "TDAQ", "TSPY",
+    "TDAQ", "TSPY", "TSYX",
 
     # Tuttle Capital ETFs
     "MAGO", "MSTK", "BITK",
