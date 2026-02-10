@@ -77,7 +77,7 @@ DEFAULT_TICKERS = [
     "SPYI", "QQQI", "IWMI", "NIHI", "IYRI", "IAUI", "BTCI", "NEHI",
     
     # Amplify / Simplify
-    "YYY", "SVOL", "HIGH", "BUCK", "MAXI",
+    "YYY", "SVOL", "HIGH", "BUCK", "MAXI", "QDVO",
 
     # ProShares High Income ETFs
     "ISPY", "IQQQ", "ITWO", "EETH","BITO",
