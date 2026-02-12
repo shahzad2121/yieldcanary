@@ -146,13 +146,13 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
 
   <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc">
     <li>
-      <span className="font-medium text-green-600 dark:text-green-400">Healthy (green)</span>: ROC < 20% — low or no principal erosion. Distributions are mostly real earned income — safe for long-term cash flow.
+      <span className="font-medium text-green-600 dark:text-green-400">Healthy (green)</span>: ROC &lt; 20% — low or no principal erosion. Distributions are mostly real earned income — safe for long-term cash flow.
     </li>
     <li>
-      <span className="font-medium text-yellow-600 dark:text-yellow-400">Dying (yellow)</span>: ROC 20%–39% — moderate principal erosion. Some of the payout is your own capital — monitor closely.
+      <span className="font-medium text-yellow-600 dark:text-yellow-400">Dying (yellow)</span>: ROC 20%&ndash;39% — moderate principal erosion. Some of the payout is your own capital — monitor closely.
     </li>
     <li>
-      <span className="font-medium text-red-600 dark:text-red-400">Dead (red)</span>: ROC ≥ 40% — severe erosion. Most of the headline yield is returning capital — high risk of fast principal loss.
+      <span className="font-medium text-red-600 dark:text-red-400">Dead (red)</span>: ROC &ge; 40% — severe erosion. Most of the headline yield is returning capital — high risk of fast principal loss.
     </li>
   </ul>
 
