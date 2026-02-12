@@ -352,15 +352,30 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
   </p>
 </div>
 
-          {/* Key Concept: Destructive vs Constructive ROC */}
-<div className="border-t border-border pt-4">
-  <h3 className="font-semibold text-sm mb-2">Key Concept: Destructive vs Constructive ROC</h3>
-  <p className="text-sm text-muted-foreground">
+          {/* Key Concepts Section */}
+<div className="border-t border-border pt-6">
+  <h3 className="font-semibold text-lg mb-4">Key Concepts</h3>
+
+  <h4 className="font-bold text-sm mb-2">Destructive vs Constructive ROC</h4>
+  <p className="text-sm text-muted-foreground mb-4">
     Not all Return of Capital (ROC) is harmful. Constructive ROC can occur when a fund earns excess income (e.g., from option premiums) and returns part of it tax-efficiently.
   </p>
-  <p className="text-sm text-muted-foreground mt-2">
-    YieldCanary flags **destructive ROC** — when distributions exceed the fund's earned income, forcing it to return principal and erode NAV over time. This is the portion that reduces your actual capital rather than representing real earnings.
+  <p className="text-sm text-muted-foreground mb-4">
+    YieldCanary flags <strong>destructive ROC</strong> — when distributions exceed earned income, forcing the fund to return principal and erode NAV over time. This reduces your actual capital rather than representing real earnings.
   </p>
+
+  <h4 className="font-bold text-sm mb-2">Headline Yield vs. Advertised Yield vs. True Income Yield</h4>
+  <ul className="text-sm text-muted-foreground space-y-3 ml-4 list-disc">
+    <li>
+      <span className="font-medium">Headline Yield</span>: Trailing 12-month (TTM) yield — total actual distributions paid over the past year ÷ current price. Historical and comparable.
+    </li>
+    <li>
+      <span className="font-medium">Advertised Yield</span>: Issuer's forward-looking snapshot — most recent payout annualized (ex. last weekly payout × 52) ÷ current price. This is often higher but not guaranteed.
+    </li>
+    <li>
+      <span className="font-medium">True Income Yield</span>: Headline Yield minus destructive ROC — shows only sustainable earned income (premiums, dividends, interest). A large gap from Headline signals erosion risk.
+    </li>
+  </ul>
 </div>
 
           {/* Footer Note */}
