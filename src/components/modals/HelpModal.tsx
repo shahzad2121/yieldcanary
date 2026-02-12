@@ -193,7 +193,7 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
     </li>
   </ul>
 
-  <p className="text-sm text-muted-foreground mt-4 italic">
+  <p className="text-sm text-muted-foreground mt-4">
     This is the default sort order when you log in to the dashboard — it prioritizes funds with the highest sustainable income after accounting for destructive ROC.
   </p>
 
@@ -206,20 +206,34 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
           <div>
             <h3 className="font-semibold text-sm mb-2">Total Return 1Y</h3>
             <p className="text-sm text-muted-foreground">
-              Simple price appreciation over the last 12 months (excludes distributions).
+              Price appreciation (capital return) over the last 12 months, excluding distributions. This shows only the change in share price — not total return with reinvested dividends.
             </p>
           </div>
 
           {/* Take-Home Cash Return */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">Take-Home Cash Return</h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              Estimated cash you'll actually keep from distributions over the last year, after taxes.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Uses your personal tax rate from account settings (default 20% for new users) applied to the qualified income portion of payouts. This gives a realistic "what lands in your pocket" view for income planning.
-            </p>
-          </div>
+<div>
+  <h3 className="font-semibold text-sm mb-2">Take-Home Cash Return</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    Estimated total return over the last year after taxes on distributions — what you actually keep in your pocket.
+  </p>
+
+  <p className="text-sm text-muted-foreground mb-3">
+    It combines:
+  </p>
+  <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc">
+    <li>Price change (capital appreciation or depreciation) over the past 12 months</li>
+    <li>After-tax distributions received (total payouts × (1 – your personal tax rate from account settings))</li>
+  </ul>
+
+  <p className="text-sm text-muted-foreground mt-3">
+    Formula: (Ending price + after-tax distributions) / Starting price – 1  
+    Default tax rate is 20% for new users — update in your account settings for accuracy.
+  </p>
+
+  <p className="text-xs text-muted-foreground mt-4 italic">
+    This is an estimate based on historical data and your entered tax rate. It does not include capital gains taxes (assumes no sale). Consult a tax advisor for personal advice.
+  </p>
+</div>
 
           {/* Monthly Spendable Cash Yield */}
           <div>
