@@ -175,17 +175,32 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
           </div>
 
           {/* True Income Yield */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">True Income Yield</h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              The real sustainable yield after removing destructive Return of Capital from distributions.
-            </p>
-            <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
-              <li>Funds often advertise high yields (total payouts ÷ price), but much can be ROC (your own money returned).</li>
-              <li>True Income Yield shows only the portion that's actual earned income (option premiums, dividends, interest).</li>
-              <li>A large gap below headline yield signals potential erosion.</li>
-            </ul>
-          </div>
+<div>
+  <h3 className="font-semibold text-sm mb-2">True Income Yield</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    The real, sustainable yield after subtracting destructive Return of Capital (ROC) from the ETF's payouts.
+  </p>
+
+  <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc">
+    <li>
+      Funds often advertise high yields (total distributions ÷ current price), but a large portion can be ROC — your own principal being returned as "income."
+    </li>
+    <li>
+      True Income Yield isolates the portion that's actual earned income (from option premiums, dividends, interest, etc.).
+    </li>
+    <li>
+      A big gap between True Income Yield and Headline Yield signals potential principal erosion.
+    </li>
+  </ul>
+
+  <p className="text-sm text-muted-foreground mt-4 italic">
+    This is the default sort order when you log in to the dashboard — it prioritizes funds with the highest sustainable income after accounting for destructive ROC.
+  </p>
+
+  <p className="text-xs text-muted-foreground mt-3 italic">
+    Note: This is an estimate based on historical data. Always cross-check issuer 19a-1 notices for official ROC details.
+  </p>
+</div>
 
           {/* Total Return 1Y */}
           <div>
