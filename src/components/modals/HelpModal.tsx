@@ -222,7 +222,10 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
   </ul>
 
   <p className="text-sm text-muted-foreground mt-3">
-    Formula: (Ending price + after-tax distributions) / Starting price – 1  
+    Formula: (Ending price + after-tax distributions) / Starting price – 1
+  </p>
+
+  <p className="text-sm text-muted-foreground mt-3">
     Default tax rate is 20% for new users — update in your account settings for accuracy.
   </p>
 
@@ -295,54 +298,75 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
 </div>
 
           {/* Payout Frequency */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">Payout Frequency</h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              Indicates how often the ETF typically pays out distributions to shareholders.
-            </p>
-            <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
-              <li><span className="font-medium">Weekly</span>: Paid every week (common in newer high-yield option-income ETFs like many YieldMax and Roundhill funds).</li>
-              <li><span className="font-medium">Monthly</span>: Paid once per month (most traditional dividend and covered-call ETFs).</li>
-              <li><span className="font-medium">Quarterly</span>: Paid every three months.</li>
-            </ul>
-          </div>
+<div>
+  <h3 className="font-semibold text-sm mb-2">Payout Frequency</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    Shows how often the ETF typically distributes cash to shareholders.
+  </p>
+  <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc">
+    <li>
+      <span className="font-medium">Weekly</span>: Paid every week (common in newer high-yield option-income ETFs like many YieldMax and Roundhill funds).
+    </li>
+    <li>
+      <span className="font-medium">Monthly</span>: Paid once per month (most traditional dividend and covered-call ETFs).
+    </li>
+    <li>
+      <span className="font-medium">Quarterly</span>: Paid every three months.
+    </li>
+  </ul>
+</div>
 
-          {/* ROC %} */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">ROC %</h3>
-            <p className="text-sm text-muted-foreground">
-              Estimated percentage of recent distributions classified as destructive Return of Capital. High sustained ROC usually means the fund is returning principal to meet yield targets, leading to NAV decay over time.
-            </p>
-          </div>
+          {/* ROC % */}
+<div>
+  <h3 className="font-semibold text-sm mb-2">ROC %</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    Estimated percentage of distributions classified as destructive Return of Capital (ROC).
+  </p>
+  <p className="text-sm text-muted-foreground mb-3">
+    High ROC means the fund is returning your own principal to meet payout targets, leading to NAV decay over time.
+  </p>
+  <p className="text-sm text-muted-foreground">
+    This is an estimate based on historical NAV changes vs. cumulative payouts. Always cross-check issuer 19a-1 notices for official ROC details. Updates weekly.
+  </p>
+</div>
 
           {/* AUM */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">AUM (Assets Under Management)</h3>
-            <p className="text-sm text-muted-foreground">
-              Total size of the fund in USD — larger funds tend to be more established.
-            </p>
-          </div>
+<div>
+  <h3 className="font-semibold text-sm mb-2">AUM (Assets Under Management)</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    Total assets in the fund (in USD) — larger funds are generally more liquid and established.
+  </p>
+  <p className="text-sm text-muted-foreground">
+    Higher AUM often means better trading volume and lower risk of extreme volatility.
+  </p>
+</div>
 
           {/* Expense */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">Expense</h3>
-            <p className="text-sm text-muted-foreground">
-              Annual expense ratio — fees as a percentage of assets.
-            </p>
-          </div>
+<div>
+  <h3 className="font-semibold text-sm mb-2">Expense</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    Annual expense ratio — the percentage of assets charged as fees each year.
+  </p>
+  <p className="text-sm text-muted-foreground">
+    Lower expense ratios mean more of the yield stays with you, especially important for long-term income.
+  </p>
+</div>
 
-          {/* Key Concept */}
-          <div className="border-t border-border pt-4">
-            <h3 className="font-semibold text-sm mb-2">Key Concept: Destructive vs Constructive ROC</h3>
-            <p className="text-sm text-muted-foreground">
-              Not all ROC is bad. Some funds use it tax-efficiently when they earn excess income. YieldCanary flags destructive ROC — when distributions exceed earned income, forcing the fund to return principal and erode NAV.
-            </p>
-          </div>
+          {/* Key Concept: Destructive vs Constructive ROC */}
+<div className="border-t border-border pt-4">
+  <h3 className="font-semibold text-sm mb-2">Key Concept: Destructive vs Constructive ROC</h3>
+  <p className="text-sm text-muted-foreground">
+    Not all Return of Capital (ROC) is harmful. Constructive ROC can occur when a fund earns excess income (e.g., from option premiums) and returns part of it tax-efficiently.
+  </p>
+  <p className="text-sm text-muted-foreground mt-2">
+    YieldCanary flags **destructive ROC** — when distributions exceed the fund's earned income, forcing it to return principal and erode NAV over time. This is the portion that reduces your actual capital rather than representing real earnings.
+  </p>
+</div>
 
           {/* Footer Note */}
           <div className="border-t border-border pt-4">
             <p className="text-xs text-muted-foreground">
-              All metrics update weekly based on public distribution and price data.
+              All metrics update weekly, expect the current market price per share of the ETF (updates every 15 minutes), based on public distribution and price data.
             </p>
           </div>
 
