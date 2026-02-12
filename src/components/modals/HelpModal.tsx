@@ -98,7 +98,7 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
           {/* Introduction */}
           <div>
             <p className="text-sm text-muted-foreground">
-              Welcome! YieldCanary tracks over 400 high-yield ETFs to help you separate sustainable income from funds that quietly erode principal through destructive Return of Capital (ROC). Below is a detailed breakdown of each column in the main dashboard.
+              Welcome! YieldCanary tracks over 200 high-yield ETFs to help you separate sustainable income from funds that quietly erode principal through destructive Return of Capital (ROC). Below is a detailed breakdown of each column in the main dashboard & watchlist.
             </p>
           </div>
 
@@ -113,15 +113,51 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
           {/* Canary Status */}
           <div>
             <h3 className="font-semibold text-sm mb-2">Canary Status</h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              A quick health rating of the ETF based on recent destructive ROC trends:
+            <p className="text-sm text-muted-foreground mb-3">
+              A quick health rating for each ETF based on estimated destructive Return of Capital (ROC) — the portion of payouts that comes from returning principal (NAV decline) rather than real earned income.
             </p>
-            <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
-              <li><span className="font-medium text-green-600 dark:text-green-400">Healthy (green)</span>: Low or no destructive ROC — distributions are mostly real earned income.</li>
-              <li><span className="font-medium text-yellow-600 dark:text-yellow-400">Dying (yellow)</span>: Moderate ROC — some principal erosion occurring.</li>
-              <li><span className="font-medium text-red-600 dark:text-red-400">Dead (red)</span>: Severe ROC — fast principal erosion; headline yield heavily reliant on returning capital.</li>
+
+            <p className="text-sm text-muted-foreground mb-3 font-medium">
+              How destructive ROC% is actually calculated (brief recap):
+            </p>
+
+            <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc mb-4">
+              <li>
+                We start with the ETF's share price (NAV) decline since inception (or earliest available data). That's the core evidence of erosion.
+              </li>
+              <li>
+                We compare that NAV drop to the total distributions paid out over the same period.
+              </li>
+              <li>
+                To make it annual:  
+                • Annual NAV erosion = total price drop ÷ years since inception  
+                • Annual distributions = total payouts ÷ years since inception
+              </li>
+              <li>
+                ROC% = (annual NAV erosion ÷ annual distributions) × 100 (capped at 100%).
+             </li>
+              </ul>
+
+            <p className="text-sm text-muted-foreground mb-3">
+              In other words: NAV decline is the proof something's being eroded. Distributions are the scale we measure it against. The result tells us how much of those payouts were likely returning your own principal instead of real income.
+            </p>
+
+            <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc">
+            <li>
+            <span className="font-medium text-green-600 dark:text-green-400">Healthy (green)</span>: ROC < 20% — low or no principal erosion. Distributions are mostly real earned income — safe for long-term cash flow.
+            </li>
+            <li>
+            <span className="font-medium text-yellow-600 dark:text-yellow-400">Dying (yellow)</span>: ROC 20%–39% — moderate principal erosion. Some of the payout is your own capital — monitor closely.
+            </li>
+            <li>
+            <span className="font-medium text-red-600 dark:text-red-400">Dead (red)</span>: ROC ≥ 40% — severe erosion. Most of the headline yield is returning capital — high risk of fast principal loss.
+            </li>
             </ul>
-          </div>
+
+            <p className="text-xs text-muted-foreground mt-4 italic">
+              Status is an estimate based on historical NAV changes vs. cumulative payouts. Always cross-check issuer 19a-1 notices for official ROC details. Updates weekly with new data.
+            </p>
+            </div>
 
           {/* Death Clock */}
           <div>
