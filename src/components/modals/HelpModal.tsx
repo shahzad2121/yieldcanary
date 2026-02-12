@@ -111,53 +111,55 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
           </div>
 
           {/* Canary Status */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">Canary Status</h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              A quick health rating for each ETF based on estimated destructive Return of Capital (ROC) — the portion of payouts that comes from returning principal (NAV decline) rather than real earned income.
-            </p>
+<div>
+  <h3 className="font-semibold text-sm mb-2">Canary Status</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    A quick health rating for each ETF based on estimated destructive Return of Capital (ROC) — the portion of payouts that comes from returning principal (NAV decline) rather than real earned income.
+  </p>
 
-            <p className="text-sm text-muted-foreground mb-3 font-medium">
-              How destructive ROC% is actually calculated (brief recap):
-            </p>
+  <p className="text-sm text-muted-foreground mb-3 font-medium">
+    How destructive ROC% is actually calculated (brief recap):
+  </p>
 
-            <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc mb-4">
-              <li>
-                We start with the ETF's share price (NAV) decline since inception (or earliest available data). That's the core evidence of erosion.
-              </li>
-              <li>
-                We compare that NAV drop to the total distributions paid out over the same period.
-              </li>
-              <li>
-                To make it annual:  
-                • Annual NAV erosion = total price drop ÷ years since inception  
-                • Annual distributions = total payouts ÷ years since inception
-              </li>
-              <li>
-                ROC% = (annual NAV erosion ÷ annual distributions) × 100 (capped at 100%).
-             </li>
-              </ul>
+  <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc mb-4">
+    <li>
+      We start with the ETF's share price (NAV) decline since inception (or earliest available data). That's the core evidence of erosion.
+    </li>
+    <li>
+      We compare that NAV drop to the total distributions paid out over the same period.
+    </li>
+    <li>
+      To make it annual:
+      <ul className="list-disc ml-6 mt-1 space-y-1">
+        <li>Annual NAV erosion = total price drop ÷ years since inception</li>
+        <li>Annual distributions = total payouts ÷ years since inception</li>
+      </ul>
+    </li>
+    <li>
+      ROC% = (annual NAV erosion ÷ annual distributions) × 100 (capped at 100%).
+    </li>
+  </ul>
 
-            <p className="text-sm text-muted-foreground mb-3">
-              In other words: NAV decline is the proof something's being eroded. Distributions are the scale we measure it against. The result tells us how much of those payouts were likely returning your own principal instead of real income.
-            </p>
+  <p className="text-sm text-muted-foreground mb-3">
+    In other words: NAV decline is the proof something's being eroded. Distributions are the scale we measure it against. The result tells us how much of those payouts were likely returning your own principal instead of real income.
+  </p>
 
-            <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc">
-            <li>
-            <span className="font-medium text-green-600 dark:text-green-400">Healthy (green)</span>: ROC < 20% — low or no principal erosion. Distributions are mostly real earned income — safe for long-term cash flow.
-            </li>
-            <li>
-            <span className="font-medium text-yellow-600 dark:text-yellow-400">Dying (yellow)</span>: ROC 20%–39% — moderate principal erosion. Some of the payout is your own capital — monitor closely.
-            </li>
-            <li>
-            <span className="font-medium text-red-600 dark:text-red-400">Dead (red)</span>: ROC ≥ 40% — severe erosion. Most of the headline yield is returning capital — high risk of fast principal loss.
-            </li>
-            </ul>
+  <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc">
+    <li>
+      <span className="font-medium text-green-600 dark:text-green-400">Healthy (green)</span>: ROC &lt; 20% — low or no principal erosion. Distributions are mostly real earned income — safe for long-term cash flow.
+    </li>
+    <li>
+      <span className="font-medium text-yellow-600 dark:text-yellow-400">Dying (yellow)</span>: ROC 20%&ndash;39% — moderate principal erosion. Some of the payout is your own capital — monitor closely.
+    </li>
+    <li>
+      <span className="font-medium text-red-600 dark:text-red-400">Dead (red)</span>: ROC &ge; 40% — severe erosion. Most of the headline yield is returning capital — high risk of fast principal loss.
+    </li>
+  </ul>
 
-            <p className="text-xs text-muted-foreground mt-4 italic">
-              Status is an estimate based on historical NAV changes vs. cumulative payouts. Always cross-check issuer 19a-1 notices for official ROC details. Updates weekly with new data.
-            </p>
-            </div>
+  <p className="text-xs text-muted-foreground mt-4 italic">
+    Status is an estimate based on historical NAV changes vs. cumulative payouts. Always cross-check issuer 19a-1 notices for official ROC details. Updates weekly with new data.
+  </p>
+</div>
 
           {/* Death Clock */}
           <div>
@@ -173,17 +175,32 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
           </div>
 
           {/* True Income Yield */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">True Income Yield</h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              The real sustainable yield after removing destructive Return of Capital from distributions.
-            </p>
-            <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
-              <li>Funds often advertise high yields (total payouts ÷ price), but much can be ROC (your own money returned).</li>
-              <li>True Income Yield shows only the portion that's actual earned income (option premiums, dividends, interest).</li>
-              <li>A large gap below headline yield signals potential erosion.</li>
-            </ul>
-          </div>
+<div>
+  <h3 className="font-semibold text-sm mb-2">True Income Yield</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    The real, sustainable yield after subtracting destructive Return of Capital (ROC) from the ETF's payouts.
+  </p>
+
+  <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc">
+    <li>
+      Funds often advertise high yields (total distributions ÷ current price), but a large portion can be ROC — your own principal being returned as "income."
+    </li>
+    <li>
+      True Income Yield isolates the portion that's actual earned income (from option premiums, dividends, interest, etc.).
+    </li>
+    <li>
+      A big gap between True Income Yield and Headline Yield signals potential principal erosion.
+    </li>
+  </ul>
+
+  <p className="text-sm text-muted-foreground mt-4 italic">
+    This is the default sort order when you log in to the dashboard — it prioritizes funds with the highest sustainable income after accounting for destructive ROC.
+  </p>
+
+  <p className="text-xs text-muted-foreground mt-3 italic">
+    Note: This is an estimate based on historical data. Always cross-check issuer 19a-1 notices for official ROC details.
+  </p>
+</div>
 
           {/* Total Return 1Y */}
           <div>
