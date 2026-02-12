@@ -98,7 +98,8 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
           {/* Introduction */}
           <div>
             <p className="text-sm text-muted-foreground">
-              Welcome! YieldCanary tracks over 200 high-yield ETFs to help you separate sustainable income from funds that quietly erode principal through destructive Return of Capital (ROC). Below is a detailed breakdown of each column in the main dashboard & watchlist.
+              Welcome! YieldCanary tracks over 200 income ETFs to help you separate sustainable funds from those that quietly erode principal through destructive Return of Capital (ROC). Below is a detailed breakdown of each column in the main dashboard.
+              Scroll down to the bottom to see the <strong>Key Concepts</strong> and Support Ticket sections.
             </p>
           </div>
 
@@ -193,10 +194,6 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
     </li>
   </ul>
 
-  <p className="text-sm text-muted-foreground mt-4 italic">
-    This is the default sort order when you log in to the dashboard — it prioritizes funds with the highest sustainable income after accounting for destructive ROC.
-  </p>
-
   <p className="text-xs text-muted-foreground mt-3 italic">
     Note: This is an estimate based on historical data. Always cross-check issuer 19a-1 notices for official ROC details.
   </p>
@@ -206,100 +203,186 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
           <div>
             <h3 className="font-semibold text-sm mb-2">Total Return 1Y</h3>
             <p className="text-sm text-muted-foreground">
-              Simple price appreciation over the last 12 months (excludes distributions).
+              Price appreciation (capital return) over the last 12 months, excluding distributions. This shows only the change in share price — not total return with reinvested dividends.
             </p>
           </div>
 
-          {/* Take-Home Cash Return */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">Take-Home Cash Return</h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              Estimated cash you'll actually keep from distributions over the last year, after taxes.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Uses your personal tax rate from account settings (default 20% for new users) applied to the qualified income portion of payouts. This gives a realistic "what lands in your pocket" view for income planning.
-            </p>
-          </div>
+{/* Take-Home Cash Return */}
+<div>
+  <h3 className="font-semibold text-sm mb-2">Take-Home Cash Return</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    Estimated total return over the last year after taxes on distributions — what you actually keep in your pocket.
+  </p>
+
+  <p className="text-sm text-muted-foreground mb-3">
+    It combines:
+  </p>
+  <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc">
+    <li>Price change (capital appreciation or depreciation) over the past 12 months</li>
+    <li>After-tax distributions received (total payouts × (1 – your personal tax rate from account settings))</li>
+  </ul>
+
+  <p className="text-sm text-muted-foreground mt-3">
+    Formula: (Ending price + after-tax distributions) / Starting price – 1
+  </p>
+
+  <p className="text-sm text-muted-foreground mt-3">
+    Default tax rate is 20% for new users — update in your account settings for accuracy.
+  </p>
+
+  <p className="text-sm text-muted-foreground mt-4">
+    This is the default sort order when you log in to the dashboard — it prioritizes funds with the highest after-tax return over the last year.
+  </p>
+
+  <p className="text-xs text-muted-foreground mt-4 italic">
+    This is an estimate based on historical data and your entered tax rate. It does not include capital gains taxes (assumes no sale). Consult a tax advisor for personal advice.
+  </p>
+</div>
 
           {/* Monthly Spendable Cash Yield */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">Monthly Spendable Cash Yield</h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              Estimated spendable cash from last month's distribution after taxes — uses your tax rate setting.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              This metric shows only the after-tax cash distribution from the most recent complete month that you could actually spend (not reinvested). Price change is not included (unrealized until sold). Formula: (Last month's distribution after tax) ÷ current price × 100. Shows "N/A" if no full month data is available yet.
-            </p>
-          </div>
+<div>
+  <h3 className="font-semibold text-sm mb-2">Monthly Spendable Cash Yield</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    Estimated spendable monthly cash from the ETF's most recent full month of distributions, after taxes — what you could actually pocket (not reinvested).
+  </p>
+
+  <p className="text-sm text-muted-foreground mb-3">
+    Uses your personal tax rate from account settings (default 20% for new users) applied to the distributions. Price change is not included (unrealized until sold).
+  </p>
+
+  <p className="text-sm text-muted-foreground mb-3">
+    Formula: (Last full month's distributions after tax) ÷ current price × 100
+  </p>
+
+  <p className="text-sm text-muted-foreground mb-3">
+    Shows "N/A" if the fund has no full month of payout data yet (common for very new funds).
+  </p>
+
+  <p className="text-xs text-muted-foreground mt-4 italic">
+    This is an estimate based on the latest available month and your tax rate. Actual cash received may vary slightly due to timing or taxes.
+  </p>
+</div>
 
           {/* Price */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">Price</h3>
-            <p className="text-sm text-muted-foreground">
-              Current market price per share.
-            </p>
-          </div>
+<div>
+  <h3 className="font-semibold text-sm mb-2">Price</h3>
+  <p className="text-sm text-muted-foreground mb-2">
+    Current market price per share of the ETF.
+  </p>
+  <p className="text-sm text-muted-foreground">
+    This is the latest adjusted closing price pulled from our data source. It updates every 15 minutes and is used to calculate yields, returns, and other metrics.
+  </p>
+</div>
 
           {/* Headline Yield */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">Headline Yield</h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              Trailing 12-month total distributions ÷ current price — the number most funds advertise.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Often inflated by ROC — compare to True Income Yield for the real picture.
-            </p>
-          </div>
+<div>
+  <h3 className="font-semibold text-sm mb-2">Headline Yield</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    Trailing 12-month (TTM) yield: total actual distributions paid over the past year divided by current price.
+  </p>
+
+  <p className="text-sm text-muted-foreground mb-3">
+    This is the historical yield most platforms and funds report — what investors actually received over the last year.
+  </p>
+
+  <p className="text-sm text-muted-foreground mb-3">
+    Often higher than True Income Yield because it includes destructive ROC (your own principal being returned as "yield").
+  </p>
+
+  <p className="text-sm text-muted-foreground">
+    Compare it to True Income Yield (which strips out destructive ROC) and Advertised Yield (issuer's forward-looking snapshot from the latest payout) to see the full picture.
+  </p>
+
+  <p className="text-xs text-muted-foreground mt-4 italic">
+    Note: This is based on actual historical payouts. Always cross-check issuer 19a-1 notices for official details.
+  </p>
+</div>
 
           {/* Payout Frequency */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">Payout Frequency</h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              Indicates how often the ETF typically pays out distributions to shareholders.
-            </p>
-            <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
-              <li><span className="font-medium">Weekly</span>: Paid every week (common in newer high-yield option-income ETFs like many YieldMax and Roundhill funds).</li>
-              <li><span className="font-medium">Monthly</span>: Paid once per month (most traditional dividend and covered-call ETFs).</li>
-              <li><span className="font-medium">Quarterly</span>: Paid every three months.</li>
-            </ul>
-          </div>
+<div>
+  <h3 className="font-semibold text-sm mb-2">Payout Frequency</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    Shows how often the ETF typically distributes cash to shareholders.
+  </p>
+  <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc">
+    <li>
+      <span className="font-medium">Weekly</span>: Paid every week (common in newer high-yield option-income ETFs like many YieldMax and Roundhill funds).
+    </li>
+    <li>
+      <span className="font-medium">Monthly</span>: Paid once per month (most traditional dividend and covered-call ETFs).
+    </li>
+    <li>
+      <span className="font-medium">Quarterly</span>: Paid every three months.
+    </li>
+  </ul>
+</div>
 
-          {/* ROC %} */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">ROC %</h3>
-            <p className="text-sm text-muted-foreground">
-              Estimated percentage of recent distributions classified as destructive Return of Capital. High sustained ROC usually means the fund is returning principal to meet yield targets, leading to NAV decay over time.
-            </p>
-          </div>
+          {/* ROC % */}
+<div>
+  <h3 className="font-semibold text-sm mb-2">ROC %</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    Estimated percentage of distributions classified as destructive Return of Capital (ROC).
+  </p>
+  <p className="text-sm text-muted-foreground mb-3">
+    High ROC means the fund is returning your own principal to meet payout targets, leading to NAV decay over time.
+  </p>
+  <p className="text-sm text-muted-foreground">
+    This is an estimate based on historical NAV changes vs. cumulative payouts. Always cross-check issuer 19a-1 notices for official ROC details. Updates weekly.
+  </p>
+</div>
 
           {/* AUM */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">AUM (Assets Under Management)</h3>
-            <p className="text-sm text-muted-foreground">
-              Total size of the fund in USD — larger funds tend to be more established.
-            </p>
-          </div>
+<div>
+  <h3 className="font-semibold text-sm mb-2">AUM (Assets Under Management)</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    Total assets in the fund (in USD) — larger funds are generally more liquid and established.
+  </p>
+  <p className="text-sm text-muted-foreground">
+    Higher AUM often means better trading volume and lower risk of extreme volatility.
+  </p>
+</div>
 
           {/* Expense */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">Expense</h3>
-            <p className="text-sm text-muted-foreground">
-              Annual expense ratio — fees as a percentage of assets.
-            </p>
-          </div>
+<div>
+  <h3 className="font-semibold text-sm mb-2">Expense</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    Annual expense ratio — the percentage of assets charged as fees each year.
+  </p>
+  <p className="text-sm text-muted-foreground">
+    Lower expense ratios mean more of the yield stays with you, especially important for long-term income.
+  </p>
+</div>
 
-          {/* Key Concept */}
-          <div className="border-t border-border pt-4">
-            <h3 className="font-semibold text-sm mb-2">Key Concept: Destructive vs Constructive ROC</h3>
-            <p className="text-sm text-muted-foreground">
-              Not all ROC is bad. Some funds use it tax-efficiently when they earn excess income. YieldCanary flags destructive ROC — when distributions exceed earned income, forcing the fund to return principal and erode NAV.
-            </p>
-          </div>
+          {/* Key Concepts Section */}
+<div className="border-t border-border pt-6">
+  <h3 className="font-semibold text-lg mb-4">Key Concepts</h3>
+
+  <h4 className="font-bold text-sm mb-2">Destructive vs Constructive ROC</h4>
+  <p className="text-sm text-muted-foreground mb-4">
+    Not all Return of Capital (ROC) is harmful. Constructive ROC can occur when a fund earns excess income (e.g., from option premiums) and returns part of it tax-efficiently.
+  </p>
+  <p className="text-sm text-muted-foreground mb-4">
+    YieldCanary flags <strong>destructive ROC</strong> — when distributions exceed earned income, forcing the fund to return principal and erode NAV over time. This reduces your actual capital rather than representing real earnings.
+  </p>
+
+  <h4 className="font-bold text-sm mb-2">Headline Yield vs. Advertised Yield vs. True Income Yield</h4>
+  <ul className="text-sm text-muted-foreground space-y-3 ml-4 list-disc">
+    <li>
+      <span className="font-medium">Headline Yield</span>: Trailing 12-month (TTM) yield — total actual distributions paid over the past year ÷ current price. Historical and comparable.
+    </li>
+    <li>
+      <span className="font-medium">Advertised Yield</span>: Issuer's forward-looking snapshot — most recent payout annualized (ex. last weekly payout × 52) ÷ current price. This is often higher but not guaranteed.
+    </li>
+    <li>
+      <span className="font-medium">True Income Yield</span>: Headline Yield minus destructive ROC — shows only sustainable earned income (premiums, dividends, interest). A large gap from Headline signals erosion risk.
+    </li>
+  </ul>
+</div>
 
           {/* Footer Note */}
           <div className="border-t border-border pt-4">
             <p className="text-xs text-muted-foreground">
-              All metrics update weekly based on public distribution and price data.
+              All metrics update weekly, except the current market price per share of the ETF (updates every 15 minutes), based on public distribution and price data.
             </p>
           </div>
 
