@@ -193,10 +193,6 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
     </li>
   </ul>
 
-  <p className="text-sm text-muted-foreground mt-4">
-    This is the default sort order when you log in to the dashboard — it prioritizes funds with the highest sustainable income after accounting for destructive ROC.
-  </p>
-
   <p className="text-xs text-muted-foreground mt-3 italic">
     Note: This is an estimate based on historical data. Always cross-check issuer 19a-1 notices for official ROC details.
   </p>
@@ -210,7 +206,7 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
             </p>
           </div>
 
-          {/* Take-Home Cash Return */}
+{/* Take-Home Cash Return */}
 <div>
   <h3 className="font-semibold text-sm mb-2">Take-Home Cash Return</h3>
   <p className="text-sm text-muted-foreground mb-3">
@@ -228,6 +224,10 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
   <p className="text-sm text-muted-foreground mt-3">
     Formula: (Ending price + after-tax distributions) / Starting price – 1  
     Default tax rate is 20% for new users — update in your account settings for accuracy.
+  </p>
+
+  <p className="text-sm text-muted-foreground mt-4">
+    This is the default sort order when you log in to the dashboard — it prioritizes funds with the highest after-tax return over the last year.
   </p>
 
   <p className="text-xs text-muted-foreground mt-4 italic">
@@ -271,15 +271,28 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
 </div>
 
           {/* Headline Yield */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">Headline Yield</h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              Trailing 12-month total distributions ÷ current price — the number most funds advertise.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Often inflated by ROC — compare to True Income Yield for the real picture.
-            </p>
-          </div>
+<div>
+  <h3 className="font-semibold text-sm mb-2">Headline Yield</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    Trailing 12-month (TTM) yield: total actual distributions paid over the past year divided by current price.
+  </p>
+
+  <p className="text-sm text-muted-foreground mb-3">
+    This is the historical yield most platforms and funds report — what investors actually received over the last year.
+  </p>
+
+  <p className="text-sm text-muted-foreground mb-3">
+    Often higher than True Income Yield because it includes destructive ROC (your own principal being returned as "yield").
+  </p>
+
+  <p className="text-sm text-muted-foreground">
+    Compare it to True Income Yield (which strips out destructive ROC) and Advertised Yield (issuer's forward-looking snapshot from the latest payout) to see the full picture.
+  </p>
+
+  <p className="text-xs text-muted-foreground mt-4 italic">
+    Note: This is based on actual historical payouts. Always cross-check issuer 19a-1 notices for official details.
+  </p>
+</div>
 
           {/* Payout Frequency */}
           <div>
