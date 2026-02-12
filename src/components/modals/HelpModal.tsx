@@ -98,7 +98,8 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
           {/* Introduction */}
           <div>
             <p className="text-sm text-muted-foreground">
-              Welcome! YieldCanary tracks over 200 high-yield ETFs to help you separate sustainable income from funds that quietly erode principal through destructive Return of Capital (ROC). Below is a detailed breakdown of each column in the main dashboard & watchlist.
+              Welcome! YieldCanary tracks over 200 income ETFs to help you separate sustainable funds from those that quietly erode principal through destructive Return of Capital (ROC). Below is a detailed breakdown of each column in the main dashboard.
+              Scroll down to the bottom to see the <strong>Key Concepts</strong> and Support Ticket sections.
             </p>
           </div>
 
@@ -381,7 +382,7 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
           {/* Footer Note */}
           <div className="border-t border-border pt-4">
             <p className="text-xs text-muted-foreground">
-              All metrics update weekly, expect the current market price per share of the ETF (updates every 15 minutes), based on public distribution and price data.
+              All metrics update weekly, except the current market price per share of the ETF (updates every 15 minutes), based on public distribution and price data.
             </p>
           </div>
 
