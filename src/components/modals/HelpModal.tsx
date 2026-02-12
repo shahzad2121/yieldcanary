@@ -236,23 +236,39 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
 </div>
 
           {/* Monthly Spendable Cash Yield */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">Monthly Spendable Cash Yield</h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              Estimated spendable cash from last month's distribution after taxes — uses your tax rate setting.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              This metric shows only the after-tax cash distribution from the most recent complete month that you could actually spend (not reinvested). Price change is not included (unrealized until sold). Formula: (Last month's distribution after tax) ÷ current price × 100. Shows "N/A" if no full month data is available yet.
-            </p>
-          </div>
+<div>
+  <h3 className="font-semibold text-sm mb-2">Monthly Spendable Cash Yield</h3>
+  <p className="text-sm text-muted-foreground mb-3">
+    Estimated spendable monthly cash from the ETF's most recent full month of distributions, after taxes — what you could actually pocket (not reinvested).
+  </p>
+
+  <p className="text-sm text-muted-foreground mb-3">
+    Uses your personal tax rate from account settings (default 20% for new users) applied to the distributions. Price change is not included (unrealized until sold).
+  </p>
+
+  <p className="text-sm text-muted-foreground mb-3">
+    Formula: (Last full month's distributions after tax) ÷ current price × 100
+  </p>
+
+  <p className="text-sm text-muted-foreground mb-3">
+    Shows "N/A" if the fund has no full month of payout data yet (common for very new funds).
+  </p>
+
+  <p className="text-xs text-muted-foreground mt-4 italic">
+    This is an estimate based on the latest available month and your tax rate. Actual cash received may vary slightly due to timing or taxes.
+  </p>
+</div>
 
           {/* Price */}
-          <div>
-            <h3 className="font-semibold text-sm mb-2">Price</h3>
-            <p className="text-sm text-muted-foreground">
-              Current market price per share.
-            </p>
-          </div>
+<div>
+  <h3 className="font-semibold text-sm mb-2">Price</h3>
+  <p className="text-sm text-muted-foreground mb-2">
+    Current market price per share of the ETF.
+  </p>
+  <p className="text-sm text-muted-foreground">
+    This is the latest adjusted closing price pulled from our data source. It updates every 15 minutes and is used to calculate yields, returns, and other metrics.
+  </p>
+</div>
 
           {/* Headline Yield */}
           <div>
