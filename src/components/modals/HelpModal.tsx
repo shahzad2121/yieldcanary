@@ -171,7 +171,7 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
             <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc mt-2">
               <li>Shown only for funds with meaningful erosion risk.</li>
               <li>"N/A" means little/no destructive ROC — no significant projected decay.</li>
-              <li>This is a trend-based estimate, not a guarantee — changes weekly with new data.</li>
+              <li>This is a trend-based estimate, not a guarantee — it changes weekly with new data.</li>
             </ul>
           </div>
 
