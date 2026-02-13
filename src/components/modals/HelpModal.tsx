@@ -270,7 +270,7 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
     Current market price per share of the ETF.
   </p>
   <p className="text-sm text-muted-foreground">
-    This is the latest adjusted closing price pulled from our data source. It updates every 15 minutes and is used to calculate yields, returns, and other metrics.
+    This is the latest adjusted closing price pulled from our data source. It updates every 2 minutes and is used to calculate yields, returns, and other metrics.
   </p>
 </div>
 
@@ -382,7 +382,7 @@ export function HelpModal({ isOpen, onClose, userEmail }: HelpModalProps) {
           {/* Footer Note */}
           <div className="border-t border-border pt-4">
             <p className="text-xs text-muted-foreground">
-              All metrics update weekly, except the current market price per share of the ETF (updates every 15 minutes), based on public distribution and price data.
+              All metrics update weekly, except the current market price per share of the ETF (updates every 2 minutes), based on public distribution and price data.
             </p>
           </div>
 
