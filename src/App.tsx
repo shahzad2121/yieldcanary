@@ -13,6 +13,7 @@ import { ToltScript } from "@/components/ToltScript";
 import Landing from "./pages/Landing";
 import DashboardPage from "./pages/DashboardPage";
 import WatchlistPage from "./pages/WatchlistPage";
+import InsightsPage from "./pages/InsightsPage";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import TermsOfService from "./pages/legal/TermsOfService";
@@ -49,6 +50,7 @@ const App = () => {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/watchlist" element={<WatchlistPage />} />
+                <Route path="/insights" element={<InsightsPage />} />
                 {/* Legal Pages */}
                 <Route path="/legal/terms" element={<TermsOfService />} />
                 <Route path="/legal/privacy" element={<PrivacyPolicy />} />

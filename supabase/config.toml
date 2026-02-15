@@ -24,3 +24,7 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/tolt-webhook/deno.json"
 entrypoint = "./functions/tolt-webhook/index.ts"
+[functions.market-snapshot]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/market-snapshot/index.ts"
