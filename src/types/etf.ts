@@ -9,6 +9,8 @@ export interface ETF {
   inceptionDate: string;
   latestAdjClose: number;
   latestDate: string;
+  /** 90-day trailing average price (from weekly_data). NULL when insufficient data. Used for Buy Zone: price < 90d avg. */
+  priceAvg90d: number | null;
   /** Price/dividend fields for client-side take-home and return calculations */
   price1YAgo?: number | null;
   dividendsLast12Mo?: number | null;

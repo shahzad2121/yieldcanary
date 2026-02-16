@@ -10,6 +10,10 @@ import { HighestAdvertisedYieldCard } from '@/components/insights/HighestAdverti
 import { BestAfterTaxCashFlowCard } from '@/components/insights/BestAfterTaxCashFlowCard';
 import { BestWeeklyPayersCard } from '@/components/insights/BestWeeklyPayersCard';
 import { BestMonthlyPayersCard } from '@/components/insights/BestMonthlyPayersCard';
+import { BuyZonePicksCard } from '@/components/insights/BuyZonePicksCard';
+import { YieldTrapsCard } from '@/components/insights/YieldTrapsCard';
+import { LargestHealthyAumCard } from '@/components/insights/LargestHealthyAumCard';
+import { LowestExpenseHealthyCard } from '@/components/insights/LowestExpenseHealthyCard';
 import { Footer } from '@/components/Footer';
 import { useETFs } from '@/hooks/useETFs';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -108,12 +112,12 @@ const InsightsPage = () => {
               loading={etfsLoading}
             />
 
-            <HighestAdvertisedYieldCard
+            {/* <HighestAdvertisedYieldCard
               etfs={etfs}
               plan={plan}
               onUpgrade={() => setIsUpgradeModalOpen(true)}
               loading={etfsLoading}
-            />
+            /> */}
 
             <BestAfterTaxCashFlowCard
               etfs={etfs}
@@ -130,6 +134,35 @@ const InsightsPage = () => {
             />
 
             <BestMonthlyPayersCard
+              etfs={etfs}
+              plan={plan}
+              onUpgrade={() => setIsUpgradeModalOpen(true)}
+              loading={etfsLoading}
+            />
+
+            {/* <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+              <LargestHealthyAumCard
+                etfs={etfs}
+                plan={plan}
+                onUpgrade={() => setIsUpgradeModalOpen(true)}
+                loading={etfsLoading}
+              />
+              <LowestExpenseHealthyCard
+                etfs={etfs}
+                plan={plan}
+                onUpgrade={() => setIsUpgradeModalOpen(true)}
+                loading={etfsLoading}
+              />
+            </div> */}
+
+            {/* <BuyZonePicksCard
+              etfs={etfs}
+              plan={plan}
+              onUpgrade={() => setIsUpgradeModalOpen(true)}
+              loading={etfsLoading}
+            /> */}
+
+            <YieldTrapsCard
               etfs={etfs}
               plan={plan}
               onUpgrade={() => setIsUpgradeModalOpen(true)}

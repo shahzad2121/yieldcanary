@@ -13,7 +13,7 @@ export type Database = {
     PostgrestVersion: "13.0.5"
   }
   public: {
-    Tables: {
+  Tables: {
       etfs: {
         Row: {
           aum: number | null
@@ -26,6 +26,7 @@ export type Database = {
           expense_ratio: number | null
           headline_yield_ttm: number | null
           advertised_yield: number | null
+          price_avg_90d: number | null
           id: string
           inception_date: string | null
           latest_adj_close: number | null
@@ -63,6 +64,7 @@ export type Database = {
           expense_ratio?: number | null
           headline_yield_ttm?: number | null
           advertised_yield?: number | null
+          price_avg_90d?: number | null
           id?: string
           inception_date?: string | null
           latest_adj_close?: number | null
@@ -100,6 +102,7 @@ export type Database = {
           expense_ratio?: number | null
           headline_yield_ttm?: number | null
           advertised_yield?: number | null
+          price_avg_90d?: number | null
           id?: string
           inception_date?: string | null
           latest_adj_close?: number | null
@@ -127,6 +130,53 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      etf_weekly_snapshots: {
+        Row: {
+          id: string
+          ticker_id: string
+          week_start_date: string
+          roc_percent: number | null
+          death_clock_years: number | null
+          true_income_yield: number | null
+          headline_yield_ttm: number | null
+          canary_health: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          ticker_id: string
+          week_start_date: string
+          roc_percent?: number | null
+          death_clock_years?: number | null
+          true_income_yield?: number | null
+          headline_yield_ttm?: number | null
+          canary_health?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          ticker_id?: string
+          week_start_date?: string
+          roc_percent?: number | null
+          death_clock_years?: number | null
+          true_income_yield?: number | null
+          headline_yield_ttm?: number | null
+          canary_health?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "etf_weekly_snapshots_ticker_id_fkey"
+            columns: ["ticker_id"]
+            isOneToOne: false
+            referencedRelation: "etfs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notices_19a1: {
         Row: {

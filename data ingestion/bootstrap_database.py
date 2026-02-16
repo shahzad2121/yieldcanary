@@ -288,12 +288,12 @@ def calculate_death_clock(roc_percent: Optional[float]) -> Optional[float]:
     return round(50 / roc_percent, 2)
 
 
-def clamp_numeric(value: Optional[float], max_val: float = 9.9999, min_val: float = -9.9999) -> Optional[float]:
+def clamp_numeric(value: Optional[float], max_val: float = 9999.9999, min_val: float = -9999.9999) -> Optional[float]:
     """Clamp numeric values to fit database NUMERIC(10,6) constraints for percentage values.
     
     Database columns with precision 10, scale 6 can store up to 9999.999999.
-    Default clamp values are set for percentage format (e.g., 13.0 for 13%).
-    This handles extreme yields/returns from high-yield ETFs.
+    Default clamp allows yields/returns from -9999.9999% to 9999.9999% (e.g. 10%, 20%, 50%).
+    Rejects only absurd values; keeps defense against bad data.
     """
     if value is None:
         return None
@@ -1268,7 +1268,11 @@ def main():
 
         # Step 5: Populate weekly data
         populate_weekly_data(tickers, fmp)
-        
+
+        # Step 5b: Recalculate 90-day average price from weekly_data (for Buy Zone filter)
+        from recalc_price_avg_90d import recalculate_price_avg_90d
+        recalculate_price_avg_90d()
+
         # Step 6: Calculate payout frequencies
         populate_payout_frequencies()
         

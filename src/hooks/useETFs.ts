@@ -13,6 +13,7 @@ function transformRowToETF(row: any): ETF {
     inceptionDate: row.inception_date,
     latestAdjClose: row.latest_adj_close,
     latestDate: row.latest_date,
+    priceAvg90d: row.price_avg_90d ?? null,
     headlineYieldTTM: row.headline_yield_ttm,
     advertisedYield: row.advertised_yield ?? null,
     rocPercent: row.roc_latest,

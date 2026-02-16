@@ -108,59 +108,135 @@ export function InsightsListCard({
         )}
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {columns.map((col) => (
-                <TableHead
-                  key={col.id}
-                  className={`${col.width ?? ''} ${col.align === 'right' ? 'text-right' : ''}`.trim()}
-                >
-                  {col.label}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {list.map((etf, index) => {
-              const isUnlocked = index < visibleCount;
-              return (
-                <TableRow key={etf.id}>
-                  {columns.map((col) => (
-                    <TableCell
-                      key={col.id}
-                      className={`${col.cellClassName ?? ''} ${col.align === 'right' ? 'text-right' : ''}`.trim()}
-                    >
-                      <div
-                        className={
-                          col.align === 'right' ? 'w-full flex justify-end' : undefined
-                        }
+        {/* Desktop/tablet: keep dense comparison table */}
+        <div className="hidden md:block">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {columns.map((col) => (
+                  <TableHead
+                    key={col.id}
+                    className={`${col.width ?? ''} ${col.align === 'right' ? 'text-right' : ''}`.trim()}
+                  >
+                    {col.label}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {list.map((etf, index) => {
+                const isUnlocked = index < visibleCount;
+                return (
+                  <TableRow key={etf.id}>
+                    {columns.map((col) => (
+                      <TableCell
+                        key={col.id}
+                        className={`${col.cellClassName ?? ''} ${col.align === 'right' ? 'text-right' : ''}`.trim()}
                       >
-                        {col.type === 'status' ? (
-                          isUnlocked ? (
-                            <CanaryStatusBadge status={etf.canaryStatus} />
+                        <div
+                          className={
+                            col.align === 'right' ? 'w-full flex justify-end' : undefined
+                          }
+                        >
+                          {col.type === 'status' ? (
+                            isUnlocked ? (
+                              <CanaryStatusBadge status={etf.canaryStatus} />
+                            ) : (
+                              <BlurredCell
+                                value={col.format(etf)}
+                                isUnlocked={false}
+                                onUpgradeClick={onUpgrade}
+                              />
+                            )
                           ) : (
                             <BlurredCell
                               value={col.format(etf)}
-                              isUnlocked={false}
+                              isUnlocked={isUnlocked}
                               onUpgradeClick={onUpgrade}
                             />
-                          )
-                        ) : (
+                          )}
+                        </div>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Mobile: card-style layout inspired by dashboard stats */}
+        <div className="space-y-2 md:hidden">
+          {list.map((etf, index) => {
+            const isUnlocked = index < visibleCount;
+
+            const tickerColumn = columns[0];
+            const nameColumn = columns.find((col) => col.id === 'name');
+            const statusColumn = columns.find((col) => col.type === 'status');
+
+            return (
+              <div
+                key={etf.id}
+                className="rounded-lg border border-border bg-card p-3 flex flex-col gap-1.5"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  {tickerColumn && (
+                    <span className="font-mono font-semibold text-sm">
+                      {tickerColumn.format(etf)}
+                    </span>
+                  )}
+                  {statusColumn && (
+                    <div className="flex-shrink-0">
+                      {isUnlocked ? (
+                        <CanaryStatusBadge status={etf.canaryStatus} />
+                      ) : (
+                        <BlurredCell
+                          value={statusColumn.format(etf)}
+                          isUnlocked={false}
+                          onUpgradeClick={onUpgrade}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {nameColumn && (
+                  <p className="text-xs text-muted-foreground truncate">
+                    {nameColumn.format(etf)}
+                  </p>
+                )}
+
+                <div className="mt-1.5 space-y-1">
+                  {columns
+                    .filter(
+                      (col) =>
+                        col !== tickerColumn &&
+                        col !== nameColumn &&
+                        col !== statusColumn
+                    )
+                    .map((col) => (
+                      <div
+                        key={col.id}
+                        className="flex items-center justify-between gap-2 text-[11px]"
+                      >
+                        <span className="text-muted-foreground truncate">
+                          {col.label}
+                        </span>
+                        <div className="ml-2 flex-1 text-right">
                           <BlurredCell
                             value={col.format(etf)}
                             isUnlocked={isUnlocked}
                             onUpgradeClick={onUpgrade}
                           />
-                        )}
+                        </div>
                       </div>
-                    </TableCell>
-                  ))}
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                    ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
         {(plan === 'free' ||
           (plan === 'basic' && list.length > VISIBLE_ROWS_BASIC)) && (
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2 border-t border-border pt-3">
