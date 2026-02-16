@@ -1,4 +1,5 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 /**
  * Market Snapshot Edge Function
@@ -8,6 +9,14 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
 const FMP_BASE_URL = "https://financialmodelingprep.com/stable";
 
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+const supabase =
+  SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    : null;
+
 // Display order and optional display names for the frontend
 const MARKET_SYMBOLS = [
   "^GSPC",  // S&P 500
@@ -16,7 +25,7 @@ const MARKET_SYMBOLS = [
   "^RUT",   // Russell 2000
   // "GC=F",    //Gold
   //"SI=F",   // Silver
-  "BTC-USD", // Bitcoin
+  "BTCUSD", // Bitcoin
   "^VIX",   // VIX
 ];
 
@@ -151,6 +160,29 @@ Deno.serve(async (req) => {
       const raw = bySymbol.get(sym);
       return normalizeItem(raw ?? { symbol: sym });
     });
+
+    // Persist latest snapshot to the database for historical and cached access.
+    if (supabase) {
+      const { error: insertError } = await supabase
+        .from("market_snapshots")
+        .insert(
+          data.map((item) => ({
+            symbol: item.symbol,
+            price: item.price,
+            changes_pct: item.changesPercentage,
+            change: item.change,
+            previous_close: item.previousClose,
+          }))
+        );
+
+      if (insertError) {
+        console.error("Failed to insert market_snapshots:", insertError);
+      }
+    } else {
+      console.error(
+        "Supabase client not configured: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing"
+      );
+    }
 
     return new Response(
       JSON.stringify({ success: true, data }),

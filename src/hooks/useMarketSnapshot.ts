@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface MarketSnapshotItem {
   symbol: string;
@@ -9,41 +10,66 @@ export interface MarketSnapshotItem {
   previousClose: number | null;
 }
 
-interface MarketSnapshotResponse {
-  success: boolean;
-  data?: MarketSnapshotItem[];
-  error?: string;
+interface MarketSnapshotRow {
+  symbol: string;
+  price: number | null;
+  changes_pct: number | null;
+  change: number | null;
+  previous_close: number | null;
+  captured_at: string;
+}
+
+const DISPLAY_NAMES: Record<string, string> = {
+  '^GSPC': 'S&P 500',
+  '^DJI': 'Dow 30',
+  '^IXIC': 'Nasdaq',
+  '^RUT': 'Russell 2000',
+  'GC=F': 'Gold',
+  'SI=F': 'Silver',
+  'BTC-USD': 'Bitcoin',
+  '^VIX': 'VIX',
+};
+
+function toDisplayName(symbol: string): string {
+  return DISPLAY_NAMES[symbol] ?? symbol;
 }
 
 async function fetchMarketSnapshot(): Promise<MarketSnapshotItem[]> {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  if (!supabaseUrl) {
-    throw new Error('VITE_SUPABASE_URL is not set');
+  const { data, error } = await supabase
+    .from('market_snapshots' as any) // remove "as any" once types are regenerated
+    .select('symbol, price, changes_pct, change, previous_close, captured_at')
+    .order('captured_at', { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!data) return [];
+
+  const rows = data as MarketSnapshotRow[];
+
+  // Keep only the latest row per symbol
+  const latestBySymbol = new Map<string, MarketSnapshotRow>();
+  for (const row of rows) {
+    if (!latestBySymbol.has(row.symbol)) {
+      latestBySymbol.set(row.symbol, row);
+    }
   }
 
-  const response = await fetch(`${supabaseUrl}/functions/v1/market-snapshot`, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-  });
-
-  const json: MarketSnapshotResponse = await response.json();
-
-  if (!response.ok) {
-    throw new Error(json.error ?? `Request failed: ${response.status}`);
-  }
-
-  if (!json.success || !Array.isArray(json.data)) {
-    throw new Error(json.error ?? 'Invalid market snapshot response');
-  }
-
-  return json.data;
+  return Array.from(latestBySymbol.values()).map((row) => ({
+    symbol: row.symbol,
+    displayName: toDisplayName(row.symbol),
+    price: row.price,
+    changesPercentage: row.changes_pct,
+    change: row.change,
+    previousClose: row.previous_close,
+  }));
 }
 
 export function useMarketSnapshot() {
   return useQuery({
     queryKey: ['market-snapshot'],
     queryFn: fetchMarketSnapshot,
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 2 * 60 * 1000, // 2 minutes to match your cron
     refetchOnWindowFocus: true,
   });
 }
