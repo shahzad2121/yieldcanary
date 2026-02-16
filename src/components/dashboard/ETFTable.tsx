@@ -72,7 +72,7 @@ const COLUMN_TOOLTIPS: Record<string, string> = {
   totalReturn1Y: "Price change over the last 12 months (capital appreciation only).",
   takeHomeCashReturn1Y: "Estimated total return over the last year after taxes on distributions. Includes price change + after-tax payouts (using your personal tax rate from settings, default 20%). Shows what you actually keep in your pocket.",
   monthlySpendableCashYield: "Estimated spendable cash from last month's distribution after taxes — using your personal tax rate from settings, default 20%. Price change not included (unrealized until sold).",
-  latestAdjClose: "Current share price.",
+  latestAdjClose: "Current share price. Updates every 2 minutes.",
   headlineYieldTTM: "Trailing 12-month (TTM) yield: total actual distributions paid over the past year divided by current price. Historical and comparable — shows what investors really received.",
   advertisedYield: "Advertised yield: latest payout per share annualized (by payout frequency) divided by current price. May overstate sustainable income — compare with True Income Yield.",
   payoutFrequency: "How often the ETF pays distributions (Weekly, Monthly, Quarterly).",
