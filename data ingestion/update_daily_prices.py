@@ -249,6 +249,13 @@ def main():
     print(f"Total: {len(tickers)}")
     print(f"\nFinished at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
 
+    # Recalculate advertised_yield so it reflects the new latest_adj_close
+    try:
+        from recalc_advertised_yield import recalculate_advertised_yield
+        recalculate_advertised_yield()
+    except Exception as e:
+        print(f"Warning: Advertised yield recalc failed: {e}")
+
 
 if __name__ == "__main__":
     main()
