@@ -14,6 +14,7 @@ function transformRowToETF(row: any): ETF {
     latestAdjClose: row.latest_adj_close,
     latestDate: row.latest_date,
     headlineYieldTTM: row.headline_yield_ttm,
+    advertisedYield: row.advertised_yield ?? null,
     rocPercent: row.roc_latest,
     rocDate: row.roc_date,
     trueIncomeYield: row.true_income_yield,
@@ -105,6 +106,7 @@ export function useETFs() {
                   latestAdjClose: payload.new.latest_adj_close ?? etf.latestAdjClose,
                   latestDate: payload.new.latest_date ?? etf.latestDate,
                   payoutFrequency: payload.new.payout_frequency ?? etf.payoutFrequency,
+                  advertisedYield: payload.new.advertised_yield ?? etf.advertisedYield,
                   // Optionally update updated_at if you want to track when it was updated
                 };
               }

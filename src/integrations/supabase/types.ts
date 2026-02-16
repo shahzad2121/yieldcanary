@@ -25,6 +25,7 @@ export type Database = {
           dividends_ytd: number | null
           expense_ratio: number | null
           headline_yield_ttm: number | null
+          advertised_yield: number | null
           id: string
           inception_date: string | null
           latest_adj_close: number | null
@@ -61,6 +62,7 @@ export type Database = {
           dividends_ytd?: number | null
           expense_ratio?: number | null
           headline_yield_ttm?: number | null
+          advertised_yield?: number | null
           id?: string
           inception_date?: string | null
           latest_adj_close?: number | null
@@ -97,6 +99,7 @@ export type Database = {
           dividends_ytd?: number | null
           expense_ratio?: number | null
           headline_yield_ttm?: number | null
+          advertised_yield?: number | null
           id?: string
           inception_date?: string | null
           latest_adj_close?: number | null

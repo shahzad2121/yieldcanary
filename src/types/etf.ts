@@ -9,7 +9,16 @@ export interface ETF {
   inceptionDate: string;
   latestAdjClose: number;
   latestDate: string;
+  /** Price/dividend fields for client-side take-home and return calculations */
+  price1YAgo?: number | null;
+  dividendsLast12Mo?: number | null;
+  priceYTDStart?: number | null;
+  dividendsYTD?: number | null;
+  priceAtInception?: number | null;
+  dividendsSinceInception?: number | null;
   headlineYieldTTM: number;
+  /** Advertised yield: (last payout × annualization) / price × 100. NULL when insufficient data. */
+  advertisedYield: number | null;
   rocPercent: number;
   rocDate: string;
   trueIncomeYield: number;

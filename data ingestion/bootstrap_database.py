@@ -1278,7 +1278,12 @@ def main():
         # Step 8: Recalculate headline yield from weekly_data so it uses
         # the canonical dividend history stored in Supabase.
         recalculate_headline_yield_from_weekly_data()
-        
+
+        # Step 9: Recalculate advertised_yield (last payout × annualization / price).
+        # Requires payout_frequency (Step 6) and weekly_data (Step 5). NULL when insufficient data.
+        from recalc_advertised_yield import recalculate_advertised_yield
+        recalculate_advertised_yield()
+
         # Print summary (only if everything succeeded)
         print_summary(success, failed, health_counts, len(tickers))
         

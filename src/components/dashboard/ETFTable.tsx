@@ -74,6 +74,7 @@ const COLUMN_TOOLTIPS: Record<string, string> = {
   monthlySpendableCashYield: "Estimated spendable cash from last month's distribution after taxes — using your personal tax rate from settings, default 20%. Price change not included (unrealized until sold).",
   latestAdjClose: "Current share price.",
   headlineYieldTTM: "Trailing 12-month (TTM) yield: total actual distributions paid over the past year divided by current price. Historical and comparable — shows what investors really received.",
+  advertisedYield: "Advertised yield: latest payout per share annualized (by payout frequency) divided by current price. May overstate sustainable income — compare with True Income Yield.",
   payoutFrequency: "How often the ETF pays distributions (Weekly, Monthly, Quarterly).",
   rocPercent: "Estimated percentage of recent distributions classified as destructive Return of Capital (eroding principal).",
   aum: "Assets Under Management (total fund size in USD).",
@@ -92,6 +93,7 @@ const MOBILE_SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'monthlySpendableCashYield', label: 'Monthly Spendable Cash Yield' },
   { key: 'latestAdjClose', label: 'Price' },
   { key: 'headlineYieldTTM', label: 'Headline Yield' },
+  { key: 'advertisedYield', label: 'Advertised Yield' },
   { key: 'payoutFrequency', label: 'Payout Frequency' },
   { key: 'rocPercent', label: 'ROC %' },
   { key: 'aum', label: 'AUM' },
@@ -111,6 +113,7 @@ const COLUMN_CONFIG = {
   monthlySpendableCashYield: { width: 'min-w-[180px]', className: '' },
   price: { width: 'w-24', className: 'font-mono' },
   headlineYield: { width: 'w-28', className: 'font-mono' },
+  advertisedYield: { width: 'w-28', className: 'font-mono' },
   payoutFrequency: { width: 'w-32', className: '' },
   rocPercent: { width: 'w-20', className: '' },
   aum: { width: 'max-w-[80px]', className: 'font-mono whitespace-nowrap overflow-hidden' },
@@ -274,9 +277,12 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
         // Use YTD fallback for new ETFs or ETFs without 1Y data
         aVal = getSortValue1Y(a, a.totalReturn1Y, a.totalReturnYTD);
         bVal = getSortValue1Y(b, b.totalReturn1Y, b.totalReturnYTD);
-      } else if (sortKey === 'monthlySpendableCashYield') {
+      } else       if (sortKey === 'monthlySpendableCashYield') {
         aVal = a.monthlySpendableCashYield;
         bVal = b.monthlySpendableCashYield;
+      } else if (sortKey === 'advertisedYield') {
+        aVal = a.advertisedYield;
+        bVal = b.advertisedYield;
       } else {
         aVal = (a as any)[sortKey];
         bVal = (b as any)[sortKey];
@@ -386,6 +392,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
       'Monthly Spendable Cash Yield',
       'Latest Price',
       'Headline Yield',
+      'Advertised Yield',
       'Payout Frequency',
       'ROC %',
       'AUM',
@@ -403,6 +410,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
       etf.monthlySpendableCashYield !== null ? `${etf.monthlySpendableCashYield.toFixed(2)}%` : 'N/A',
       etf.latestAdjClose ?? '',
       etf.headlineYieldTTM ?? '',
+      etf.advertisedYield != null ? `${etf.advertisedYield.toFixed(2)}%` : '',
       etf.payoutFrequency ?? '',
       etf.rocPercent ?? '',
       etf.aum ?? '',
@@ -533,6 +541,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
                 <SortableHeader label="Monthly Spendable Cash Yield" sortKeyProp="monthlySpendableCashYield" icon={Banknote} className={`${COLUMN_CONFIG.monthlySpendableCashYield.width} text-start`} />
                 <SortableHeader label="Price" sortKeyProp="latestAdjClose" className={COLUMN_CONFIG.price.width} />
                 <SortableHeader label="Headline Yield" sortKeyProp="headlineYieldTTM" className={COLUMN_CONFIG.headlineYield.width} />
+                <SortableHeader label="Advertised Yield" sortKeyProp="advertisedYield" icon={Percent} className={COLUMN_CONFIG.advertisedYield.width} />
                 <SortableHeader label="Payout Frequency" sortKeyProp="payoutFrequency" className={COLUMN_CONFIG.payoutFrequency.width} />
                 <SortableHeader label="ROC %" sortKeyProp="rocPercent" className={COLUMN_CONFIG.rocPercent.width} />
                 <SortableHeader label="AUM" sortKeyProp="aum" className={COLUMN_CONFIG.aum.width} />
@@ -562,6 +571,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
                     <TableCell className={`${COLUMN_CONFIG.monthlySpendableCashYield.width} ${COLUMN_CONFIG.monthlySpendableCashYield.className} text-sm`}><BlurredCell value={etf.monthlySpendableCashYield !== null ? `${etf.monthlySpendableCashYield.toFixed(2)}%` : 'N/A'} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className={`${COLUMN_CONFIG.price.width} ${COLUMN_CONFIG.price.className} text-muted-foreground text-sm`}>${etf.latestAdjClose ? etf.latestAdjClose.toFixed(2) : '0.00'}</TableCell>
                     <TableCell className={`${COLUMN_CONFIG.headlineYield.width} ${COLUMN_CONFIG.headlineYield.className} text-muted-foreground text-sm`}>{formatPercent(etf.headlineYieldTTM)}</TableCell>
+                    <TableCell className={`${COLUMN_CONFIG.advertisedYield.width} ${COLUMN_CONFIG.advertisedYield.className} text-muted-foreground text-sm`}>{etf.advertisedYield != null ? `${etf.advertisedYield.toFixed(2)}%` : 'N/A'}</TableCell>
                     <TableCell className={`${COLUMN_CONFIG.payoutFrequency.width} text-sm text-muted-foreground`}>{etf.payoutFrequency || 'N/A'}</TableCell>
                     <TableCell className={`${COLUMN_CONFIG.rocPercent.width} text-sm`}><BlurredCell value={`${etf.rocPercent}%`} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className={`${COLUMN_CONFIG.aum.width} ${COLUMN_CONFIG.aum.className} text-muted-foreground text-sm`}>{formatCurrency(etf.aum)}</TableCell>
@@ -672,6 +682,10 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
                 <div>
                   <p className="text-[10px] text-muted-foreground">Headline Yield</p>
                   <p className="font-mono text-sm">{formatPercent(etf.headlineYieldTTM)}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground">Advertised Yield</p>
+                  <p className="font-mono text-sm">{etf.advertisedYield != null ? `${etf.advertisedYield.toFixed(2)}%` : 'N/A'}</p>
                 </div>
               </div>
 

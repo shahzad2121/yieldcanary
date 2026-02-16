@@ -3,8 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
+import { UpgradeModal } from '@/components/dashboard/UpgradeModal';
 import { MarketSnapshotBanner } from '@/components/insights/MarketSnapshotBanner';
+import { HighestYieldingLowRocCard } from '@/components/insights/HighestYieldingLowRocCard';
+import { HighestAdvertisedYieldCard } from '@/components/insights/HighestAdvertisedYieldCard';
+import { BestAfterTaxCashFlowCard } from '@/components/insights/BestAfterTaxCashFlowCard';
+import { BestWeeklyPayersCard } from '@/components/insights/BestWeeklyPayersCard';
+import { BestMonthlyPayersCard } from '@/components/insights/BestMonthlyPayersCard';
 import { Footer } from '@/components/Footer';
+import { useETFs } from '@/hooks/useETFs';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -12,7 +19,9 @@ const InsightsPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [userEmail, setUserEmail] = useState<string>('');
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const navigate = useNavigate();
+  const { etfs, loading: etfsLoading } = useETFs();
   const { user: subscriptionUser, loading: userLoading, isTrialing, trialEndsAt } = useUserSubscription();
 
   type Plan = 'free' | 'basic' | 'advanced';
@@ -77,7 +86,7 @@ const InsightsPage = () => {
             userEmail={userEmail}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            onUpgrade={() => {}}
+            onUpgrade={() => setIsUpgradeModalOpen(true)}
           />
 
           <main className="container px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
@@ -92,9 +101,49 @@ const InsightsPage = () => {
 
             <MarketSnapshotBanner />
 
+            <HighestYieldingLowRocCard
+              etfs={etfs}
+              plan={plan}
+              onUpgrade={() => setIsUpgradeModalOpen(true)}
+              loading={etfsLoading}
+            />
+
+            <HighestAdvertisedYieldCard
+              etfs={etfs}
+              plan={plan}
+              onUpgrade={() => setIsUpgradeModalOpen(true)}
+              loading={etfsLoading}
+            />
+
+            <BestAfterTaxCashFlowCard
+              etfs={etfs}
+              plan={plan}
+              onUpgrade={() => setIsUpgradeModalOpen(true)}
+              loading={etfsLoading}
+            />
+
+            <BestWeeklyPayersCard
+              etfs={etfs}
+              plan={plan}
+              onUpgrade={() => setIsUpgradeModalOpen(true)}
+              loading={etfsLoading}
+            />
+
+            <BestMonthlyPayersCard
+              etfs={etfs}
+              plan={plan}
+              onUpgrade={() => setIsUpgradeModalOpen(true)}
+              loading={etfsLoading}
+            />
+
             <Footer showDataDisclaimer={true} />
           </main>
         </div>
+        <UpgradeModal
+          isOpen={isUpgradeModalOpen}
+          onClose={() => setIsUpgradeModalOpen(false)}
+          onUpgrade={() => setIsUpgradeModalOpen(false)}
+        />
       </DashboardLayout>
     </>
   );
