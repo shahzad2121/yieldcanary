@@ -1,21 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
 
 /**
  * Market Snapshot Edge Function
- * Fetches real-time quotes for S&P 500, Dow 30, Nasdaq, Russell 2000, Gold, Silver, Bitcoin, VIX
- * via FMP batch-quote API. Used by the Insights page banner.
+ * Fetches real-time quotes for S&P 500, Dow 30, Nasdaq, Russell 2000, Bitcoin, VIX
+ * via FMP API. Called directly from frontend - no database storage needed.
  */
 
 const FMP_BASE_URL = "https://financialmodelingprep.com/stable";
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-
-const supabase =
-  SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
-    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-    : null;
 
 // Display order and optional display names for the frontend
 const MARKET_SYMBOLS = [
@@ -36,7 +27,7 @@ const DISPLAY_NAMES: Record<string, string> = {
   "^RUT": "Russell 2000",
   "GC=F": "Gold",
   "SI=F": "Silver",
-  "BTC-USD": "Bitcoin",
+  "BTCUSD": "Bitcoin",  // Fixed: Changed from "BTC-USD"
   "^VIX": "VIX",
 };
 
@@ -63,7 +54,7 @@ export type MarketSnapshotItem = {
 function corsHeaders(): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Content-Type": "application/json",
   };
@@ -103,7 +94,6 @@ async function fetchMarketQuotes(apiKey: string): Promise<FMPQuote[]> {
   }
 }
 
-
 function normalizeItem(raw: FMPQuote): MarketSnapshotItem {
   const symbol = raw.symbol ?? "";
   // FMP returns changePercentage as decimal (e.g. 0.03395); convert to percentage (3.395) for frontend
@@ -122,18 +112,16 @@ function normalizeItem(raw: FMPQuote): MarketSnapshotItem {
 }
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
+      headers: corsHeaders(),
     });
   }
 
-  if (req.method !== "GET") {
+  // Support both GET and POST for flexibility
+  if (req.method !== "GET" && req.method !== "POST") {
     return new Response(
       JSON.stringify({ success: false, error: "Method not allowed" }),
       { status: 405, headers: corsHeaders() }
@@ -160,29 +148,6 @@ Deno.serve(async (req) => {
       const raw = bySymbol.get(sym);
       return normalizeItem(raw ?? { symbol: sym });
     });
-
-    // Persist latest snapshot to the database for historical and cached access.
-    if (supabase) {
-      const { error: insertError } = await supabase
-        .from("market_snapshots")
-        .insert(
-          data.map((item) => ({
-            symbol: item.symbol,
-            price: item.price,
-            changes_pct: item.changesPercentage,
-            change: item.change,
-            previous_close: item.previousClose,
-          }))
-        );
-
-      if (insertError) {
-        console.error("Failed to insert market_snapshots:", insertError);
-      }
-    } else {
-      console.error(
-        "Supabase client not configured: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing"
-      );
-    }
 
     return new Response(
       JSON.stringify({ success: true, data }),
