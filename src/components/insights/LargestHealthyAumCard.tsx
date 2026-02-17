@@ -84,6 +84,7 @@ export function LargestHealthyAumCard({
         width: 'min-w-[140px]',
         format: (etf) => etf.name,
         cellClassName: 'max-w-[180px] truncate',
+        showNameTooltip: true,
       },
       {
         id: 'aum',

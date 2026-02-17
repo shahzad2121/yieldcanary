@@ -88,6 +88,7 @@ export function LowestExpenseHealthyCard({
         width: 'min-w-[140px]',
         format: (etf) => etf.name,
         cellClassName: 'max-w-[200px] truncate',
+        showNameTooltip: true,
       },
       {
         id: 'expenseRatio',
