@@ -1,12 +1,17 @@
 /**
  * Derived health status for market snapshot cards (indices, commodities, VIX).
- * Uses daily change %; VIX is inverted (down = good, up = bad).
+ *
+ * `changePercentage` is now the raw percentage value from FMP
+ * (e.g. +0.35 means +0.35%, -1.2 means -1.20%).
+ *
+ * For VIX, we invert the sign so that a falling VIX is treated as "good"
+ * (lower volatility / less fear), and a rising VIX as "bad".
  */
 
 export type MarketSnapshotStatus = 'Healthy' | 'Dying' | 'Dead';
 
-/** changePercentage is in decimal form (e.g. 0.03 = 3%) */
-const THRESHOLD_DYING = -0.01; // -1%: between 0 and -1% = Dying, below = Dead
+/** Threshold between "Dying" and "Dead" in percent (e.g. -1 means -1.0%) */
+const THRESHOLD_DYING = -1; // -1%: between 0 and -1% = Dying, below = Dead
 
 export function getMarketSnapshotStatus(
   symbol: string,

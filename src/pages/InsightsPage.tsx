@@ -14,6 +14,8 @@ import { BuyZonePicksCard } from '@/components/insights/BuyZonePicksCard';
 import { YieldTrapsCard } from '@/components/insights/YieldTrapsCard';
 import { LargestHealthyAumCard } from '@/components/insights/LargestHealthyAumCard';
 import { LowestExpenseHealthyCard } from '@/components/insights/LowestExpenseHealthyCard';
+import { WeeklyImprovementsCard } from '@/components/insights/WeeklyImprovementsCard';
+import { WeeklyDeteriorationsCard } from '@/components/insights/WeeklyDeteriorationsCard';
 import { Footer } from '@/components/Footer';
 import { useETFs } from '@/hooks/useETFs';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -104,6 +106,17 @@ const InsightsPage = () => {
             </div>
 
             <MarketSnapshotBanner />
+
+            {/* <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+              <WeeklyImprovementsCard
+                plan={plan}
+                onUpgrade={() => setIsUpgradeModalOpen(true)}
+              />
+              <WeeklyDeteriorationsCard
+                plan={plan}
+                onUpgrade={() => setIsUpgradeModalOpen(true)}
+              />
+            </div> */}
 
             <HighestYieldingLowRocCard
               etfs={etfs}

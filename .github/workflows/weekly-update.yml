@@ -35,6 +35,12 @@ jobs:
           FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
         run: python bootstrap_database.py
 
+      - name: Snapshot weekly ETF metrics
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python snapshot_weekly_etf_metrics.py
+
       - name: Summary
         if: always()
         run: |

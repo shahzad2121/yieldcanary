@@ -121,8 +121,7 @@ def snapshot_weekly_etf_metrics() -> None:
             on_conflict="ticker_id,week_start_date",
         ).execute()
 
-        if result.error:
-            # Supabase-py returns an error attribute on the response; raise to avoid silent failures
+        if getattr(result, "error", None):
             raise RuntimeError(f"Upsert error: {result.error}")
 
         total_upserted += len(batch)

@@ -74,7 +74,9 @@ export function HighestYieldingLowRocCard({
         e.canaryStatus === 'Healthy' &&
         typeof e.rocPercent === 'number' &&
         e.rocPercent >= ROC_MIN &&
-        e.rocPercent <= ROC_MAX
+        e.rocPercent <= ROC_MAX &&
+        typeof e.totalReturn1Y === 'number' &&
+        e.totalReturn1Y > 0
     );
     const sorted = [...filtered].sort((a, b) => {
       const ay = a.trueIncomeYield ?? -1;
@@ -87,10 +89,10 @@ export function HighestYieldingLowRocCard({
 
   return (
     <InsightsListCard
-      title="Highest Yielding ETFs with No/Low NAV Erosion"
-      subtitle="Healthy funds, 0–5% ROC, sorted by True Income Yield."
+      title="Highest Yielding ETFs with No NAV Erosion"
+      subtitle="Healthy funds with 0–5% ROC and positive 1Y total return, sorted by True Income Yield."
       list={list}
-      emptyMessage="No Healthy ETFs with 0–5% ROC right now."
+      emptyMessage="No Healthy ETFs with 0–5% ROC and positive 1Y total return right now."
       plan={plan}
       onUpgrade={onUpgrade}
       loading={loading}

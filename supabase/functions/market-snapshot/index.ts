@@ -14,8 +14,8 @@ const MARKET_SYMBOLS = [
   "^DJI",   // Dow 30
   "^IXIC",  // Nasdaq
   "^RUT",   // Russell 2000
-  "GLD",    //Gold
-  "SLV",   // Silver
+  "XAUUSD",    //Gold
+  "XAGUSD",   // Silver
   "BTCUSD", // Bitcoin
   "^VIX",   // VIX
 ];
@@ -25,9 +25,9 @@ const DISPLAY_NAMES: Record<string, string> = {
   "^DJI": "Dow 30",
   "^IXIC": "Nasdaq",
   "^RUT": "Russell 2000",
-  "GLD": "Gold",
-  "SLV": "Silver",
-  "BTCUSD": "Bitcoin",  // Fixed: Changed from "BTC-USD"
+  "XAUUSD": "Gold",
+  "XAGUSD": "Silver",
+  "BTCUSD": "Bitcoin",
   "^VIX": "VIX",
 };
 
