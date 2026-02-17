@@ -12,6 +12,7 @@ import { Lock } from 'lucide-react';
 import { ETF } from '@/types/etf';
 import { CanaryStatusBadge } from '@/components/dashboard/CanaryStatusBadge';
 import { BlurredCell } from '@/components/dashboard/BlurredCell';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const VISIBLE_ROWS_BASIC = 3;
 
@@ -25,6 +26,8 @@ export type InsightsListColumn = {
   format: (etf: ETF) => string;
   /** Optional class for the table cell (e.g. truncate, font-mono). */
   cellClassName?: string;
+  /** When true and id === 'name', show full ETF name in a tooltip on hover. */
+  showNameTooltip?: boolean;
 };
 
 export interface InsightsListCardProps {
@@ -108,8 +111,9 @@ export function InsightsListCard({
         )}
       </CardHeader>
       <CardContent>
+        <TooltipProvider delayDuration={300}>
         {/* Desktop/tablet: keep dense comparison table */}
-        <div className="hidden md:block">
+        <div className="hidden md:block insights-table-x-scroll">
           <Table>
             <TableHeader>
               <TableRow>
@@ -148,6 +152,21 @@ export function InsightsListCard({
                                 onUpgradeClick={onUpgrade}
                               />
                             )
+                          ) : col.id === 'name' && isUnlocked && col.showNameTooltip ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="w-full text-left">
+                                  <BlurredCell
+                                    value={col.format(etf)}
+                                    isUnlocked={isUnlocked}
+                                    onUpgradeClick={onUpgrade}
+                                  />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs text-xs">
+                                {col.format(etf)}
+                              </TooltipContent>
+                            </Tooltip>
                           ) : (
                             <BlurredCell
                               value={col.format(etf)}
@@ -201,9 +220,16 @@ export function InsightsListCard({
                 </div>
 
                 {nameColumn && (
-                  <p className="text-xs text-muted-foreground truncate">
-                    {nameColumn.format(etf)}
-                  </p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {nameColumn.format(etf)}
+                      </p>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs text-xs">
+                      {nameColumn.format(etf)}
+                    </TooltipContent>
+                  </Tooltip>
                 )}
 
                 <div className="mt-1.5 space-y-1">
@@ -219,10 +245,10 @@ export function InsightsListCard({
                         key={col.id}
                         className="flex items-center justify-between gap-2 text-[11px]"
                       >
-                        <span className="text-muted-foreground truncate">
+                        <span className="min-w-0 flex-1 text-muted-foreground truncate">
                           {col.label}
                         </span>
-                        <div className="ml-2 flex-1 text-right">
+                        <div className="ml-2 flex-shrink-0 text-right">
                           <BlurredCell
                             value={col.format(etf)}
                             isUnlocked={isUnlocked}
@@ -251,6 +277,7 @@ export function InsightsListCard({
             </Button>
           </div>
         )}
+        </TooltipProvider>
       </CardContent>
     </Card>
   );

@@ -14,6 +14,8 @@ import { BuyZonePicksCard } from '@/components/insights/BuyZonePicksCard';
 import { YieldTrapsCard } from '@/components/insights/YieldTrapsCard';
 import { LargestHealthyAumCard } from '@/components/insights/LargestHealthyAumCard';
 import { LowestExpenseHealthyCard } from '@/components/insights/LowestExpenseHealthyCard';
+import { WeeklyImprovementsCard } from '@/components/insights/WeeklyImprovementsCard';
+import { WeeklyDeteriorationsCard } from '@/components/insights/WeeklyDeteriorationsCard';
 import { Footer } from '@/components/Footer';
 import { useETFs } from '@/hooks/useETFs';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -105,6 +107,17 @@ const InsightsPage = () => {
 
             <MarketSnapshotBanner />
 
+            {/* <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+              <WeeklyImprovementsCard
+                plan={plan}
+                onUpgrade={() => setIsUpgradeModalOpen(true)}
+              />
+              <WeeklyDeteriorationsCard
+                plan={plan}
+                onUpgrade={() => setIsUpgradeModalOpen(true)}
+              />
+            </div> */}
+
             <HighestYieldingLowRocCard
               etfs={etfs}
               plan={plan}
@@ -112,12 +125,12 @@ const InsightsPage = () => {
               loading={etfsLoading}
             />
 
-            {/* <HighestAdvertisedYieldCard
+            <HighestAdvertisedYieldCard
               etfs={etfs}
               plan={plan}
               onUpgrade={() => setIsUpgradeModalOpen(true)}
               loading={etfsLoading}
-            /> */}
+            />
 
             <BestAfterTaxCashFlowCard
               etfs={etfs}
@@ -140,7 +153,7 @@ const InsightsPage = () => {
               loading={etfsLoading}
             />
 
-            {/* <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
               <LargestHealthyAumCard
                 etfs={etfs}
                 plan={plan}
@@ -153,14 +166,14 @@ const InsightsPage = () => {
                 onUpgrade={() => setIsUpgradeModalOpen(true)}
                 loading={etfsLoading}
               />
-            </div> */}
+            </div>
 
-            {/* <BuyZonePicksCard
+            <BuyZonePicksCard
               etfs={etfs}
               plan={plan}
               onUpgrade={() => setIsUpgradeModalOpen(true)}
               loading={etfsLoading}
-            /> */}
+            />
 
             <YieldTrapsCard
               etfs={etfs}

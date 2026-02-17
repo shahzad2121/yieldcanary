@@ -14,8 +14,8 @@ const MARKET_SYMBOLS = [
   "^DJI",   // Dow 30
   "^IXIC",  // Nasdaq
   "^RUT",   // Russell 2000
-  // "GC=F",    //Gold
-  //"SI=F",   // Silver
+  "XAUUSD",    //Gold
+  "XAGUSD",   // Silver
   "BTCUSD", // Bitcoin
   "^VIX",   // VIX
 ];
@@ -25,9 +25,9 @@ const DISPLAY_NAMES: Record<string, string> = {
   "^DJI": "Dow 30",
   "^IXIC": "Nasdaq",
   "^RUT": "Russell 2000",
-  "GC=F": "Gold",
-  "SI=F": "Silver",
-  "BTCUSD": "Bitcoin",  // Fixed: Changed from "BTC-USD"
+  "XAUUSD": "Gold",
+  "XAGUSD": "Silver",
+  "BTCUSD": "Bitcoin",
   "^VIX": "VIX",
 };
 
@@ -96,10 +96,11 @@ async function fetchMarketQuotes(apiKey: string): Promise<FMPQuote[]> {
 
 function normalizeItem(raw: FMPQuote): MarketSnapshotItem {
   const symbol = raw.symbol ?? "";
-  // FMP returns changePercentage as decimal (e.g. 0.03395); convert to percentage (3.395) for frontend
+  // FMP already returns changePercentage as a percentage value (e.g. -1.06 for -1.06%)
+  // Just round to two decimals for display instead of scaling again.
   const changesPercentage =
     typeof raw.changePercentage === "number"
-      ? Math.round(raw.changePercentage * 10000) / 100
+      ? Math.round(raw.changePercentage * 100) / 100
       : null;
   return {
     symbol,
