@@ -93,7 +93,7 @@ export function LowestExpenseHealthyCard({
         id: 'expenseRatio',
         label: 'Expense Ratio',
         width: 'w-[120px]',
-        align: 'right',
+        align: 'left',
         format: (etf) =>
           typeof etf.expenseRatio === 'number'
             ? `${etf.expenseRatio.toFixed(2)}%`
@@ -103,16 +103,16 @@ export function LowestExpenseHealthyCard({
       {
         id: 'trueIncomeYield',
         label: 'True Income Yield',
-        width: 'w-[130px]',
-        align: 'right',
+        width: 'w-[120px]',
+        align: 'left',
         format: (etf) => formatPercent(etf.trueIncomeYield),
         cellClassName: 'font-mono text-sm',
       },
       {
         id: 'monthlySpendableCashYield',
         label: 'Monthly Spendable Cash Yield',
-        width: 'w-[170px]',
-        align: 'right',
+        width: 'w-[160px]',
+        align: 'left',
         format: (etf) => {
           const val = (etf as ETF & {
             monthlySpendableCashYield?: number | null;
@@ -124,10 +124,10 @@ export function LowestExpenseHealthyCard({
       {
         id: 'aum',
         label: 'AUM',
-        width: 'w-[110px]',
-        align: 'right',
+        width: 'w-[90px]',
+        align: 'left',
         format: (etf) => formatCurrencyInBillions(etf.aum),
-        cellClassName: 'font-mono text-sm',
+        cellClassName: 'font-mono text-sm whitespace-nowrap',
       },
     ],
     []
@@ -138,7 +138,7 @@ export function LowestExpenseHealthyCard({
       title="Lowest Expense Ratio Funds (Healthy Only)"
       subtitle="Top 10 Healthy funds with the lowest fees. Lower expenses mean more of the yield goes to you."
       list={list}
-      emptyMessage="No Healthy ETFs with expense ratio data right now."
+      emptyMessage="No Healthy ETFs with expense ratio data left now."
       plan={plan}
       onUpgrade={onUpgrade}
       loading={loading}

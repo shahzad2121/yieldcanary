@@ -74,7 +74,7 @@ export function LargestHealthyAumCard({
       {
         id: 'ticker',
         label: 'Ticker',
-        width: 'w-[80px]',
+        width: 'w-[50px]',
         format: (etf) => etf.ticker,
         cellClassName: 'font-mono font-medium',
       },
@@ -83,21 +83,21 @@ export function LargestHealthyAumCard({
         label: 'Name',
         width: 'min-w-[140px]',
         format: (etf) => etf.name,
-        cellClassName: 'max-w-[200px] truncate',
+        cellClassName: 'max-w-[180px] truncate',
       },
       {
         id: 'aum',
         label: 'AUM',
         width: 'w-[110px]',
-        align: 'right',
+        align: 'left',
         format: (etf) => formatCurrencyInBillions(etf.aum),
-        cellClassName: 'font-mono text-sm',
+        cellClassName: 'font-mono text-sm whitespace-nowrap',
       },
       {
         id: 'trueIncomeYield',
         label: 'True Income Yield',
         width: 'w-[130px]',
-        align: 'right',
+        align: 'left',
         format: (etf) => formatPercent(etf.trueIncomeYield),
         cellClassName: 'font-mono text-sm',
       },
@@ -105,7 +105,7 @@ export function LargestHealthyAumCard({
         id: 'monthlySpendableCashYield',
         label: 'Monthly Spendable Cash Yield',
         width: 'w-[170px]',
-        align: 'right',
+        align: 'left',
         format: (etf) => {
           const val = (etf as ETF & {
             monthlySpendableCashYield?: number | null;
@@ -118,7 +118,7 @@ export function LargestHealthyAumCard({
         id: 'expenseRatio',
         label: 'Expense Ratio',
         width: 'w-[120px]',
-        align: 'right',
+        align: 'left',
         format: (etf) =>
           typeof etf.expenseRatio === 'number'
             ? `${etf.expenseRatio.toFixed(2)}%`
@@ -134,7 +134,7 @@ export function LargestHealthyAumCard({
       title="Largest Healthy Funds by AUM"
       subtitle="Top 10 Healthy funds by assets under management. Bigger funds tend to be more liquid and stable."
       list={list}
-      emptyMessage="No Healthy ETFs with AUM data right now."
+      emptyMessage="No Healthy ETFs with AUM data left now."
       plan={plan}
       onUpgrade={onUpgrade}
       loading={loading}

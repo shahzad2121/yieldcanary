@@ -112,12 +112,12 @@ const InsightsPage = () => {
               loading={etfsLoading}
             />
 
-            {/* <HighestAdvertisedYieldCard
+            <HighestAdvertisedYieldCard
               etfs={etfs}
               plan={plan}
               onUpgrade={() => setIsUpgradeModalOpen(true)}
               loading={etfsLoading}
-            /> */}
+            />
 
             <BestAfterTaxCashFlowCard
               etfs={etfs}
@@ -140,7 +140,7 @@ const InsightsPage = () => {
               loading={etfsLoading}
             />
 
-            {/* <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
               <LargestHealthyAumCard
                 etfs={etfs}
                 plan={plan}
@@ -153,14 +153,14 @@ const InsightsPage = () => {
                 onUpgrade={() => setIsUpgradeModalOpen(true)}
                 loading={etfsLoading}
               />
-            </div> */}
+            </div>
 
-            {/* <BuyZonePicksCard
+            <BuyZonePicksCard
               etfs={etfs}
               plan={plan}
               onUpgrade={() => setIsUpgradeModalOpen(true)}
               loading={etfsLoading}
-            /> */}
+            />
 
             <YieldTrapsCard
               etfs={etfs}

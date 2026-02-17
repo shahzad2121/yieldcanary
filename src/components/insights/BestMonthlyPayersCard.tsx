@@ -79,7 +79,7 @@ export function BestMonthlyPayersCard({
         id: 'monthlySpendableCashYield',
         label: 'Monthly Spendable Cash Yield',
         width: 'w-[160px]',
-        align: 'right',
+        align: 'left',
         format: (etf) => {
           const val = (etf as ETF & { monthlySpendableCashYield?: number | null })
             .monthlySpendableCashYield;
@@ -97,7 +97,7 @@ export function BestMonthlyPayersCard({
       subtitle="Healthy funds that pay monthly, sorted by Monthly Spendable Cash Yield."
       badge={`At your ${effectiveTaxRate}% rate`}
       list={list}
-      emptyMessage="No Healthy monthly payers right now."
+      emptyMessage="No Healthy monthly payers left now."
       plan={plan}
       onUpgrade={onUpgrade}
       loading={loading}

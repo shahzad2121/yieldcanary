@@ -201,6 +201,49 @@
     overflow-x: auto;
   }
 
+  /* Insights list cards: horizontal scroll only (no fixed height, no vertical scroll) */
+  .insights-table-x-scroll {
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  /* Insights-only scrollbar styling (horizontal) */
+  .insights-table-x-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) transparent;
+  }
+
+  .insights-table-x-scroll::-webkit-scrollbar {
+    height: 8px; /* horizontal scrollbar */
+  }
+
+  .insights-table-x-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .insights-table-x-scroll::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted));
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+
+  .insights-table-x-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.4);
+  }
+
+  .dark .insights-table-x-scroll {
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+
+  .dark .insights-table-x-scroll::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.3);
+  }
+
+  .dark .insights-table-x-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.5);
+  }
+
   .etf-desktop-header-cell {
     position: sticky;
     top: 0;

@@ -109,7 +109,7 @@ export function InsightsListCard({
       </CardHeader>
       <CardContent>
         {/* Desktop/tablet: keep dense comparison table */}
-        <div className="hidden md:block">
+        <div className="hidden md:block insights-table-x-scroll">
           <Table>
             <TableHeader>
               <TableRow>
@@ -201,7 +201,7 @@ export function InsightsListCard({
                 </div>
 
                 {nameColumn && (
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="text-xs text-muted-foreground line-clamp-2">
                     {nameColumn.format(etf)}
                   </p>
                 )}
@@ -219,10 +219,10 @@ export function InsightsListCard({
                         key={col.id}
                         className="flex items-center justify-between gap-2 text-[11px]"
                       >
-                        <span className="text-muted-foreground truncate">
+                        <span className="min-w-0 flex-1 text-muted-foreground truncate">
                           {col.label}
                         </span>
-                        <div className="ml-2 flex-1 text-right">
+                        <div className="ml-2 flex-shrink-0 text-right">
                           <BlurredCell
                             value={col.format(etf)}
                             isUnlocked={isUnlocked}

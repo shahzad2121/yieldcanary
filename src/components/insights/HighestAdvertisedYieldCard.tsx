@@ -32,7 +32,7 @@ const COLUMNS: InsightsListColumn[] = [
     id: 'advertisedYield',
     label: 'Advertised Yield',
     width: 'w-[120px]',
-    align: 'right',
+    align: 'left',
     format: (etf) =>
       etf.advertisedYield != null ? `${etf.advertisedYield.toFixed(2)}%` : '—',
     cellClassName: 'font-mono text-sm',
@@ -41,7 +41,7 @@ const COLUMNS: InsightsListColumn[] = [
     id: 'trueIncomeYield',
     label: 'True Yield',
     width: 'w-[100px]',
-    align: 'right',
+    align: 'left',
     format: (etf) => formatPercent(etf.trueIncomeYield),
     cellClassName: 'font-mono text-sm',
   },
