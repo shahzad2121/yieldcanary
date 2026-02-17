@@ -269,7 +269,7 @@ export function InsightsListCard({
             <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             <p className="text-sm text-muted-foreground">
               {plan === 'free'
-                ? 'Upgrade to Basic to see this list.'
+                ? 'Upgrade to Basic to see the top 3 in this list, or Advanced for the full list.'
                 : `Upgrade to Advanced to see all ${list.length} funds.`}
             </p>
             <Button size="sm" variant="outline" onClick={onUpgrade}>
