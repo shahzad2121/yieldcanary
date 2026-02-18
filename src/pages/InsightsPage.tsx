@@ -107,16 +107,7 @@ const InsightsPage = () => {
 
             <MarketSnapshotBanner />
 
-            {/* <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
-              <WeeklyImprovementsCard
-                plan={plan}
-                onUpgrade={() => setIsUpgradeModalOpen(true)}
-              />
-              <WeeklyDeteriorationsCard
-                plan={plan}
-                onUpgrade={() => setIsUpgradeModalOpen(true)}
-              />
-            </div> */}
+            
 
             <HighestYieldingLowRocCard
               etfs={etfs}
@@ -166,6 +157,17 @@ const InsightsPage = () => {
                 onUpgrade={() => setIsUpgradeModalOpen(true)}
                 loading={etfsLoading}
               />
+            </div>
+
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+              <WeeklyImprovementsCard
+                plan={plan}
+                onUpgrade={() => setIsUpgradeModalOpen(true)}
+              />
+              {/* <WeeklyDeteriorationsCard
+                plan={plan}
+                onUpgrade={() => setIsUpgradeModalOpen(true)}
+              /> */}
             </div>
 
             <BuyZonePicksCard

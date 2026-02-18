@@ -1,15 +1,18 @@
 import { Lock } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface BlurredCellProps {
   value: string;
   isUnlocked: boolean;
   onUpgradeClick: () => void;
+  /** Optional class for the unlocked value span (e.g. text-muted-foreground). */
+  className?: string;
 }
 
-export function BlurredCell({ value, isUnlocked, onUpgradeClick }: BlurredCellProps) {
+export function BlurredCell({ value, isUnlocked, onUpgradeClick, className }: BlurredCellProps) {
   if (isUnlocked) {
     return (
-      <span className="font-mono text-foreground">
+      <span className={cn('font-mono text-foreground', className)}>
         {value}
       </span>
     );

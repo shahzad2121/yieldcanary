@@ -28,6 +28,8 @@ export type InsightsListColumn = {
   cellClassName?: string;
   /** When true and id === 'name', show full ETF name in a tooltip on hover. */
   showNameTooltip?: boolean;
+  /** Optional class for the value span inside BlurredCell (e.g. text-muted-foreground). */
+  valueClassName?: string;
 };
 
 export interface InsightsListCardProps {
@@ -114,7 +116,7 @@ export function InsightsListCard({
         <TooltipProvider delayDuration={300}>
         {/* Desktop/tablet: keep dense comparison table */}
         <div className="hidden md:block insights-table-x-scroll">
-          <Table>
+          <Table className="table-fixed">
             <TableHeader>
               <TableRow>
                 {columns.map((col) => (
@@ -135,7 +137,7 @@ export function InsightsListCard({
                     {columns.map((col) => (
                       <TableCell
                         key={col.id}
-                        className={`${col.cellClassName ?? ''} ${col.align === 'right' ? 'text-right' : ''}`.trim()}
+                        className={`${col.width ?? ''} ${col.cellClassName ?? ''} ${col.align === 'right' ? 'text-right' : ''}`.trim()}
                       >
                         <div
                           className={
@@ -150,16 +152,18 @@ export function InsightsListCard({
                                 value={col.format(etf)}
                                 isUnlocked={false}
                                 onUpgradeClick={onUpgrade}
+                                className={col.valueClassName}
                               />
                             )
                           ) : col.id === 'name' && isUnlocked && col.showNameTooltip ? (
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <div className="w-full text-left">
+                                <div className="w-full min-w-0 overflow-hidden truncate text-left">
                                   <BlurredCell
                                     value={col.format(etf)}
                                     isUnlocked={isUnlocked}
                                     onUpgradeClick={onUpgrade}
+                                    className={col.valueClassName}
                                   />
                                 </div>
                               </TooltipTrigger>
@@ -172,6 +176,7 @@ export function InsightsListCard({
                               value={col.format(etf)}
                               isUnlocked={isUnlocked}
                               onUpgradeClick={onUpgrade}
+                              className={col.valueClassName}
                             />
                           )}
                         </div>
@@ -253,6 +258,7 @@ export function InsightsListCard({
                             value={col.format(etf)}
                             isUnlocked={isUnlocked}
                             onUpgradeClick={onUpgrade}
+                            className={col.valueClassName}
                           />
                         </div>
                       </div>
