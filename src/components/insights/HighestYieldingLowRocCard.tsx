@@ -15,6 +15,26 @@ function formatPercent(value: number | null | undefined): string {
   return `${pct.toFixed(2)}%`;
 }
 
+function isLessThanOneYear(inceptionDate: string): boolean {
+  if (!inceptionDate) return false;
+  const today = new Date();
+  const inception = new Date(inceptionDate);
+  const ageInDays =
+    (today.getTime() - inception.getTime()) / (1000 * 60 * 60 * 24);
+  return ageInDays < 365;
+}
+
+/** Effective 1Y return: use YTD for new ETFs or when 1Y is missing/zero. */
+function getEffectiveReturn1Y(etf: ETF): number | null {
+  const value1Y = etf.totalReturn1Y;
+  const valueYTD = etf.totalReturnYTD;
+  const isNew = isLessThanOneYear(etf.inceptionDate);
+  const hasNo1YData =
+    value1Y === null || value1Y === undefined || value1Y === 0;
+  if (isNew || hasNo1YData) return valueYTD ?? null;
+  return value1Y ?? null;
+}
+
 const COLUMNS: InsightsListColumn[] = [
   {
     id: 'ticker',
@@ -29,6 +49,7 @@ const COLUMNS: InsightsListColumn[] = [
     width: 'min-w-[120px]',
     format: (etf) => etf.name,
     cellClassName: 'max-w-[180px] truncate',
+    valueClassName: 'text-muted-foreground',
   },
   {
     id: 'status',
@@ -69,15 +90,17 @@ export function HighestYieldingLowRocCard({
   loading = false,
 }: HighestYieldingLowRocCardProps) {
   const list = useMemo(() => {
-    const filtered = etfs.filter(
-      (e) =>
+    const filtered = etfs.filter((e) => {
+      const effectiveReturn = getEffectiveReturn1Y(e);
+      return (
         e.canaryStatus === 'Healthy' &&
         typeof e.rocPercent === 'number' &&
         e.rocPercent >= ROC_MIN &&
         e.rocPercent <= ROC_MAX &&
-        typeof e.totalReturn1Y === 'number' &&
-        e.totalReturn1Y > 0
-    );
+        effectiveReturn != null &&
+        effectiveReturn > 0
+      );
+    });
     const sorted = [...filtered].sort((a, b) => {
       const ay = a.trueIncomeYield ?? -1;
       const by = b.trueIncomeYield ?? -1;

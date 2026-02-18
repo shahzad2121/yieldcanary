@@ -4,14 +4,9 @@ import {
   InsightsListCard,
   type InsightsListColumn,
 } from '@/components/insights/InsightsListCard';
-import { useUserTaxRate } from '@/hooks/useUserTaxRate';
-import {
-  calcMonthlySpendableCashYield,
-  formatCurrencyInBillions,
-} from '@/lib/utils';
+import { formatCurrencyInBillions } from '@/lib/utils';
 
 const TOP_N = 10;
-const DEFAULT_TAX_RATE = 20;
 
 function formatPercent(value: number | null | undefined): string {
   if (value === null || value === undefined) return '—';
@@ -32,24 +27,8 @@ export function LargestHealthyAumCard({
   onUpgrade,
   loading = false,
 }: LargestHealthyAumCardProps) {
-  const { taxRate } = useUserTaxRate();
-  const effectiveTaxRate = taxRate ?? DEFAULT_TAX_RATE;
-
   const list = useMemo(() => {
-    const enriched = etfs.map((etf) => {
-      const monthlySpendableCashYield = calcMonthlySpendableCashYield({
-        lastMonthDistribution: etf.lastMonthDistribution,
-        currentPrice: etf.latestAdjClose,
-        taxRate: effectiveTaxRate,
-      });
-
-      return {
-        ...etf,
-        monthlySpendableCashYield,
-      };
-    });
-
-    const filtered = enriched.filter(
+    const filtered = etfs.filter(
       (e) =>
         e.canaryStatus === 'Healthy' &&
         typeof e.aum === 'number' &&
@@ -67,7 +46,7 @@ export function LargestHealthyAumCard({
     });
 
     return sorted.slice(0, TOP_N);
-  }, [etfs, effectiveTaxRate]);
+  }, [etfs]);
 
   const columns: InsightsListColumn[] = useMemo(
     () => [
@@ -81,50 +60,38 @@ export function LargestHealthyAumCard({
       {
         id: 'name',
         label: 'Name',
-        width: 'min-w-[140px]',
+        width: 'min-w-[150px]',
         format: (etf) => etf.name,
-        cellClassName: 'max-w-[180px] truncate',
+        cellClassName: 'min-w-0 truncate',
         showNameTooltip: true,
+        valueClassName: 'text-muted-foreground',
       },
       {
         id: 'aum',
         label: 'AUM',
-        width: 'w-[110px]',
-        align: 'left',
+        width: 'w-[60px]',
+        align: 'right',
         format: (etf) => formatCurrencyInBillions(etf.aum),
         cellClassName: 'font-mono text-sm whitespace-nowrap',
       },
       {
         id: 'trueIncomeYield',
         label: 'True Income Yield',
-        width: 'w-[130px]',
-        align: 'left',
+        width: 'w-[80px]',
+        align: 'right',
         format: (etf) => formatPercent(etf.trueIncomeYield),
-        cellClassName: 'font-mono text-sm',
-      },
-      {
-        id: 'monthlySpendableCashYield',
-        label: 'Monthly Spendable Cash Yield',
-        width: 'w-[170px]',
-        align: 'left',
-        format: (etf) => {
-          const val = (etf as ETF & {
-            monthlySpendableCashYield?: number | null;
-          }).monthlySpendableCashYield;
-          return val != null ? `${val.toFixed(2)}%` : 'N/A';
-        },
-        cellClassName: 'font-mono text-sm',
+        cellClassName: 'font-mono text-sm whitespace-nowrap',
       },
       {
         id: 'expenseRatio',
         label: 'Expense Ratio',
-        width: 'w-[120px]',
-        align: 'left',
+        width: 'w-[70px]',
+        align: 'right',
         format: (etf) =>
           typeof etf.expenseRatio === 'number'
             ? `${etf.expenseRatio.toFixed(2)}%`
             : 'N/A',
-        cellClassName: 'font-mono text-sm',
+        cellClassName: 'font-mono text-sm whitespace-nowrap',
       },
     ],
     []

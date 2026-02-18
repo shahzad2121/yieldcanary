@@ -33,6 +33,7 @@ const COLUMNS: InsightsListColumn[] = [
     width: 'min-w-[120px]',
     format: (etf) => etf.name,
     cellClassName: 'max-w-[180px] truncate',
+    valueClassName: 'text-muted-foreground',
   },
   {
     id: 'status',
