@@ -107,7 +107,7 @@ const InsightsPage = () => {
 
             <MarketSnapshotBanner />
 
-            {/* <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
               <WeeklyImprovementsCard
                 plan={plan}
                 onUpgrade={() => setIsUpgradeModalOpen(true)}
@@ -116,7 +116,7 @@ const InsightsPage = () => {
                 plan={plan}
                 onUpgrade={() => setIsUpgradeModalOpen(true)}
               />
-            </div> */}
+            </div>
 
             <HighestYieldingLowRocCard
               etfs={etfs}
