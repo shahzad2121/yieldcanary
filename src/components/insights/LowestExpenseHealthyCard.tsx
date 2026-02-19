@@ -84,7 +84,7 @@ export function LowestExpenseHealthyCard({
       {
         id: 'trueIncomeYield',
         label: 'True Income Yield',
-        width: 'w-[80px]',
+        width: 'w-[110px]',
         align: 'right',
         format: (etf) => formatPercent(etf.trueIncomeYield),
         cellClassName: 'font-mono text-sm whitespace-nowrap',
@@ -92,7 +92,7 @@ export function LowestExpenseHealthyCard({
       {
         id: 'aum',
         label: 'AUM',
-        width: 'w-[60px]',
+        width: 'w-[72px]',
         align: 'right',
         format: (etf) => formatCurrencyInBillions(etf.aum),
         cellClassName: 'font-mono text-sm whitespace-nowrap',
