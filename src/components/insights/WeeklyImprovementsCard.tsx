@@ -53,6 +53,11 @@ export function WeeklyImprovementsCard({
         format: (row: ETF | (Row & Partial<ETF>)) =>
           formatDelta((row as Row).rocChange, '%'),
         cellClassName: 'font-mono text-sm',
+        getValueClassName: (row: ETF | (Row & Partial<ETF>)) => {
+          const value = (row as Row).rocChange;
+          // ROC: negative = improvement (green), positive = worsening (red)
+          return value < 0 ? 'text-emerald-500' : value > 0 ? 'text-red-500' : '';
+        },
       },
       {
         id: 'deathClockChange',
@@ -62,6 +67,11 @@ export function WeeklyImprovementsCard({
         format: (row: ETF | (Row & Partial<ETF>)) =>
           formatDelta((row as Row).deathClockChange, 'y'),
         cellClassName: 'font-mono text-sm',
+        getValueClassName: (row: ETF | (Row & Partial<ETF>)) => {
+          const value = (row as Row).deathClockChange;
+          // Death Clock: positive = improvement (green), negative = worsening (red)
+          return value > 0 ? 'text-emerald-500' : value < 0 ? 'text-red-500' : '';
+        },
       },
       {
         id: 'trueIncomeChange',
@@ -71,6 +81,11 @@ export function WeeklyImprovementsCard({
         format: (row: ETF | (Row & Partial<ETF>)) =>
           formatDelta((row as Row).trueIncomeChange, '%'),
         cellClassName: 'font-mono text-sm',
+        getValueClassName: (row: ETF | (Row & Partial<ETF>)) => {
+          const value = (row as Row).trueIncomeChange;
+          // True Income: positive = improvement (green), negative = worsening (red)
+          return value > 0 ? 'text-emerald-500' : value < 0 ? 'text-red-500' : '';
+        },
       },
     ],
     []
