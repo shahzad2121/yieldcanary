@@ -8,7 +8,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Lock } from 'lucide-react';
+import { Check, Lock } from 'lucide-react';
 import { ETF } from '@/types/etf';
 import { CanaryStatusBadge } from '@/components/dashboard/CanaryStatusBadge';
 import { BlurredCell } from '@/components/dashboard/BlurredCell';
@@ -35,7 +35,7 @@ export type InsightsListColumn = {
 export interface InsightsListCardProps {
   title: string;
   subtitle?: string;
-  /** Optional badge text (e.g. "At your 20% rate"). */
+  /** Optional badge text (e.g. "Your 20% Tax Rate Applied"). */
   badge?: string;
   list: ETF[];
   emptyMessage: string;
@@ -68,7 +68,16 @@ export function InsightsListCard({
             <p className="text-sm text-muted-foreground">{subtitle}</p>
           )}
           {badge && (
-            <p className="text-xs text-muted-foreground font-medium">{badge}</p>
+            badge.includes('Tax Rate Applied')
+              ? (
+                <div className="w-fit inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
+                  <Check className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span>{badge}</span>
+                </div>
+              )
+              : (
+                <p className="text-xs text-muted-foreground font-medium">{badge}</p>
+              )
           )}
         </CardHeader>
         <CardContent>
@@ -89,7 +98,16 @@ export function InsightsListCard({
             <p className="text-sm text-muted-foreground">{subtitle}</p>
           )}
           {badge && (
-            <p className="text-xs text-muted-foreground font-medium">{badge}</p>
+            badge.includes('Tax Rate Applied')
+              ? (
+                <div className="w-fit inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
+                  <Check className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span>{badge}</span>
+                </div>
+              )
+              : (
+                <p className="text-xs text-muted-foreground font-medium">{badge}</p>
+              )
           )}
         </CardHeader>
         <CardContent>
@@ -109,7 +127,16 @@ export function InsightsListCard({
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         )}
         {badge && (
-          <p className="text-xs text-muted-foreground font-medium">{badge}</p>
+          badge.includes('Tax Rate Applied')
+            ? (
+              <div className="w-fit inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
+                <Check className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span>{badge}</span>
+              </div>
+            )
+            : (
+              <p className="text-xs text-muted-foreground font-medium">{badge}</p>
+            )
         )}
       </CardHeader>
       <CardContent>
