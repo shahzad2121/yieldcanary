@@ -182,13 +182,15 @@ async function computeWeeklyMovers(
     });
   }
 
-  // Sort for gainers (biggest improvement first)
+  // Sort for gainers (biggest improvement first) - only include actual improvements (score > 0)
   const gainers = [...movers]
+    .filter((m) => m.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 5);
 
-  // Sort for losers (biggest deterioration first)
+  // Sort for losers (biggest deterioration first) - only include actual deteriorations (score < 0)
   const losers = [...movers]
+    .filter((m) => m.score < 0)
     .sort((a, b) => a.score - b.score)
     .slice(0, 5);
 
