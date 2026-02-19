@@ -164,10 +164,10 @@ const InsightsPage = () => {
                 plan={plan}
                 onUpgrade={() => setIsUpgradeModalOpen(true)}
               />
-              {/* <WeeklyDeteriorationsCard
+              <WeeklyDeteriorationsCard
                 plan={plan}
                 onUpgrade={() => setIsUpgradeModalOpen(true)}
-              /> */}
+              />
             </div>
 
             <BuyZonePicksCard

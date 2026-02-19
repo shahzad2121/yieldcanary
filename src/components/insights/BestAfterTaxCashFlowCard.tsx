@@ -154,7 +154,7 @@ export function BestAfterTaxCashFlowCard({
     <InsightsListCard
       title="Best After-Tax Cash Flow"
       subtitle="Healthy funds, sorted by Take-Home Cash Return 1Y."
-      badge={`At your ${effectiveTaxRate}% rate`}
+      badge={`Your ${effectiveTaxRate}% Tax Rate Applied`}
       list={list}
       emptyMessage="No Healthy ETFs with take-home cash return data right now."
       plan={plan}

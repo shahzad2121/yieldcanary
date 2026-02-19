@@ -7,6 +7,8 @@ Purpose
   to show meaningful ROC / Death Clock / True Income deltas.
 - This script computes last week's metrics from weekly_data (prices + dividends)
   using the same formulas as bootstrap, and uses current etfs for this week.
+- ETFs without weekly_data: falls back to FMP API (if FMP_API_KEY is set) to get
+  more movers. This is a one-off fix when weekly_data is incomplete.
 - After running once, the normal snapshot_weekly_etf_metrics.py workflow takes over;
   from next week onward everything works as usual.
 
@@ -15,14 +17,19 @@ Usage
 Run once from project root:
 
     python "data ingestion/backfill_weekly_snapshots_real.py"
+
+Requires: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+Optional: FMP_API_KEY (for fallback when weekly_data is missing for an ETF)
 """
 
 from __future__ import annotations
 
 import os
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+import requests
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
@@ -87,6 +94,180 @@ def _estimate_roc_from_nav_erosion(
             return round(roc_estimate, 2)
 
     return 0.0
+
+
+# ---- FMP fallback (one-off fix when weekly_data is incomplete) ----
+
+FMP_BASE_URL = "https://financialmodelingprep.com/stable"
+FMP_REQUESTS_PER_MINUTE = 250
+FMP_MIN_INTERVAL = 60.0 / FMP_REQUESTS_PER_MINUTE
+
+
+class _FMPClient:
+    """Minimal FMP client for backfill fallback."""
+
+    def __init__(self, api_key: str) -> None:
+        self.api_key = api_key
+        self._last_request = 0.0
+
+    def _wait(self) -> None:
+        elapsed = time.time() - self._last_request
+        if elapsed < FMP_MIN_INTERVAL:
+            time.sleep(FMP_MIN_INTERVAL - elapsed)
+        self._last_request = time.time()
+
+    def _request(self, endpoint: str, params: dict | None = None) -> list | dict:
+        if params is None:
+            params = {}
+        params["apikey"] = self.api_key
+        self._wait()
+        resp = requests.get(f"{FMP_BASE_URL}/{endpoint}", params=params, timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+        if isinstance(data, dict) and data.get("Error Message"):
+            raise RuntimeError(data["Error Message"])
+        return data
+
+    def get_etf_info(self, ticker: str) -> dict | None:
+        try:
+            data = self._request("etf/info", {"symbol": ticker})
+            return data[0] if data and len(data) > 0 else None
+        except Exception:
+            return None
+
+    def get_historical_prices(
+        self,
+        ticker: str,
+        from_date: str | None = None,
+        to_date: str | None = None,
+    ) -> list:
+        try:
+            params: dict = {"symbol": ticker}
+            if from_date:
+                params["from"] = from_date
+            if to_date:
+                params["to"] = to_date
+            data = self._request("historical-price-eod/full", params)
+            return data if isinstance(data, list) else []
+        except Exception:
+            return []
+
+    def get_dividends(self, ticker: str) -> list:
+        try:
+            data = self._request("dividends", {"symbol": ticker})
+            return data if isinstance(data, list) else []
+        except Exception:
+            return []
+
+
+def _find_price_on_date(
+    prices: list, target_date: datetime, lookback_days: int = 14
+) -> float | None:
+    target_str = target_date.strftime("%Y-%m-%d")
+    min_date = (target_date - timedelta(days=lookback_days)).strftime("%Y-%m-%d")
+    for row in prices:
+        date_str = row.get("date", "")
+        if min_date <= date_str <= target_str:
+            return row.get("close")
+    return None
+
+
+def _find_earliest_price(prices: list) -> tuple[float | None, str | None]:
+    if not prices:
+        return None, None
+    earliest = prices[-1]
+    return earliest.get("close"), earliest.get("date")
+
+
+def _calc_dividends_in_range(
+    dividends: list, start_date: datetime, end_date: datetime
+) -> float:
+    total = 0.0
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+    for div in dividends:
+        date_str = div.get("date", "")
+        if start_str <= date_str <= end_str:
+            total += div.get("adjDividend", 0) or div.get("dividend", 0) or 0
+    return total
+
+
+def _compute_last_week_from_fmp(
+    ticker_id: str,
+    ticker: str,
+    last_week_end: datetime,
+    last_week_str: str,
+    fmp: _FMPClient,
+    five_years_ago_str: str,
+) -> dict | None:
+    """Compute last-week metrics from FMP. Returns snapshot dict or None."""
+    etf_info = fmp.get_etf_info(ticker)
+    if not etf_info or not etf_info.get("inceptionDate"):
+        return None
+
+    inception_str = etf_info["inceptionDate"][:10]
+    try:
+        inception_dt = datetime.strptime(inception_str, "%Y-%m-%d")
+    except ValueError:
+        return None
+
+    prices = fmp.get_historical_prices(
+        ticker,
+        from_date=five_years_ago_str,
+        to_date=last_week_end.strftime("%Y-%m-%d"),
+    )
+    if not prices:
+        return None
+
+    latest_price = _find_price_on_date(prices, last_week_end, lookback_days=14)
+    if not latest_price:
+        return None
+
+    price_at_inception = _find_price_on_date(prices, inception_dt, lookback_days=14)
+    if not price_at_inception:
+        ep, _ = _find_earliest_price(prices)
+        if ep:
+            price_at_inception = ep
+    if not price_at_inception:
+        return None
+
+    years_since = (last_week_end - inception_dt).days / 365.0
+    if years_since < 0:
+        return None
+
+    dividends = fmp.get_dividends(ticker)
+    dividends_since_inception = _calc_dividends_in_range(dividends, inception_dt, last_week_end)
+    one_year_before = last_week_end - timedelta(days=365)
+    dividends_last_12mo = _calc_dividends_in_range(dividends, one_year_before, last_week_end)
+
+    roc = _estimate_roc_from_nav_erosion(
+        price_at_inception,
+        latest_price,
+        dividends_since_inception,
+        years_since,
+    )
+    if roc is None:
+        return None
+
+    death_clock = _calculate_death_clock(roc)
+    canary_health = _determine_canary_health(roc)
+    headline_yield = (dividends_last_12mo / latest_price) * 100 if latest_price > 0 else None
+    true_income = (
+        round(headline_yield * (1 - roc / 100), 6)
+        if headline_yield is not None
+        else None
+    )
+    headline_yield = _clamp_numeric(headline_yield) if headline_yield is not None else None
+
+    return {
+        "ticker_id": ticker_id,
+        "week_start_date": last_week_str,
+        "roc_percent": roc,
+        "death_clock_years": death_clock,
+        "true_income_yield": true_income,
+        "headline_yield_ttm": headline_yield,
+        "canary_health": canary_health,
+    }
 
 
 # ---- Env and week dates ----
@@ -175,22 +356,39 @@ def backfill_weekly_snapshots_real() -> None:
 
     print(f"  ✓ {len(wd_rows)} rows for {len(by_ticker)} tickers")
 
-    # 3. Compute last week metrics for each ETF
+    # 3. Compute last week metrics for each ETF (weekly_data first, FMP fallback when missing)
     last_week_snapshots: list[dict] = []
     one_year_before_end = last_week_end - timedelta(days=365)
     one_year_before_str = one_year_before_end.date().isoformat()
+    five_years_ago_str = (last_week_end - timedelta(days=1825)).strftime("%Y-%m-%d")
+
+    fmp_api_key = os.getenv("FMP_API_KEY")
+    fmp = _FMPClient(fmp_api_key) if fmp_api_key else None
+    fmp_fallback_count = 0
 
     for etf in etfs:
         ticker_id = etf["id"]
         ticker = etf.get("ticker", "?")
+
+        rows = by_ticker.get(ticker_id, [])
+        if not rows:
+            # No weekly_data: try FMP fallback (one-off fix for incomplete weekly_data)
+            if fmp:
+                try:
+                    snap = _compute_last_week_from_fmp(
+                        ticker_id, ticker, last_week_end, last_week_str, fmp, five_years_ago_str
+                    )
+                    if snap:
+                        last_week_snapshots.append(snap)
+                        fmp_fallback_count += 1
+                except Exception as e:
+                    pass  # Skip on FMP error
+            continue
+
         inception_str = etf.get("inception_date")
         price_at_inception = etf.get("price_at_inception")
         if price_at_inception is not None:
             price_at_inception = float(price_at_inception)
-
-        rows = by_ticker.get(ticker_id, [])
-        if not rows:
-            continue
 
         # Latest price on or before last_week_end
         latest_row = rows[-1]
@@ -300,6 +498,8 @@ def backfill_weekly_snapshots_real() -> None:
 
     print("\nBackfill complete.")
     print(f"  Last week:  {len(last_week_snapshots)} ETFs")
+    if fmp_fallback_count > 0:
+        print(f"    (FMP fallback: {fmp_fallback_count} ETFs without weekly_data)")
     print(f"  This week:  {len(this_week_snapshots)} ETFs")
     print(f"  Total:      {total} rows")
     print("=" * 60)

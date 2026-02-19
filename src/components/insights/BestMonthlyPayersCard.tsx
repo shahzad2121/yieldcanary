@@ -96,7 +96,7 @@ export function BestMonthlyPayersCard({
     <InsightsListCard
       title="Best Monthly Payers"
       subtitle="Healthy funds that pay monthly, sorted by Monthly Spendable Cash Yield."
-      badge={`At your ${effectiveTaxRate}% rate`}
+      badge={`Your ${effectiveTaxRate}% Tax Rate Applied`}
       list={list}
       emptyMessage="No Healthy monthly payers left now."
       plan={plan}

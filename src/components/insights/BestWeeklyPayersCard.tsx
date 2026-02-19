@@ -96,7 +96,7 @@ export function BestWeeklyPayersCard({
     <InsightsListCard
       title="Best Weekly Payers"
       subtitle="Healthy funds that pay weekly, sorted by Monthly Spendable Cash Yield."
-      badge={`At your ${effectiveTaxRate}% rate`}
+      badge={`Your ${effectiveTaxRate}% Tax Rate Applied`}
       list={list}
       emptyMessage="No Healthy weekly payers right now."
       plan={plan}
