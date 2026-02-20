@@ -76,7 +76,6 @@ export function HighestAdvertisedYieldCard({
     <InsightsListCard
       title="Highest Advertised Yield Funds"
       subtitle="Sorted by Advertised Yield. Compare with True Yield — high advertised yield may not be sustainable."
-      badge="True Income Warning"
       list={list}
       emptyMessage="No advertised yield data available."
       plan={plan}
