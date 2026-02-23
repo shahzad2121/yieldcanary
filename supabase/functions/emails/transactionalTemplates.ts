@@ -12,7 +12,8 @@ export type TransactionalEmailTemplate = {
     | 'trial_ending_reminder'
     | 'trial_converted_to_paid'
     | 'payment_failed'
-    | 'subscription_cancelled';
+    | 'subscription_cancelled'
+    | 'cancellation_reason_to_support';
   title: string;
   subject: string;
   previewText?: string;
@@ -1434,6 +1435,121 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
       <p class="footer-text" style="margin-top: 24px; font-size: 12px;">
         © 2026 YieldCanary. All rights reserved.
       </p>
+    </div>
+  </div>
+</body>
+</html>`,
+  },
+  {
+    id: 'cancellation_reason_to_support',
+    title: 'Cancellation reason (to support)',
+    subject: '[YieldCanary] Cancellation – {{user_email}}',
+    previewText: 'A user cancelled their subscription. Reason: {{reason}}',
+    body: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cancellation – Support</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.6;
+      color: #1a2938;
+      background: linear-gradient(135deg, rgba(13, 164, 114, 0.05) 0%, rgba(26, 140, 216, 0.05) 100%);
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 40px rgba(13, 164, 114, 0.1);
+      overflow: hidden;
+      border: 1px solid rgba(13, 164, 114, 0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%);
+      color: #ffffff;
+      padding: 48px 32px;
+      text-align: center;
+      position: relative;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+      position: relative;
+      z-index: 1;
+    }
+    .header p {
+      font-size: 16px;
+      opacity: 0.95;
+      font-weight: 500;
+      position: relative;
+      z-index: 1;
+    }
+    .content { padding: 48px 32px; background: #ffffff; }
+    .info-box {
+      background: linear-gradient(135deg, rgba(13, 164, 114, 0.08) 0%, rgba(26, 140, 216, 0.08) 100%);
+      border: 1px solid rgba(13, 164, 114, 0.2);
+      border-left: 4px solid #0da472;
+      padding: 28px;
+      margin: 24px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(13, 164, 114, 0.1);
+    }
+    .info-box h2 { font-size: 18px; color: #1a2938; margin-bottom: 16px; font-weight: 600; }
+    .info-box p { font-size: 15px; color: #475569; line-height: 1.7; margin-bottom: 8px; }
+    .info-box p:last-child { margin-bottom: 0; }
+    .label { font-weight: 600; color: #1a2938; }
+    .footer {
+      background: #f8fafc;
+      padding: 32px;
+      text-align: center;
+      border-top: 1px solid rgba(13, 164, 114, 0.1);
+    }
+    .footer-text { font-size: 14px; color: #64748b; }
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+      .container { border-radius: 8px; }
+      .content, .header { padding: 24px 20px; }
+      .header h1 { font-size: 22px; }
+      .header p { font-size: 14px; }
+      .info-box { padding: 20px; margin: 20px 0; }
+      .info-box h2 { font-size: 16px; margin-bottom: 12px; }
+      .info-box p { font-size: 14px; }
+      .footer { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📋 Subscription cancelled</h1>
+      <p>In-app cancellation – reason for leaving</p>
+    </div>
+    <div class="content">
+      <div class="info-box">
+        <h2>User &amp; reason</h2>
+        <p><span class="label">User:</span> {{user_email}}</p>
+        <p><span class="label">Reason:</span> {{reason}}</p>
+        <p><span class="label">Other details:</span> {{reason_other|—}}</p>
+        <p><span class="label">Time:</span> {{timestamp}}</p>
+      </div>
+    </div>
+    <div class="footer">
+      <p class="footer-text">This email was sent from YieldCanary when the user cancelled their subscription and selected a reason.</p>
     </div>
   </div>
 </body>

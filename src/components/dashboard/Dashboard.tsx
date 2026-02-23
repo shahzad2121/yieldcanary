@@ -12,7 +12,7 @@ import { Footer } from '@/components/Footer';
 
 export function Dashboard() {
   const { etfs, loading, error } = useETFs();
-  const { user: subscriptionUser, loading: userLoading, isTrialing, trialEndsAt } = useUserSubscription();
+  const { user: subscriptionUser, loading: userLoading, isTrialing, trialEndsAt, refetch: refetchSubscription } = useUserSubscription();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<CanaryStatus | 'all'>('all');
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -90,6 +90,7 @@ export function Dashboard() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onUpgrade={() => setIsUpgradeModalOpen(true)}
+        onSubscriptionCancelled={refetchSubscription}
       />
 
       <main className="container py-4 sm:py-6 space-y-4 sm:space-y-6">

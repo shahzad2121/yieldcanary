@@ -1,4 +1,4 @@
-import { Bird, Crown, Search, Bell, Settings, LogOut, ChevronLeft, Moon, Sun, Star } from 'lucide-react';
+import { Bird, Crown, Search, Bell, Settings, LogOut, ChevronLeft, Moon, Sun, Star, CreditCard, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTheme } from '@/hooks/useTheme';
 import { SettingsModal } from './SettingsModal';
 import { FeedbackModal } from '@/components/modals/FeedbackModal';
+import { CancelSubscriptionModal } from './CancelSubscriptionModal';
+import { redirectToManageSubscription } from '@/integrations/stripe/checkout';
 
 /** Mobile sticky header height (nav h-14 + search row h-9 + pb-2). Use for sticky elements that sit below the header. */
 export const DASHBOARD_HEADER_HEIGHT_MOBILE = '6.25rem';
@@ -29,6 +31,8 @@ interface DashboardHeaderProps {
   onUpgrade: () => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  /** Callback after subscription is cancelled (e.g. refetch user) so UI updates to free tier. */
+  onSubscriptionCancelled?: () => void;
 }
 
 export function DashboardHeader({
@@ -40,11 +44,23 @@ export function DashboardHeader({
   onUpgrade,
   searchQuery,
   onSearchChange,
+  onSubscriptionCancelled,
 }: DashboardHeaderProps) {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  const handleManageSubscription = async () => {
+    setPortalLoading(true);
+    try {
+      await redirectToManageSubscription();
+    } finally {
+      setPortalLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -158,6 +174,25 @@ export function DashboardHeader({
                   Watchlist
                 </DropdownMenuItem>
               )}
+              {plan !== 'free' && (
+                <DropdownMenuItem
+                  onClick={handleManageSubscription}
+                  disabled={portalLoading}
+                  className="text-xs sm:text-sm"
+                >
+                  <CreditCard className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  {portalLoading ? 'Opening...' : 'Manage Subscription'}
+                </DropdownMenuItem>
+              )}
+              {plan !== 'free' && (
+                <DropdownMenuItem
+                  onClick={() => setIsCancelModalOpen(true)}
+                  className="text-xs sm:text-sm text-destructive focus:text-destructive"
+                >
+                  <XCircle className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  Cancel subscription
+                </DropdownMenuItem>
+              )}
               {plan !== 'free' && <DropdownMenuSeparator />}
               <DropdownMenuItem onClick={() => setIsSettingsOpen(true)} className="text-xs sm:text-sm">
                 <Settings className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
@@ -198,6 +233,13 @@ export function DashboardHeader({
          onClose={() => setIsFeedbackOpen(false)}
          userEmail={userEmail}
        />
+      <CancelSubscriptionModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onSuccess={() => {
+          onSubscriptionCancelled?.();
+        }}
+      />
     </header>
   );
 }

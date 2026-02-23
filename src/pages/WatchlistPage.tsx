@@ -14,7 +14,7 @@ import { CanaryStatus } from '@/types/etf';
 
 const WatchlistPage = () => {
   const { etfs, loading: etfsLoading, error: etfsError } = useETFs();
-  const { user: subscriptionUser, loading: userLoading, isTrialing, trialEndsAt } = useUserSubscription();
+  const { user: subscriptionUser, loading: userLoading, isTrialing, trialEndsAt, refetch: refetchSubscription } = useUserSubscription();
   const { watchlistTickers, loading: watchlistLoading } = useWatchlist();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -104,7 +104,8 @@ const WatchlistPage = () => {
           userEmail={userEmail}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          onUpgrade={() => {}} // Upgrade handling already wired on Landing/Pricing
+          onUpgrade={() => {}}
+          onSubscriptionCancelled={refetchSubscription}
         />
 
         <main className="container px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">

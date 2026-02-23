@@ -27,44 +27,44 @@ export function useUserSubscription() {
 
   const isTrialing = isOnTrial(user);
 
-  useEffect(() => {
-    const fetchUserSubscription = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
+  const fetchUserSubscription = async () => {
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
 
-        if (!session?.user?.email) {
-          setUser(null);
-          setLoading(false);
-          return;
-        }
-
-        const { data, error: queryError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('email', session.user.email)
-          .single();
-
-        if (queryError && queryError.code !== 'PGRST116') {
-          throw queryError;
-        }
-
-        if (data) {
-          setUser(data as UserSubscription);
-        } else {
-          setUser(null);
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch subscription';
-        setError(errorMessage);
-        console.error('Subscription fetch error:', err);
-      } finally {
+      if (!session?.user?.email) {
+        setUser(null);
         setLoading(false);
+        return;
       }
-    };
 
+      const { data, error: queryError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', session.user.email)
+        .single();
+
+      if (queryError && queryError.code !== 'PGRST116') {
+        throw queryError;
+      }
+
+      if (data) {
+        setUser(data as UserSubscription);
+      } else {
+        setUser(null);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch subscription';
+      setError(errorMessage);
+      console.error('Subscription fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUserSubscription();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       fetchUserSubscription();
     });
@@ -72,5 +72,5 @@ export function useUserSubscription() {
     return () => subscription?.unsubscribe();
   }, []);
 
-  return { user, loading, error, isTrialing, trialEndsAt: user?.trial_ends_at ?? null };
+  return { user, loading, error, isTrialing, trialEndsAt: user?.trial_ends_at ?? null, refetch: fetchUserSubscription };
 }
