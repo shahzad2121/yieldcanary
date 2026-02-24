@@ -1017,4 +1017,49 @@ export const trialEmailTemplates: TransactionalEmailTemplate[] = [
 </body>
 </html>`,
   },
+  {
+    id: 'cancellation_scheduled',
+    title: 'Cancellation scheduled',
+    subject: 'Your YieldCanary subscription will end on {{cancels_at_date}}',
+    previewText: 'You keep access until the end of your billing period.',
+    body: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cancellation scheduled</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #1a2938; background: linear-gradient(135deg, rgba(13, 164, 114, 0.05) 0%, rgba(26, 140, 216, 0.05) 100%); padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid rgba(13, 164, 114, 0.1); }
+    .header { background: linear-gradient(135deg, #0da472 0%, #1a8cd8 100%); color: #fff; padding: 32px; text-align: center; }
+    .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .content { padding: 32px; }
+    .greeting { font-size: 18px; color: #1a2938; margin-bottom: 16px; font-weight: 600; }
+    .intro { font-size: 15px; color: #475569; margin-bottom: 16px; line-height: 1.7; }
+    .date-box { background: rgba(13, 164, 114, 0.08); border-left: 4px solid #0da472; padding: 16px 20px; margin: 20px 0; border-radius: 8px; }
+    .date-box strong { color: #1a2938; }
+    .footer { background: #f8fafc; padding: 24px; text-align: center; border-top: 1px solid rgba(13, 164, 114, 0.1); font-size: 14px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Cancellation scheduled</h1>
+      <p>You keep access until the end of your billing period</p>
+    </div>
+    <div class="content">
+      <p class="greeting">Hey, {{first_name|there!}}</p>
+      <p class="intro">You’ve requested to cancel your YieldCanary subscription. Your plan will remain active until the end of your current billing period; after that, your account will move to the free plan.</p>
+      <div class="date-box">
+        <strong>Access until:</strong> {{cancels_at_date}}
+      </div>
+      <p class="intro">If you change your mind, you can resubscribe anytime from your account.</p>
+    </div>
+    <div class="footer">Thanks for using YieldCanary.</div>
+  </div>
+</body>
+</html>`,
+  },
 ];

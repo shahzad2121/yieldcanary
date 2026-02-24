@@ -75,6 +75,8 @@ DEFAULT_TICKERS = [
     
     # Neos ETFs
     "SPYI", "QQQI", "IWMI", "NIHI", "IYRI", "IAUI", "BTCI", "NEHI",
+    "CSHI", "BNDI", "HYBI", "TLTI", "QQQH", "SPYH", "NLSI", "MLPI",
+    "XSPI", "XQQI", "XBCI",
     
     # Amplify / Simplify
     "YYY", "SVOL", "HIGH", "BUCK", "MAXI", "QDVO",

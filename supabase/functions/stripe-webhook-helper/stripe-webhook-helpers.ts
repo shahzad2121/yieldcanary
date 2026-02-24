@@ -397,6 +397,7 @@ export async function updateUserSubscriptionFromStripe(
     is_paid: isActiveOrTrialing,
     subscription_tier: newTier,
     stripe_customer_id: customerId || null,
+    stripe_subscription_id: subscriptionId || null,
     subscription_start: subscriptionStart,
     subscription_end: subscriptionEnd,
     trial_ends_at: trialEndsAt,
@@ -449,6 +450,7 @@ export async function downgradeUserToFree(
       body: JSON.stringify({
         is_paid: false,
         subscription_tier: "free",
+        stripe_subscription_id: null,
         subscription_start: null,
         subscription_end: null,
         trial_ends_at: null,
