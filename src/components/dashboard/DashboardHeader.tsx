@@ -1,4 +1,4 @@
-import { Bird, Crown, Search, Bell, Settings, LogOut, ChevronLeft, Moon, Sun, Star, CreditCard, XCircle } from 'lucide-react';
+import { Bird, Crown, Search, Bell, Settings, LogOut, ChevronLeft, Moon, Sun, Star, CreditCard, XCircle, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -199,7 +199,7 @@ export function DashboardHeader({
                   className="text-xs sm:text-sm text-destructive focus:text-destructive"
                 >
                   <XCircle className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  Cancel subscription
+                  {isTrialing ? 'Cancel Trial' : 'Cancel subscription'}
                 </DropdownMenuItem>
               )}
               {plan !== 'free' && <DropdownMenuSeparator />}

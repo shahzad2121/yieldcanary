@@ -13,6 +13,7 @@ export type TransactionalEmailTemplate = {
     | 'trial_converted_to_paid'
     | 'payment_failed'
     | 'subscription_cancelled'
+    | 'cancellation_scheduled'
     | 'cancellation_reason_to_support';
   title: string;
   subject: string;

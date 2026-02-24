@@ -88,7 +88,7 @@ export function CancelSubscriptionModal({ isOpen, onClose, isTrialing = false, o
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Cancel subscription</DialogTitle>
+          <DialogTitle>{isTrialing ? 'Cancel Trial' : 'Cancel subscription'}</DialogTitle>
           <DialogDescription>
             {isTrialing
               ? "Your trial will end immediately and you won't be charged. Please tell us why you're leaving so we can improve."
@@ -135,7 +135,7 @@ export function CancelSubscriptionModal({ isOpen, onClose, isTrialing = false, o
             Keep subscription
           </Button>
           <Button variant="destructive" onClick={handleSubmit} disabled={loading || !reason || (reason === 'other' && !reasonOther.trim())}>
-            {loading ? 'Cancelling...' : 'Cancel subscription'}
+            {loading ? 'Cancelling...' : isTrialing ? 'Cancel Trial' : 'Cancel subscription'}
           </Button>
         </DialogFooter>
       </DialogContent>
