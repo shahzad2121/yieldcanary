@@ -1,4 +1,4 @@
-import { Bird, Crown, Search, Bell, Settings, LogOut, ChevronLeft, Moon, Sun, Star } from 'lucide-react';
+import { Bird, Crown, Search, Bell, Settings, LogOut, ChevronLeft, Moon, Sun, Star, CreditCard, XCircle, Wallet , BadgePercent } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTheme } from '@/hooks/useTheme';
 import { SettingsModal } from './SettingsModal';
 import { FeedbackModal } from '@/components/modals/FeedbackModal';
+import { CancelSubscriptionModal } from './CancelSubscriptionModal';
+import { redirectToManageSubscription } from '@/integrations/stripe/checkout';
 
 /** Mobile sticky header height (nav h-14 + search row h-9 + pb-2). Use for sticky elements that sit below the header. */
 export const DASHBOARD_HEADER_HEIGHT_MOBILE = '6.25rem';
@@ -25,10 +27,14 @@ interface DashboardHeaderProps {
   isPaid: boolean;
   isTrialing?: boolean;
   trialEndsAt?: string | null;
+  cancelAtPeriodEnd?: boolean;
+  cancelsAt?: string | null;
   userEmail?: string;
   onUpgrade: () => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  /** Callback after subscription is cancelled (e.g. refetch user) so UI updates. */
+  onSubscriptionCancelled?: () => void;
 }
 
 export function DashboardHeader({
@@ -36,15 +42,29 @@ export function DashboardHeader({
   isPaid,
   isTrialing = false,
   trialEndsAt = null,
+  cancelAtPeriodEnd = false,
+  cancelsAt = null,
   userEmail = 'user@example.com',
   onUpgrade,
   searchQuery,
   onSearchChange,
+  onSubscriptionCancelled,
 }: DashboardHeaderProps) {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  const handleManageSubscription = async () => {
+    setPortalLoading(true);
+    try {
+      await redirectToManageSubscription();
+    } finally {
+      setPortalLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -150,6 +170,11 @@ export function DashboardHeader({
                     Trial ends {new Date(trialEndsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                   </p>
                 )}
+                {cancelAtPeriodEnd && cancelsAt && (
+                  <p className="text-xs text-amber-600 dark:text-amber-500 mt-0.5">
+                    Cancels on {new Date(cancelsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                )}
               </div>
               <DropdownMenuSeparator />
               {plan !== 'free' && (
@@ -158,10 +183,29 @@ export function DashboardHeader({
                   Watchlist
                 </DropdownMenuItem>
               )}
+              {plan !== 'free' && (
+                <DropdownMenuItem
+                  onClick={handleManageSubscription}
+                  disabled={portalLoading}
+                  className="text-xs sm:text-sm"
+                >
+                  <CreditCard className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  {portalLoading ? 'Opening...' : 'Manage Subscription'}
+                </DropdownMenuItem>
+              )}
+              {plan !== 'free' && !cancelAtPeriodEnd && (
+                <DropdownMenuItem
+                  onClick={() => setIsCancelModalOpen(true)}
+                  className="text-xs sm:text-sm text-destructive focus:text-destructive"
+                >
+                  <XCircle className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  {isTrialing ? 'Cancel Trial' : 'Cancel subscription'}
+                </DropdownMenuItem>
+              )}
               {plan !== 'free' && <DropdownMenuSeparator />}
               <DropdownMenuItem onClick={() => setIsSettingsOpen(true)} className="text-xs sm:text-sm">
-                <Settings className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                Settings
+                <BadgePercent className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                Tax Rate
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-xs sm:text-sm">
@@ -172,6 +216,15 @@ export function DashboardHeader({
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Cancellation scheduled banner */}
+      {cancelAtPeriodEnd && cancelsAt && (
+        <div className="border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 px-3 py-1.5 text-center">
+          <p className="text-xs text-amber-800 dark:text-amber-200">
+            Your subscription will cancel on {new Date(cancelsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}. You keep access until then.
+          </p>
+        </div>
+      )}
 
       {/* Mobile search bar */}
       <div className="md:hidden px-3 pb-2">
@@ -198,6 +251,14 @@ export function DashboardHeader({
          onClose={() => setIsFeedbackOpen(false)}
          userEmail={userEmail}
        />
+      <CancelSubscriptionModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        isTrialing={isTrialing}
+        onSuccess={() => {
+          onSubscriptionCancelled?.();
+        }}
+      />
     </header>
   );
 }

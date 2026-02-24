@@ -2,6 +2,91 @@ import { stripePromise } from './client';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
+/** Opens the Stripe Customer Portal (manage subscription, payment method, invoices). */
+export async function redirectToManageSubscription(): Promise<void> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (!supabaseUrl) {
+    throw new Error('VITE_SUPABASE_URL is not set');
+  }
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    toast({ variant: 'destructive', title: 'Sign in required', description: 'Please sign in to manage your subscription.' });
+    return;
+  }
+  const response = await fetch(`${supabaseUrl}/functions/v1/create-portal-session`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ returnUrl: window.location.origin + '/' }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = data.error ?? 'Failed to open billing portal';
+    toast({ variant: 'destructive', title: 'Error', description: message });
+    return;
+  }
+  if (data.url) {
+    window.location.href = data.url;
+  } else {
+    toast({ variant: 'destructive', title: 'Error', description: 'No billing portal URL returned.' });
+  }
+}
+
+/** Cancel reason values sent to the API (must match backend). */
+export const CANCEL_REASON_API_VALUES = [
+  'too_expensive',
+  'not_enough_value',
+  'not_using_enough',
+  'found_better_alternative',
+  'other',
+] as const;
+export type CancelReasonValue = (typeof CANCEL_REASON_API_VALUES)[number];
+
+export const CANCEL_REASON_LABELS: Record<CancelReasonValue, string> = {
+  too_expensive: 'Too expensive',
+  not_enough_value: 'Not enough value / features',
+  not_using_enough: 'Not using it enough',
+  found_better_alternative: 'Found a better alternative',
+  other: 'Other',
+};
+
+export interface CancelSubscriptionParams {
+  cancel_reason: CancelReasonValue;
+  cancel_reason_other?: string;
+}
+
+export interface CancelSubscriptionResult {
+  error?: string;
+  cancels_at?: string;
+}
+
+/** Call cancel-subscription-with-reason Edge Function. On success, returns { cancels_at? }. On error, returns { error }. */
+export async function cancelSubscriptionWithReason(params: CancelSubscriptionParams): Promise<CancelSubscriptionResult> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (!supabaseUrl) return { error: 'VITE_SUPABASE_URL is not set' };
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) return { error: 'Please sign in to cancel your subscription.' };
+  const body: { cancel_reason: string; cancel_reason_other?: string } = {
+    cancel_reason: params.cancel_reason,
+  };
+  if (params.cancel_reason === 'other' && params.cancel_reason_other?.trim()) {
+    body.cancel_reason_other = params.cancel_reason_other.trim();
+  }
+  const response = await fetch(`${supabaseUrl}/functions/v1/cancel-subscription-with-reason`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) return { error: (data.error as string) || 'Failed to cancel subscription' };
+  return { cancels_at: data.cancels_at };
+}
+
 export type PricingPlan = 'basic_monthly' | 'basic_yearly' | 'advanced_monthly' | 'advanced_yearly' | 'one_dollar';
 
 const PRICE_IDS: Record<PricingPlan, string> = {

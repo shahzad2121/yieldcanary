@@ -28,7 +28,7 @@ const InsightsPage = () => {
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const navigate = useNavigate();
   const { etfs, loading: etfsLoading } = useETFs();
-  const { user: subscriptionUser, loading: userLoading, isTrialing, trialEndsAt } = useUserSubscription();
+  const { user: subscriptionUser, loading: userLoading, isTrialing, trialEndsAt, cancelAtPeriodEnd, cancelsAt, refetch: refetchSubscription } = useUserSubscription();
 
   type Plan = 'free' | 'basic' | 'advanced';
   const subscriptionTier = subscriptionUser?.subscription_tier ?? null;
@@ -89,10 +89,13 @@ const InsightsPage = () => {
             isPaid={isPaid}
             isTrialing={isTrialing}
             trialEndsAt={trialEndsAt}
+            cancelAtPeriodEnd={cancelAtPeriodEnd}
+            cancelsAt={cancelsAt}
             userEmail={userEmail}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             onUpgrade={() => setIsUpgradeModalOpen(true)}
+            onSubscriptionCancelled={refetchSubscription}
           />
 
           <main className="container px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
