@@ -35,15 +35,17 @@ jobs:
           FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
         run: python bootstrap_database.py
 
-      - name: Snapshot weekly ETF metrics
+      - name: Backfill weekly snapshots (last week + this week)
         env:
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: python snapshot_weekly_etf_metrics.py
+          FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+        run: python backfill_weekly_snapshots_real.py
 
       - name: Summary
         if: always()
         run: |
-          echo "## ETF Data Bootstrap" >> $GITHUB_STEP_SUMMARY
+          echo "## Weekly ETF Data Update" >> $GITHUB_STEP_SUMMARY
           echo "- **Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
           echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Steps:** Bootstrap + Weekly snapshots (last week + this week) for Biggest Movers" >> $GITHUB_STEP_SUMMARY

@@ -30,6 +30,8 @@ export type InsightsListColumn = {
   showNameTooltip?: boolean;
   /** Optional class for the value span inside BlurredCell (e.g. text-muted-foreground). */
   valueClassName?: string;
+  /** Optional function to dynamically determine className based on ETF data. Overrides valueClassName if provided. */
+  getValueClassName?: (etf: ETF) => string;
 };
 
 export interface InsightsListCardProps {
@@ -179,7 +181,7 @@ export function InsightsListCard({
                                 value={col.format(etf)}
                                 isUnlocked={false}
                                 onUpgradeClick={onUpgrade}
-                                className={col.valueClassName}
+                                className={col.getValueClassName?.(etf) ?? col.valueClassName}
                               />
                             )
                           ) : col.id === 'name' && isUnlocked && col.showNameTooltip ? (
@@ -190,7 +192,7 @@ export function InsightsListCard({
                                     value={col.format(etf)}
                                     isUnlocked={isUnlocked}
                                     onUpgradeClick={onUpgrade}
-                                    className={col.valueClassName}
+                                    className={col.getValueClassName?.(etf) ?? col.valueClassName}
                                   />
                                 </div>
                               </TooltipTrigger>
@@ -203,7 +205,7 @@ export function InsightsListCard({
                               value={col.format(etf)}
                               isUnlocked={isUnlocked}
                               onUpgradeClick={onUpgrade}
-                              className={col.valueClassName}
+                              className={col.getValueClassName?.(etf) ?? col.valueClassName}
                             />
                           )}
                         </div>
@@ -285,7 +287,7 @@ export function InsightsListCard({
                             value={col.format(etf)}
                             isUnlocked={isUnlocked}
                             onUpgradeClick={onUpgrade}
-                            className={col.valueClassName}
+                            className={col.getValueClassName?.(etf) ?? col.valueClassName}
                           />
                         </div>
                       </div>
