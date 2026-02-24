@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { SlidersHorizontal } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { UpgradeModal } from '@/components/dashboard/UpgradeModal';
+import { CustomizeInsightsModal } from '@/components/insights/CustomizeInsightsModal';
+import { type InsightsSectionId } from '@/components/insights/insightsSectionConfig';
+import { useInsightsSectionOrder } from '@/hooks/useInsightsSectionOrder';
 import { MarketSnapshotBanner } from '@/components/insights/MarketSnapshotBanner';
 import { HighestYieldingLowRocCard } from '@/components/insights/HighestYieldingLowRocCard';
 import { HighestAdvertisedYieldCard } from '@/components/insights/HighestAdvertisedYieldCard';
@@ -17,20 +21,24 @@ import { LowestExpenseHealthyCard } from '@/components/insights/LowestExpenseHea
 import { WeeklyImprovementsCard } from '@/components/insights/WeeklyImprovementsCard';
 import { WeeklyDeteriorationsCard } from '@/components/insights/WeeklyDeteriorationsCard';
 import { Footer } from '@/components/Footer';
+import { Button } from '@/components/ui/button';
 import { useETFs } from '@/hooks/useETFs';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { supabase } from '@/integrations/supabase/client';
+
+type Plan = 'free' | 'basic' | 'advanced';
 
 const InsightsPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [userEmail, setUserEmail] = useState<string>('');
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const navigate = useNavigate();
   const { etfs, loading: etfsLoading } = useETFs();
   const { user: subscriptionUser, loading: userLoading, isTrialing, trialEndsAt } = useUserSubscription();
+  const { sectionOrder, setSectionOrder } = useInsightsSectionOrder();
 
-  type Plan = 'free' | 'basic' | 'advanced';
   const subscriptionTier = subscriptionUser?.subscription_tier ?? null;
   const plan: Plan =
     subscriptionTier === 'advanced' ? 'advanced' :
@@ -105,88 +113,37 @@ const InsightsPage = () => {
               </p>
             </div>
 
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsCustomizeOpen(true)}
+                className="gap-2"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Customize
+              </Button>
+            </div>
+
             <MarketSnapshotBanner />
 
-            
-
-            <HighestYieldingLowRocCard
+            <InsightsSections
+              sectionOrder={sectionOrder}
               etfs={etfs}
               plan={plan}
+              etfsLoading={etfsLoading}
               onUpgrade={() => setIsUpgradeModalOpen(true)}
-              loading={etfsLoading}
-            />
-
-            <HighestAdvertisedYieldCard
-              etfs={etfs}
-              plan={plan}
-              onUpgrade={() => setIsUpgradeModalOpen(true)}
-              loading={etfsLoading}
-            />
-
-            <BestAfterTaxCashFlowCard
-              etfs={etfs}
-              plan={plan}
-              onUpgrade={() => setIsUpgradeModalOpen(true)}
-              loading={etfsLoading}
-            />
-
-            <BestWeeklyPayersCard
-              etfs={etfs}
-              plan={plan}
-              onUpgrade={() => setIsUpgradeModalOpen(true)}
-              loading={etfsLoading}
-            />
-
-            <BestMonthlyPayersCard
-              etfs={etfs}
-              plan={plan}
-              onUpgrade={() => setIsUpgradeModalOpen(true)}
-              loading={etfsLoading}
-            />
-
-            <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
-              <LargestHealthyAumCard
-                etfs={etfs}
-                plan={plan}
-                onUpgrade={() => setIsUpgradeModalOpen(true)}
-                loading={etfsLoading}
-              />
-              <LowestExpenseHealthyCard
-                etfs={etfs}
-                plan={plan}
-                onUpgrade={() => setIsUpgradeModalOpen(true)}
-                loading={etfsLoading}
-              />
-            </div>
-
-            <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
-              <WeeklyImprovementsCard
-                plan={plan}
-                onUpgrade={() => setIsUpgradeModalOpen(true)}
-              />
-              <WeeklyDeteriorationsCard
-                plan={plan}
-                onUpgrade={() => setIsUpgradeModalOpen(true)}
-              />
-            </div>
-
-            <BuyZonePicksCard
-              etfs={etfs}
-              plan={plan}
-              onUpgrade={() => setIsUpgradeModalOpen(true)}
-              loading={etfsLoading}
-            />
-
-            <YieldTrapsCard
-              etfs={etfs}
-              plan={plan}
-              onUpgrade={() => setIsUpgradeModalOpen(true)}
-              loading={etfsLoading}
             />
 
             <Footer showDataDisclaimer={true} />
           </main>
         </div>
+        <CustomizeInsightsModal
+          open={isCustomizeOpen}
+          onOpenChange={setIsCustomizeOpen}
+          sectionOrder={sectionOrder}
+          onSave={setSectionOrder}
+        />
         <UpgradeModal
           isOpen={isUpgradeModalOpen}
           onClose={() => setIsUpgradeModalOpen(false)}
@@ -196,5 +153,83 @@ const InsightsPage = () => {
     </>
   );
 };
+
+type InsightsSectionsProps = {
+  sectionOrder: InsightsSectionId[];
+  etfs: ReturnType<typeof useETFs>['etfs'];
+  plan: Plan;
+  etfsLoading: boolean;
+  onUpgrade: () => void;
+};
+
+function InsightsSections({ sectionOrder, etfs, plan, etfsLoading, onUpgrade }: InsightsSectionsProps) {
+  const cardProps = { etfs, plan, onUpgrade, loading: etfsLoading };
+
+  const renderSection = (id: InsightsSectionId, opts?: { stacked?: boolean }) => {
+    const stacked = opts?.stacked ?? false;
+    switch (id) {
+      case 'highest_yielding':
+        return <HighestYieldingLowRocCard {...cardProps} />;
+      case 'highest_advertised':
+        return <HighestAdvertisedYieldCard {...cardProps} />;
+      case 'best_after_tax':
+        return <BestAfterTaxCashFlowCard {...cardProps} />;
+      case 'best_weekly':
+        return <BestWeeklyPayersCard {...cardProps} />;
+      case 'best_monthly':
+        return <BestMonthlyPayersCard {...cardProps} />;
+      case 'largest_aum_lowest_expense':
+        return stacked ? (
+          <div className="space-y-4 sm:space-y-6">
+            <LargestHealthyAumCard {...cardProps} />
+            <LowestExpenseHealthyCard {...cardProps} />
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+            <LargestHealthyAumCard {...cardProps} />
+            <LowestExpenseHealthyCard {...cardProps} />
+          </div>
+        );
+      case 'weekly_movers':
+        return stacked ? (
+          <div className="space-y-4 sm:space-y-6">
+            <WeeklyImprovementsCard plan={plan} onUpgrade={onUpgrade} />
+            <WeeklyDeteriorationsCard plan={plan} onUpgrade={onUpgrade} />
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+            <WeeklyImprovementsCard plan={plan} onUpgrade={onUpgrade} />
+            <WeeklyDeteriorationsCard plan={plan} onUpgrade={onUpgrade} />
+          </div>
+        );
+      case 'buy_zone':
+        return <BuyZonePicksCard {...cardProps} />;
+      case 'yield_traps':
+        return <YieldTrapsCard {...cardProps} />;
+      default:
+        return null;
+    }
+  };
+
+  if (sectionOrder.length === 0) return null;
+
+  const single = sectionOrder.slice(0, -2);
+  const lastTwo = sectionOrder.slice(-2);
+
+  return (
+    <>
+      {single.map((id) => (
+        <div key={id}>{renderSection(id)}</div>
+      ))}
+      {sectionOrder.length >= 2 && (
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+          <div key={lastTwo[0]}>{renderSection(lastTwo[0], { stacked: true })}</div>
+          <div key={lastTwo[1]}>{renderSection(lastTwo[1], { stacked: true })}</div>
+        </div>
+      )}
+      {sectionOrder.length === 1 && <div key={sectionOrder[0]}>{renderSection(sectionOrder[0])}</div>}
+    </>
+  );
+}
 
 export default InsightsPage;
