@@ -116,7 +116,7 @@ export function SettingsModal({ isOpen, onClose, userEmail }: SettingsModalProps
         <DialogHeader>
           <DialogTitle>My Profile</DialogTitle>
           <DialogDescription>
-            Adjust your personal settings like tax rate. Changes are saved when you click save.
+            Adjust your tax rate. Changes are saved when you click save.
           </DialogDescription>
         </DialogHeader>
         {initialLoading ? (

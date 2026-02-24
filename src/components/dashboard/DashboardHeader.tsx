@@ -1,4 +1,4 @@
-import { Bird, Crown, Search, Bell, Settings, LogOut, ChevronLeft, Moon, Sun, Star, CreditCard, XCircle, Wallet } from 'lucide-react';
+import { Bird, Crown, Search, Bell, Settings, LogOut, ChevronLeft, Moon, Sun, Star, CreditCard, XCircle, Wallet , BadgePercent } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -204,8 +204,8 @@ export function DashboardHeader({
               )}
               {plan !== 'free' && <DropdownMenuSeparator />}
               <DropdownMenuItem onClick={() => setIsSettingsOpen(true)} className="text-xs sm:text-sm">
-                <Settings className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                Settings
+                <BadgePercent className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                Tax Rate
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-xs sm:text-sm">
