@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
       });
     }
     if (!stripeSecret) {
-      return new Response(JSON.stringify({ error: "Stripe is not configured" }), {
+      return new Response(JSON.stringify({ error: "Stripe is not configured (set STRIPE_SECRET_KEY)" }), {
         status: 500,
         headers: corsHeaders,
       });

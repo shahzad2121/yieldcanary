@@ -27,11 +27,13 @@ interface DashboardHeaderProps {
   isPaid: boolean;
   isTrialing?: boolean;
   trialEndsAt?: string | null;
+  cancelAtPeriodEnd?: boolean;
+  cancelsAt?: string | null;
   userEmail?: string;
   onUpgrade: () => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  /** Callback after subscription is cancelled (e.g. refetch user) so UI updates to free tier. */
+  /** Callback after subscription is cancelled (e.g. refetch user) so UI updates. */
   onSubscriptionCancelled?: () => void;
 }
 
@@ -40,6 +42,8 @@ export function DashboardHeader({
   isPaid,
   isTrialing = false,
   trialEndsAt = null,
+  cancelAtPeriodEnd = false,
+  cancelsAt = null,
   userEmail = 'user@example.com',
   onUpgrade,
   searchQuery,
@@ -166,6 +170,11 @@ export function DashboardHeader({
                     Trial ends {new Date(trialEndsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                   </p>
                 )}
+                {cancelAtPeriodEnd && cancelsAt && (
+                  <p className="text-xs text-amber-600 dark:text-amber-500 mt-0.5">
+                    Cancels on {new Date(cancelsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                )}
               </div>
               <DropdownMenuSeparator />
               {plan !== 'free' && (
@@ -184,7 +193,7 @@ export function DashboardHeader({
                   {portalLoading ? 'Opening...' : 'Manage Subscription'}
                 </DropdownMenuItem>
               )}
-              {plan !== 'free' && (
+              {plan !== 'free' && !cancelAtPeriodEnd && (
                 <DropdownMenuItem
                   onClick={() => setIsCancelModalOpen(true)}
                   className="text-xs sm:text-sm text-destructive focus:text-destructive"
@@ -207,6 +216,15 @@ export function DashboardHeader({
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Cancellation scheduled banner */}
+      {cancelAtPeriodEnd && cancelsAt && (
+        <div className="border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 px-3 py-1.5 text-center">
+          <p className="text-xs text-amber-800 dark:text-amber-200">
+            Your subscription will cancel on {new Date(cancelsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}. You keep access until then.
+          </p>
+        </div>
+      )}
 
       {/* Mobile search bar */}
       <div className="md:hidden px-3 pb-2">
@@ -236,6 +254,7 @@ export function DashboardHeader({
       <CancelSubscriptionModal
         isOpen={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}
+        isTrialing={isTrialing}
         onSuccess={() => {
           onSubscriptionCancelled?.();
         }}

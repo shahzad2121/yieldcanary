@@ -9,14 +9,20 @@ export interface UserSubscription {
   subscription_tier: string | null;
   subscription_start: string | null;
   subscription_end: string | null;
+  subscription_status?: string | null;
   trial_ends_at?: string | null;
+  cancel_at_period_end?: boolean | null;
+  cancels_at?: string | null;
   created_at: string;
   updated_at: string;
 }
 
-/** True when user is paid and trial_ends_at is in the future. */
+/** True when backend says user is on trial (subscription_status === 'trialing'). Active = not trial even if trial_ends_at is still in future. */
 export function isOnTrial(u: UserSubscription | null): boolean {
-  if (!u?.is_paid || !u.trial_ends_at) return false;
+  if (!u?.is_paid) return false;
+  if (u.subscription_status === 'active') return false;
+  if (u.subscription_status === 'trialing') return true;
+  if (!u.trial_ends_at) return false;
   return new Date(u.trial_ends_at) > new Date();
 }
 
@@ -72,5 +78,14 @@ export function useUserSubscription() {
     return () => subscription?.unsubscribe();
   }, []);
 
-  return { user, loading, error, isTrialing, trialEndsAt: user?.trial_ends_at ?? null, refetch: fetchUserSubscription };
+  return {
+    user,
+    loading,
+    error,
+    isTrialing,
+    trialEndsAt: user?.trial_ends_at ?? null,
+    cancelAtPeriodEnd: user?.cancel_at_period_end ?? false,
+    cancelsAt: user?.cancels_at ?? null,
+    refetch: fetchUserSubscription,
+  };
 }

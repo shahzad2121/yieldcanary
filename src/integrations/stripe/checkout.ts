@@ -57,12 +57,17 @@ export interface CancelSubscriptionParams {
   cancel_reason_other?: string;
 }
 
-/** Call cancel-subscription-with-reason Edge Function. Returns error message or null on success. */
-export async function cancelSubscriptionWithReason(params: CancelSubscriptionParams): Promise<string | null> {
+export interface CancelSubscriptionResult {
+  error?: string;
+  cancels_at?: string;
+}
+
+/** Call cancel-subscription-with-reason Edge Function. On success, returns { cancels_at? }. On error, returns { error }. */
+export async function cancelSubscriptionWithReason(params: CancelSubscriptionParams): Promise<CancelSubscriptionResult> {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  if (!supabaseUrl) return 'VITE_SUPABASE_URL is not set';
+  if (!supabaseUrl) return { error: 'VITE_SUPABASE_URL is not set' };
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) return 'Please sign in to cancel your subscription.';
+  if (!session?.access_token) return { error: 'Please sign in to cancel your subscription.' };
   const body: { cancel_reason: string; cancel_reason_other?: string } = {
     cancel_reason: params.cancel_reason,
   };
@@ -78,8 +83,8 @@ export async function cancelSubscriptionWithReason(params: CancelSubscriptionPar
     body: JSON.stringify(body),
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) return (data.error as string) || 'Failed to cancel subscription';
-  return null;
+  if (!response.ok) return { error: (data.error as string) || 'Failed to cancel subscription' };
+  return { cancels_at: data.cancels_at };
 }
 
 export type PricingPlan = 'basic_monthly' | 'basic_yearly' | 'advanced_monthly' | 'advanced_yearly' | 'one_dollar';

@@ -21,10 +21,11 @@ import { useToast } from '@/hooks/use-toast';
 export interface CancelSubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  isTrialing?: boolean;
   onSuccess: () => void;
 }
 
-export function CancelSubscriptionModal({ isOpen, onClose, onSuccess }: CancelSubscriptionModalProps) {
+export function CancelSubscriptionModal({ isOpen, onClose, isTrialing = false, onSuccess }: CancelSubscriptionModalProps) {
   const [reason, setReason] = useState<CancelReasonValue | ''>('');
   const [reasonOther, setReasonOther] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,18 +44,26 @@ export function CancelSubscriptionModal({ isOpen, onClose, onSuccess }: CancelSu
     }
     setLoading(true);
     try {
-      const err = await cancelSubscriptionWithReason({
+      const result = await cancelSubscriptionWithReason({
         cancel_reason: reason as CancelReasonValue,
         cancel_reason_other: reason === 'other' ? reasonOther.trim() : undefined,
       });
-      if (err) {
-        setError(err);
+      if (result.error) {
+        setError(result.error);
         return;
       }
-      toast({
-        title: 'Subscription cancelled',
-        description: 'Your account is now on the free plan.',
-      });
+      if (result.cancels_at) {
+        const dateStr = new Date(result.cancels_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        toast({
+          title: 'Cancellation scheduled',
+          description: `Your subscription will end on ${dateStr}. You'll keep access until then.`,
+        });
+      } else {
+        toast({
+          title: 'Subscription cancelled',
+          description: 'Your account is now on the free plan.',
+        });
+      }
       onSuccess();
       onClose();
       setReason('');
@@ -81,10 +90,12 @@ export function CancelSubscriptionModal({ isOpen, onClose, onSuccess }: CancelSu
         <DialogHeader>
           <DialogTitle>Cancel subscription</DialogTitle>
           <DialogDescription>
-            Your subscription will be cancelled immediately. Please tell us why you&apos;re leaving so we can improve.
+            {isTrialing
+              ? "Your trial will end immediately and you won't be charged. Please tell us why you're leaving so we can improve."
+              : "Your subscription will continue until the end of your current billing period, then cancel. Please tell us why you're leaving so we can improve."}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 pb-4">
           <div className="grid gap-3">
             <Label>Why are you leaving?</Label>
             <RadioGroup

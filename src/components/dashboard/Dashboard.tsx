@@ -12,7 +12,7 @@ import { Footer } from '@/components/Footer';
 
 export function Dashboard() {
   const { etfs, loading, error } = useETFs();
-  const { user: subscriptionUser, loading: userLoading, isTrialing, trialEndsAt, refetch: refetchSubscription } = useUserSubscription();
+  const { user: subscriptionUser, loading: userLoading, isTrialing, trialEndsAt, cancelAtPeriodEnd, cancelsAt, refetch: refetchSubscription } = useUserSubscription();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<CanaryStatus | 'all'>('all');
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -86,6 +86,8 @@ export function Dashboard() {
         isPaid={isPaid}
         isTrialing={isTrialing}
         trialEndsAt={trialEndsAt}
+        cancelAtPeriodEnd={cancelAtPeriodEnd}
+        cancelsAt={cancelsAt}
         userEmail={userEmail}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}

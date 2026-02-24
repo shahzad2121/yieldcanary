@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
     }
 
     const usersRes = await fetch(
-      `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=id,stripe_customer_id,stripe_subscription_id,is_paid,name,username,subscription_tier`,
+      `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=id,stripe_customer_id,stripe_subscription_id,is_paid,name,username,subscription_tier,subscription_status`,
       {
         headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` },
       }
@@ -121,21 +121,124 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "No active subscription found" }, 400);
     }
 
-    const deleteRes = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
-      method: "DELETE",
+    // Fetch subscription to know if trialing (cancel now) or active (cancel at period end)
+    const getSubRes = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
       headers: { Authorization: `Bearer ${stripeSecret}` },
     });
-    if (!deleteRes.ok) {
-      const errText = await deleteRes.text();
-      console.error("Stripe cancel subscription error:", errText);
-      const alreadyCanceled = errText.includes("No such subscription") || errText.includes("canceled") || errText.includes("already been canceled");
-      if (!alreadyCanceled) {
-        return jsonResponse({ error: "Could not cancel subscription. Please try Manage Subscription or contact support." }, 500);
-      }
-      // Subscription already cancelled (e.g. via portal); still update DB and send emails so user is marked free
+    if (!getSubRes.ok) {
+      const errText = await getSubRes.text();
+      console.error("Stripe get subscription error:", errText);
+      return jsonResponse({ error: "Could not load subscription" }, 500);
     }
+    const stripeSub = await getSubRes.json();
+    const subStatus = stripeSub?.status ?? "";
+    const isTrialing = subStatus === "trialing";
+    const currentPeriodEnd = stripeSub?.current_period_end ? Number(stripeSub.current_period_end) : null;
+    const cancelsAtIso = currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toISOString() : null;
 
     const now = new Date().toISOString();
+    const previousTier = user.subscription_tier || "basic";
+    const firstName = user.name || user.username || email.split("@")[0];
+
+    if (isTrialing) {
+      // Trial: cancel immediately (DELETE)
+      const deleteRes = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${stripeSecret}` },
+      });
+      if (!deleteRes.ok) {
+        const errText = await deleteRes.text();
+        console.error("Stripe cancel subscription error:", errText);
+        const alreadyCanceled = errText.includes("No such subscription") || errText.includes("canceled") || errText.includes("already been canceled");
+        if (!alreadyCanceled) {
+          return jsonResponse({ error: "Could not cancel subscription. Please try Manage Subscription or contact support." }, 500);
+        }
+      }
+
+      const updateRes = await fetch(
+        `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`,
+        {
+          method: "PATCH",
+          headers: {
+            apikey: serviceRoleKey,
+            Authorization: `Bearer ${serviceRoleKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            cancel_reason: cancelReason,
+            cancel_reason_other: cancelReason === "other" ? cancelReasonOther : null,
+            cancelled_at: now,
+            is_paid: false,
+            subscription_tier: "free",
+            stripe_subscription_id: null,
+            subscription_start: null,
+            subscription_end: null,
+            trial_ends_at: null,
+            subscription_status: "free",
+            trial_converted_to_paid: false,
+            cancel_at_period_end: false,
+            cancels_at: null,
+            updated_at: now,
+          }),
+        }
+      );
+      if (!updateRes.ok) {
+        const errText = await updateRes.text();
+        console.error("Failed to update user after cancel:", errText);
+        return jsonResponse({ error: "Subscription was cancelled but we could not update your account. Please contact support." }, 500);
+      }
+
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceRoleKey}` },
+          body: JSON.stringify({
+            to: email,
+            templateId: "subscription_cancelled",
+            data: { first_name: firstName, tier: previousTier },
+          }),
+        });
+      } catch (e) {
+        console.error("Failed to send subscription_cancelled email:", e);
+      }
+      try {
+        const reasonLabel = cancelReason === "other" ? `Other: ${cancelReasonOther}` : cancelReason.replace(/_/g, " ");
+        await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceRoleKey}` },
+          body: JSON.stringify({
+            to: "support@yieldcanary.com",
+            templateId: "cancellation_reason_to_support",
+            data: {
+              user_email: email,
+              reason: reasonLabel,
+              reason_other: cancelReason === "other" ? cancelReasonOther : "",
+              timestamp: now,
+            },
+          }),
+        });
+      } catch (e) {
+        console.error("Failed to send cancellation reason to support:", e);
+      }
+
+      return jsonResponse({ success: true }, 200);
+    }
+
+    // Paid (active): cancel at end of billing period (PATCH cancel_at_period_end)
+    const patchRes = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${stripeSecret}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({ cancel_at_period_end: "true" }).toString(),
+    });
+    if (!patchRes.ok) {
+      const errText = await patchRes.text();
+      console.error("Stripe set cancel_at_period_end error:", errText);
+      return jsonResponse({ error: "Could not schedule cancellation. Please try Manage Subscription or contact support." }, 500);
+    }
+
     const updateRes = await fetch(
       `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`,
       {
@@ -149,46 +252,20 @@ Deno.serve(async (req) => {
           cancel_reason: cancelReason,
           cancel_reason_other: cancelReason === "other" ? cancelReasonOther : null,
           cancelled_at: now,
-          is_paid: false,
-          subscription_tier: "free",
-          stripe_subscription_id: null,
-          subscription_start: null,
-          subscription_end: null,
-          trial_ends_at: null,
-          subscription_status: "free",
-          trial_converted_to_paid: false,
+          cancel_at_period_end: true,
+          cancels_at: cancelsAtIso,
           updated_at: now,
         }),
       }
     );
     if (!updateRes.ok) {
       const errText = await updateRes.text();
-      console.error("Failed to update user after cancel:", errText);
-      return jsonResponse({ error: "Subscription was cancelled but we could not update your account. Please contact support." }, 500);
-    }
-
-    const previousTier = user.subscription_tier || "basic";
-    const firstName = user.name || user.username || email.split("@")[0];
-
-    try {
-      await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceRoleKey}` },
-        body: JSON.stringify({
-          to: email,
-          templateId: "subscription_cancelled",
-          data: { first_name: firstName, tier: previousTier },
-        }),
-      });
-    } catch (e) {
-      console.error("Failed to send subscription_cancelled email:", e);
+      console.error("Failed to update user after schedule cancel:", errText);
+      return jsonResponse({ error: "Cancellation was scheduled but we could not update your account. Please contact support." }, 500);
     }
 
     try {
-      const reasonLabel =
-        cancelReason === "other"
-          ? `Other: ${cancelReasonOther}`
-          : cancelReason.replace(/_/g, " ");
+      const reasonLabel = cancelReason === "other" ? `Other: ${cancelReasonOther}` : cancelReason.replace(/_/g, " ");
       await fetch(`${supabaseUrl}/functions/v1/send-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceRoleKey}` },
@@ -200,6 +277,7 @@ Deno.serve(async (req) => {
             reason: reasonLabel,
             reason_other: cancelReason === "other" ? cancelReasonOther : "",
             timestamp: now,
+            cancels_at: cancelsAtIso ?? "",
           },
         }),
       });
@@ -207,7 +285,7 @@ Deno.serve(async (req) => {
       console.error("Failed to send cancellation reason to support:", e);
     }
 
-    return jsonResponse({ success: true }, 200);
+    return jsonResponse({ success: true, cancels_at: cancelsAtIso ?? undefined }, 200);
   } catch (e) {
     console.error("cancel-subscription-with-reason error:", e);
     return jsonResponse({ error: "Something went wrong" }, 500);
