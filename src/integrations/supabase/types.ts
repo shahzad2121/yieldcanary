@@ -297,6 +297,8 @@ export type Database = {
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           tax_rate: number | null
+          how_did_you_hear: string | null
+          how_did_you_hear_other: string | null
           created_at: string
           updated_at: string
         }
@@ -312,6 +314,8 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           tax_rate?: number | null
+          how_did_you_hear?: string | null
+          how_did_you_hear_other?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -327,6 +331,8 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           tax_rate?: number | null
+          how_did_you_hear?: string | null
+          how_did_you_hear_other?: string | null
           created_at?: string
           updated_at?: string
         }
