@@ -5,13 +5,14 @@ export const FIXED_INSIGHTS_SECTION_ID = 'market_snapshot' as const;
 export const DEFAULT_INSIGHTS_SECTION_ORDER = [
   'highest_yielding',       // Highest Yielding ETFs with No/Low NAV Erosion
   'best_after_tax',         // Best After-Tax Cash Flow
+  'buy_zone',               // Buy Zone Picks - Undervalued Healthy ETFs
+  'highest_advertised',     // Highest Advertised Yield (with True Income Warning)
   'best_weekly',            // Best Weekly Payers
   'best_monthly',           // Best Monthly Payers
-  'highest_advertised',     // Highest Advertised Yield (with True Income Warning)
-  'buy_zone',               // Buy Zone Picks - Undervalued Healthy ETFs
-  'yield_traps',            // Yield Traps to Avoid
   'weekly_movers',          // Biggest Movers of the Week (2 boxes side by side)
   'largest_aum_lowest_expense', // Largest Healthy AUM & Lowest Expense (2 boxes side by side)
+  'yield_traps',            // Yield Traps to Avoid
+
 ] as const;
 
 export type InsightsSectionId = (typeof DEFAULT_INSIGHTS_SECTION_ORDER)[number];
