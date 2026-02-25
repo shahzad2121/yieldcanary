@@ -6,6 +6,10 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { ETFTable } from '@/components/dashboard/ETFTable';
 import { FilterBar } from '@/components/dashboard/FilterBar';
 import { KillerStats } from '@/components/dashboard/KillerStats';
+import { KillerStatsSkeleton } from '@/components/dashboard/KillerStatsSkeleton';
+import { WatchlistSummary } from '@/components/dashboard/WatchlistSummary';
+import { WatchlistSummarySkeleton } from '@/components/dashboard/WatchlistSummarySkeleton';
+import { ETFTableSkeleton } from '@/components/dashboard/ETFTableSkeleton';
 import { Footer } from '@/components/Footer';
 import { useETFs } from '@/hooks/useETFs';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -62,28 +66,8 @@ const WatchlistPage = () => {
     setSearchQuery('');
   };
 
-  const loading = etfsLoading || userLoading || watchlistLoading;
+  const isDataLoading = etfsLoading || userLoading || watchlistLoading;
   const error = etfsError;
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground">Loading your watchlist...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-destructive">Error loading watchlist: {error}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -121,8 +105,14 @@ const WatchlistPage = () => {
             </p>
           </div>
 
+          {error && (
+            <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              Error loading watchlist: {error instanceof Error ? error.message : String(error)}
+            </div>
+          )}
+
           {/* Killer Stats (based only on watchlist ETFs) */}
-          <KillerStats etfs={filteredWatchlistETFs} />
+          {isDataLoading ? <KillerStatsSkeleton /> : <KillerStats etfs={filteredWatchlistETFs} />}
 
           {/* Filters */}
           <FilterBar
@@ -131,8 +121,13 @@ const WatchlistPage = () => {
             onClearFilters={handleClearFilters}
           />
 
+          {/* Watchlist Summary (above the list) */}
+          {isDataLoading ? <WatchlistSummarySkeleton /> : <WatchlistSummary etfs={filteredWatchlistETFs} />}
+
           {/* Watchlist Table */}
-          {filteredWatchlistETFs.length === 0 ? (
+          {isDataLoading ? (
+            <ETFTableSkeleton />
+          ) : filteredWatchlistETFs.length === 0 ? (
             <div className="border border-dashed border-border rounded-xl p-6 text-center text-sm text-muted-foreground">
               You don&apos;t have any ETFs in your watchlist yet. Star ETFs on the main dashboard to see them here.
             </div>
@@ -141,7 +136,7 @@ const WatchlistPage = () => {
               etfs={filteredWatchlistETFs}
               plan={plan}
               isPaid={isPaid}
-              onUpgrade={() => {}} // Watchlist is only visible when already signed in; upgrade CTA handled elsewhere
+              onUpgrade={() => {}}
             />
           )}
 

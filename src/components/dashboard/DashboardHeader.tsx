@@ -177,12 +177,12 @@ export function DashboardHeader({
                 )}
               </div>
               <DropdownMenuSeparator />
-              {plan !== 'free' && (
-                <DropdownMenuItem onClick={() => navigate('/watchlist')} className="text-xs sm:text-sm">
-                  <Star className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  Watchlist
-                </DropdownMenuItem>
-              )}
+             
+               {/* {plan !== 'free' && <DropdownMenuSeparator />} */}
+               <DropdownMenuItem onClick={() => setIsSettingsOpen(true)} className="text-xs sm:text-sm">
+                <BadgePercent className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                Tax Rate
+              </DropdownMenuItem>
               {plan !== 'free' && (
                 <DropdownMenuItem
                   onClick={handleManageSubscription}
@@ -202,13 +202,9 @@ export function DashboardHeader({
                   {isTrialing ? 'Cancel Trial' : 'Cancel subscription'}
                 </DropdownMenuItem>
               )}
-              {plan !== 'free' && <DropdownMenuSeparator />}
-              <DropdownMenuItem onClick={() => setIsSettingsOpen(true)} className="text-xs sm:text-sm">
-                <BadgePercent className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                Tax Rate
-              </DropdownMenuItem>
+             
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-xs sm:text-sm">
+              <DropdownMenuItem onClick={handleLogout} className="text-xs sm:text-sm hover:cursor-pointer">
                 <LogOut className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                 Sign out
               </DropdownMenuItem>
