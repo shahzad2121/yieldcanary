@@ -1,5 +1,6 @@
-import { TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useMarketSnapshot, type MarketSnapshotItem } from '@/hooks/useMarketSnapshot';
 import { getMarketSnapshotStatus } from '@/lib/marketSnapshotStatus';
 import { MarketSnapshotStatusIcon } from '@/components/insights/MarketSnapshotStatusIcon';
@@ -67,9 +68,30 @@ export function MarketSnapshotBanner() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border bg-card p-8 flex items-center justify-center min-h-[200px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+      <section className="space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="rounded-xl border border-border bg-card shadow-sm">
+              <CardContent className="p-4">
+                <Skeleton className="h-3 w-20 mb-2" />
+                <Skeleton className="h-6 w-16 mt-1" />
+                <Skeleton className="h-4 w-14 mt-2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="rounded-xl border border-border bg-card shadow-sm">
+              <CardContent className="p-4">
+                <Skeleton className="h-3 w-20 mb-2" />
+                <Skeleton className="h-6 w-16 mt-1" />
+                <Skeleton className="h-4 w-14 mt-2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
     );
   }
 

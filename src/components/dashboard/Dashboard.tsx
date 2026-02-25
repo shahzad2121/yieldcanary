@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
 import { DashboardHeader } from './DashboardHeader';
 import { KillerStats } from './KillerStats';
+import { KillerStatsSkeleton } from './KillerStatsSkeleton';
 import { ETFTable } from './ETFTable';
+import { ETFTableSkeleton } from './ETFTableSkeleton';
 import { FilterBar } from './FilterBar';
 import { UpgradeModal } from './UpgradeModal';
 import { useETFs } from '@/hooks/useETFs';
@@ -59,25 +61,7 @@ export function Dashboard() {
     setSearchQuery('');
   };
 
-  if (loading || userLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground">Loading ETF data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-destructive">Error loading ETFs: {error instanceof Error ? error.message : String(error)}</p>
-        </div>
-      </div>
-    );
-  }
+  const isDataLoading = loading || userLoading;
 
   return (
     <div className="min-h-screen bg-background">
@@ -106,8 +90,14 @@ export function Dashboard() {
           </p>
         </div>
 
+        {error && (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            Error loading ETFs: {error instanceof Error ? error.message : String(error)}
+          </div>
+        )}
+
         {/* Killer Stats */}
-        <KillerStats etfs={filteredETFs} />
+        {isDataLoading ? <KillerStatsSkeleton /> : <KillerStats etfs={filteredETFs} />}
 
         {/* Filters */}
         <FilterBar
@@ -117,12 +107,16 @@ export function Dashboard() {
         />
 
         {/* ETF Table */}
-        <ETFTable
-          etfs={filteredETFs}
-          plan={plan}
-          isPaid={isPaid}
-          onUpgrade={() => setIsUpgradeModalOpen(true)}
-        />
+        {isDataLoading ? (
+          <ETFTableSkeleton />
+        ) : (
+          <ETFTable
+            etfs={filteredETFs}
+            plan={plan}
+            isPaid={isPaid}
+            onUpgrade={() => setIsUpgradeModalOpen(true)}
+          />
+        )}
 
         {/* Footer */}
         <Footer showDataDisclaimer={true} />

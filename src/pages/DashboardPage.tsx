@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardContentSkeleton } from '@/components/dashboard/DashboardContentSkeleton';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '@/integrations/supabase/client';
 
 const DashboardPage = () => {
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,7 +16,7 @@ const DashboardPage = () => {
         if (!session?.user) {
           navigate('/auth');
         }
-        setLoading(false);
+        setAuthLoading(false);
       }
     );
 
@@ -23,19 +24,11 @@ const DashboardPage = () => {
       if (!session?.user) {
         navigate('/auth');
       }
-      setLoading(false);
+      setAuthLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -47,7 +40,7 @@ const DashboardPage = () => {
         />
       </Helmet>
       <DashboardLayout>
-      <Dashboard />
+        {authLoading ? <DashboardContentSkeleton /> : <Dashboard />}
       </DashboardLayout>
     </>
   );

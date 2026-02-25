@@ -21,6 +21,7 @@ import { LowestExpenseHealthyCard } from '@/components/insights/LowestExpenseHea
 import { WeeklyImprovementsCard } from '@/components/insights/WeeklyImprovementsCard';
 import { WeeklyDeteriorationsCard } from '@/components/insights/WeeklyDeteriorationsCard';
 import { Footer } from '@/components/Footer';
+import { InsightsSectionsSkeleton } from '@/components/insights/InsightsSectionsSkeleton';
 import { Button } from '@/components/ui/button';
 import { useETFs } from '@/hooks/useETFs';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -73,13 +74,7 @@ const InsightsPage = () => {
     getUser();
   }, []);
 
-  if (loading || userLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
+  const isDataLoading = loading || userLoading || etfsLoading;
 
   return (
     <>
@@ -130,13 +125,17 @@ const InsightsPage = () => {
 
             <MarketSnapshotBanner />
 
-            <InsightsSections
-              sectionOrder={sectionOrder}
-              etfs={etfs}
-              plan={plan}
-              etfsLoading={etfsLoading}
-              onUpgrade={() => setIsUpgradeModalOpen(true)}
-            />
+            {isDataLoading ? (
+              <InsightsSectionsSkeleton />
+            ) : (
+              <InsightsSections
+                sectionOrder={sectionOrder}
+                etfs={etfs}
+                plan={plan}
+                etfsLoading={etfsLoading}
+                onUpgrade={() => setIsUpgradeModalOpen(true)}
+              />
+            )}
 
             <Footer showDataDisclaimer={true} />
           </main>
