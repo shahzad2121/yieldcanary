@@ -493,9 +493,6 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
       {/* Table Controls */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs sm:text-sm text-muted-foreground">
-            {sortedETFs.length} ETFs
-          </span>
           {/* Default View button - only for free users when not in default view */}
           {!isPaid && !isDefaultView && (
             <Button

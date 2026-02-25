@@ -177,12 +177,7 @@ export function DashboardHeader({
                 )}
               </div>
               <DropdownMenuSeparator />
-              {plan !== 'free' && (
-                <DropdownMenuItem onClick={() => navigate('/watchlist')} className="text-xs sm:text-sm">
-                  <Star className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  Watchlist
-                </DropdownMenuItem>
-              )}
+             
                {/* {plan !== 'free' && <DropdownMenuSeparator />} */}
                <DropdownMenuItem onClick={() => setIsSettingsOpen(true)} className="text-xs sm:text-sm">
                 <BadgePercent className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
