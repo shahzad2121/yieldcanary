@@ -167,8 +167,7 @@ type InsightsSectionsProps = {
 function InsightsSections({ sectionOrder, etfs, plan, etfsLoading, onUpgrade }: InsightsSectionsProps) {
   const cardProps = { etfs, plan, onUpgrade, loading: etfsLoading };
 
-  const renderSection = (id: InsightsSectionId, opts?: { stacked?: boolean }) => {
-    const stacked = opts?.stacked ?? false;
+  const renderSection = (id: InsightsSectionId) => {
     switch (id) {
       case 'highest_yielding':
         return <HighestYieldingLowRocCard {...cardProps} />;
@@ -181,24 +180,14 @@ function InsightsSections({ sectionOrder, etfs, plan, etfsLoading, onUpgrade }: 
       case 'best_monthly':
         return <BestMonthlyPayersCard {...cardProps} />;
       case 'largest_aum_lowest_expense':
-        return stacked ? (
-          <div className="space-y-4 sm:space-y-6">
-            <LargestHealthyAumCard {...cardProps} />
-            <LowestExpenseHealthyCard {...cardProps} />
-          </div>
-        ) : (
+        return (
           <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
             <LargestHealthyAumCard {...cardProps} />
             <LowestExpenseHealthyCard {...cardProps} />
           </div>
         );
       case 'weekly_movers':
-        return stacked ? (
-          <div className="space-y-4 sm:space-y-6">
-            <WeeklyImprovementsCard plan={plan} onUpgrade={onUpgrade} />
-            <WeeklyDeteriorationsCard plan={plan} onUpgrade={onUpgrade} />
-          </div>
-        ) : (
+        return (
           <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
             <WeeklyImprovementsCard plan={plan} onUpgrade={onUpgrade} />
             <WeeklyDeteriorationsCard plan={plan} onUpgrade={onUpgrade} />
@@ -215,21 +204,11 @@ function InsightsSections({ sectionOrder, etfs, plan, etfsLoading, onUpgrade }: 
 
   if (sectionOrder.length === 0) return null;
 
-  const single = sectionOrder.slice(0, -2);
-  const lastTwo = sectionOrder.slice(-2);
-
   return (
     <>
-      {single.map((id) => (
+      {sectionOrder.map((id) => (
         <div key={id}>{renderSection(id)}</div>
       ))}
-      {sectionOrder.length >= 2 && (
-        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
-          <div key={lastTwo[0]}>{renderSection(lastTwo[0], { stacked: true })}</div>
-          <div key={lastTwo[1]}>{renderSection(lastTwo[1], { stacked: true })}</div>
-        </div>
-      )}
-      {sectionOrder.length === 1 && <div key={sectionOrder[0]}>{renderSection(sectionOrder[0])}</div>}
     </>
   );
 }
