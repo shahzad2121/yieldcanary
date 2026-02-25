@@ -1,26 +1,22 @@
-import { Skull, Heart, AlertTriangle, DollarSign } from 'lucide-react';
+import { Skull, Heart, AlertTriangle, LayoutGrid } from 'lucide-react';
 import { ETF } from '@/types/etf';
-import { formatCurrencyInBillions } from '@/lib/utils';
 
 interface KillerStatsProps {
   etfs: ETF[];
 }
 
 export function KillerStats({ etfs }: KillerStatsProps) {
+  const totalCount = etfs.length;
   const healthyCount = etfs.filter((e) => e.canaryStatus === 'Healthy').length;
   const dyingCount = etfs.filter((e) => e.canaryStatus === 'Dying').length;
   const deadCount = etfs.filter((e) => e.canaryStatus === 'Dead').length;
 
-  // Calculate AUM statistics
-  const totalAUM = etfs.reduce((sum, etf) => sum + (etf.aum || 0), 0);
-  const deadAUM = etfs
-    .filter((e) => e.canaryStatus === 'Dead')
-    .reduce((sum, etf) => sum + (etf.aum || 0), 0);
-  
-  const deadAUMPercentage = totalAUM > 0 ? (deadAUM / totalAUM) * 100 : 0;
-  const deadAUMFormatted = formatCurrencyInBillions(deadAUM);
-
   const stats = [
+    {
+      label: 'Total ETFs',
+      value: totalCount,
+      icon: LayoutGrid,
+    },
     {
       label: 'Healthy ETFs',
       value: healthyCount,
@@ -35,11 +31,6 @@ export function KillerStats({ etfs }: KillerStatsProps) {
       label: 'Dead ETFs',
       value: deadCount,
       icon: Skull,
-    },
-    {
-      label: `${deadAUMPercentage.toFixed(1)}% of AUM is DEAD`,
-      value: deadAUMFormatted,
-      icon: DollarSign,
     },
   ];
 

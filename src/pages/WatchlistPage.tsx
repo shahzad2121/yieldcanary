@@ -6,6 +6,7 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { ETFTable } from '@/components/dashboard/ETFTable';
 import { FilterBar } from '@/components/dashboard/FilterBar';
 import { KillerStats } from '@/components/dashboard/KillerStats';
+import { WatchlistSummary } from '@/components/dashboard/WatchlistSummary';
 import { Footer } from '@/components/Footer';
 import { useETFs } from '@/hooks/useETFs';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -79,7 +80,7 @@ const WatchlistPage = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-destructive">Error loading watchlist: {error}</p>
+          <p className="text-destructive">Error loading watchlist: {error instanceof Error ? error.message : String(error)}</p>
         </div>
       </div>
     );
@@ -130,6 +131,9 @@ const WatchlistPage = () => {
             onStatusFilterChange={setStatusFilter}
             onClearFilters={handleClearFilters}
           />
+
+          {/* Watchlist Summary (above the list) */}
+          <WatchlistSummary etfs={filteredWatchlistETFs} />
 
           {/* Watchlist Table */}
           {filteredWatchlistETFs.length === 0 ? (
