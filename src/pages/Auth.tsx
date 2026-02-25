@@ -4,8 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Bird, ChevronLeft, Moon, Sun } from "lucide-react";
+import { Bird, ChevronLeft, Eye, EyeOff, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { sendTransactionalEmail } from "@/lib/sendTransactionalEmail";
 
@@ -19,10 +26,14 @@ export default function Auth() {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState<string | null>(null);
   const [taxRate, setTaxRate] = useState("20");
+  const [howDidYouHear, setHowDidYouHear] = useState("");
+  const [howDidYouHearOther, setHowDidYouHearOther] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [taxRateError, setTaxRateError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
@@ -271,6 +282,17 @@ export default function Auth() {
         }
         setTaxRateError("");
 
+        if (!howDidYouHear) {
+          setError("Please select how you heard about us");
+          setLoading(false);
+          return;
+        }
+        if (howDidYouHear === "Other" && !howDidYouHearOther.trim()) {
+          setError("Please specify how you heard about us");
+          setLoading(false);
+          return;
+        }
+
         console.log("Attempting sign up with:", email);
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -297,6 +319,8 @@ export default function Auth() {
                   username: username,
                   name: firstName,
                   tax_rate: finalTaxRate,
+                  how_did_you_hear: howDidYouHear,
+                  how_did_you_hear_other: howDidYouHear === "Other" ? howDidYouHearOther.trim() : null,
                   subscription_tier: 'free',
                   is_paid: false,
                   subscription_status: 'free',
@@ -335,12 +359,16 @@ export default function Auth() {
           setEmail("");
           setFirstName("");
           setPassword("");
+          setHowDidYouHear("");
+          setHowDidYouHearOther("");
         } else {
           // Auto-sign in if no email verification needed
           setSuccessMessage("Account created! Signing you in...");
           setEmail("");
           setFirstName("");
           setPassword("");
+          setHowDidYouHear("");
+          setHowDidYouHearOther("");
           setTimeout(() => setIsLogin(true), 1000);
         }
       }
@@ -370,7 +398,7 @@ export default function Auth() {
           <ChevronLeft className="h-4 w-4 xs:h-5 xs:w-5" />
         </Button>
       </div>
-      <div className="absolute top-3 xs:top-4 right-3 xs:top-4">
+      <div className="absolute top-3 right-3 xs:top-4">
         <button
           onClick={toggleTheme}
           className="p-1.5 xs:p-2 rounded-lg hover:bg-muted transition-colors"
@@ -384,10 +412,10 @@ export default function Auth() {
         </button>
       </div>
       <div className="w-full max-w-md">
-        <div className="text-center mb-6 xs:mb-8">
+        <div className="text-center mb-3 xs:mb-2">
           <button
             onClick={() => navigate('/')}
-            className="flex items-center justify-center gap-2 mb-3 xs:mb-4 mx-auto hover:opacity-80 transition-opacity"
+            className="flex items-center justify-center gap-2 mb-3 xs:mb-2 mx-auto hover:opacity-80 transition-opacity"
           >
             <Bird className="h-6 xs:h-8 w-6 xs:w-8 text-foreground" />
             <span className="text-lg xs:text-2xl font-bold text-foreground">YieldCanary</span>
@@ -422,7 +450,7 @@ export default function Auth() {
             </div>
           )}
           {!isResettingPassword && (
-            <div className="space-y-1.5 xs:space-y-2">
+            <div className="space-y-1.5 xs:space-y-1">
               <Label htmlFor="email" className="text-xs xs:text-sm">Email</Label>
               <Input
                 id="email"
@@ -437,7 +465,7 @@ export default function Auth() {
           )}
 
           {!isLogin && !isResettingPassword && (
-            <div className="space-y-1.5 xs:space-y-2">
+            <div className="space-y-1.5 xs:space-y-1">
               <Label htmlFor="firstName" className="text-xs xs:text-sm">First Name</Label>
               <Input
                 id="firstName"
@@ -452,7 +480,7 @@ export default function Auth() {
           )}
 
           {!isLogin && !isResettingPassword && (
-            <div className="space-y-1.5 xs:space-y-2">
+            <div className="space-y-1.5 xs:space-y-1">
               <Label htmlFor="username" className="text-xs xs:text-sm">Username</Label>
               <Input
                 id="username"
@@ -467,7 +495,7 @@ export default function Auth() {
           )}
 
           {!isLogin && !isResettingPassword && (
-            <div className="space-y-1.5 xs:space-y-2">
+            <div className="space-y-1.5 xs:space-y-1">
               <Label htmlFor="taxRate" className="text-xs xs:text-sm">Tax Rate (%)</Label>
               <Input
                 id="taxRate"
@@ -487,33 +515,92 @@ export default function Auth() {
             </div>
           )}
 
-          <div className="space-y-1.5 xs:space-y-2">
+          {!isLogin && !isResettingPassword && (
+            <div className="space-y-1.5 xs:space-y-1">
+              <Label className="text-xs xs:text-sm">How did you hear about us?</Label>
+              <Select value={howDidYouHear || undefined} onValueChange={setHowDidYouHear}>
+                <SelectTrigger className="text-sm h-9 xs:h-10">
+                  <SelectValue placeholder="Select an option" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="YouTube">YouTube</SelectItem>
+                  <SelectItem value="TikTok">TikTok</SelectItem>
+                  <SelectItem value="Instagram">Instagram</SelectItem>
+                  <SelectItem value="X">X</SelectItem>
+                  <SelectItem value="Reddit">Reddit</SelectItem>
+                  <SelectItem value="Google Search">Google Search</SelectItem>
+                  <SelectItem value="Friend/Referral">Friend/Referral</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              {howDidYouHear === "Other" && (
+                <div className="space-y-1.5 xs:space-y-1">
+                  <Label htmlFor="howDidYouHearOther" className="text-xs xs:text-sm">Please specify</Label>
+                  <Input
+                    id="howDidYouHearOther"
+                    type="text"
+                    placeholder="How did you hear about us?"
+                    value={howDidYouHearOther}
+                    onChange={(e) => setHowDidYouHearOther(e.target.value)}
+                    required
+                    className="text-sm h-9 xs:h-10"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-1.5 xs:space-y-1">
             <Label htmlFor="password" className="text-xs xs:text-sm">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="text-sm h-9 xs:h-10"
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="text-sm h-9 xs:h-10 pr-9"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-9 w-9 xs:h-10 xs:w-10 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowPassword((p) => !p)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
 
           {isResettingPassword && (
-            <div className="space-y-1.5 xs:space-y-2">
+            <div className="space-y-1.5 xs:space-y-1">
               <Label htmlFor="confirmPassword" className="text-xs xs:text-sm">Confirm new password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                minLength={6}
-                className="text-sm h-9 xs:h-10"
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="••••••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="text-sm h-9 xs:h-10 pr-9"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-9 w-9 xs:h-10 xs:w-10 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowConfirmPassword((p) => !p)}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
           )}
 
@@ -542,7 +629,7 @@ export default function Auth() {
         </form>
 
         {!isResettingPassword && (
-          <div className="mt-4 xs:mt-6 text-center">
+          <div className="mt-3 xs:mt-2 text-center">
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}

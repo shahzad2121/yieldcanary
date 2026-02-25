@@ -14,6 +14,8 @@ import {
 import { Bird, LayoutDashboard, Star, HelpCircle, BarChart2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { HelpModal } from '@/components/modals/HelpModal';
+import { WelcomeBanner } from '@/components/dashboard/WelcomeBanner';
+import { useWelcomeBanner } from '@/hooks/useWelcomeBanner';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -24,6 +26,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
+  const { shouldShow: showWelcomeBanner, isLoading: welcomeBannerLoading, dismiss: dismissWelcomeBanner } = useWelcomeBanner();
 
   const path = location.pathname;
   const isDashboard = path === '/dashboard';
@@ -93,6 +96,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="min-w-0">
+        {isDashboard && !welcomeBannerLoading && showWelcomeBanner && (
+          <WelcomeBanner
+            onGoToHelp={() => {
+              dismissWelcomeBanner();
+              setIsHelpOpen(true);
+            }}
+            onDismiss={dismissWelcomeBanner}
+          />
+        )}
         {children}
       </SidebarInset>
       <HelpModal
