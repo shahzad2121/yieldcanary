@@ -11,10 +11,11 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import {
+  DEFAULT_INSIGHTS_SECTION_ORDER,
   INSIGHTS_SECTION_TITLES,
   type InsightsSectionId,
 } from '@/components/insights/insightsSectionConfig';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type CustomizeInsightsModalProps = {
@@ -80,14 +81,32 @@ export function CustomizeInsightsModal({ open, onOpenChange, sectionOrder, onSav
     onOpenChange(false);
   };
 
+  const handleResetToDefault = () => {
+    setOrder([...DEFAULT_INSIGHTS_SECTION_ORDER]);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Customize Insights</DialogTitle>
-          <DialogDescription>
-            Drag sections to reorder how they appear on the Insights page.
-          </DialogDescription>
+          <div className="flex items-end justify-between gap-2">
+            <div className="space-y-1.5">
+              <DialogTitle>Customize Insights</DialogTitle>
+              <DialogDescription>
+                Drag sections to reorder how they appear on the Insights page.
+              </DialogDescription>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleResetToDefault}
+              aria-label="Reset to default order"
+              className="h-8 w-8 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          </div>
         </DialogHeader>
         <DragDropProvider onDragEnd={handleDragEnd}>
           <ul className="flex flex-col gap-2 py-2">

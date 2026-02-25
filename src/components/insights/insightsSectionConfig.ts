@@ -1,17 +1,17 @@
 /** Section ID for the fixed-at-top section (not draggable). */
 export const FIXED_INSIGHTS_SECTION_ID = 'market_snapshot' as const;
 
-/** Section IDs for the Insights page (reorderable only). Market Snapshot is fixed at top and excluded. Pairs (largest_aum_lowest_expense, weekly_movers) are one draggable item each. */
+/** Default section order for Insights page (reorderable only). Market Snapshot is fixed at top and excluded. Pairs (largest_aum_lowest_expense, weekly_movers) are one draggable item each. */
 export const DEFAULT_INSIGHTS_SECTION_ORDER = [
-  'highest_yielding',
-  'highest_advertised',
-  'best_after_tax',
-  'best_weekly',
-  'best_monthly',
-  'largest_aum_lowest_expense',
-  'weekly_movers',
-  'buy_zone',
-  'yield_traps',
+  'highest_yielding',       // Highest Yielding ETFs with No/Low NAV Erosion
+  'best_after_tax',         // Best After-Tax Cash Flow
+  'best_weekly',            // Best Weekly Payers
+  'best_monthly',           // Best Monthly Payers
+  'highest_advertised',     // Highest Advertised Yield (with True Income Warning)
+  'buy_zone',               // Buy Zone Picks - Undervalued Healthy ETFs
+  'yield_traps',            // Yield Traps to Avoid
+  'weekly_movers',          // Biggest Movers of the Week (2 boxes side by side)
+  'largest_aum_lowest_expense', // Largest Healthy AUM & Lowest Expense (2 boxes side by side)
 ] as const;
 
 export type InsightsSectionId = (typeof DEFAULT_INSIGHTS_SECTION_ORDER)[number];
