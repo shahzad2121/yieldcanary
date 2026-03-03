@@ -77,10 +77,28 @@ export function BestMonthlyPayersCard({
         format: (etf) => etf.canaryStatus,
       },
       {
+        id: 'trueIncomeYield',
+        label: 'True Income Yield',
+        width: 'w-[130px]',
+        align: 'right',
+        format: (etf) =>
+          etf.trueIncomeYield != null ? `${etf.trueIncomeYield.toFixed(2)}%` : 'N/A',
+        cellClassName: 'font-mono text-sm',
+      },
+      {
+        id: 'rocPercent',
+        label: 'ROC%',
+        width: 'w-[80px]',
+        align: 'right',
+        format: (etf) =>
+          etf.rocPercent != null ? `${etf.rocPercent.toFixed(2)}%` : 'N/A',
+        cellClassName: 'font-mono text-sm',
+      },
+      {
         id: 'monthlySpendableCashYield',
         label: 'Monthly Spendable Cash Yield',
         width: 'w-[160px]',
-        align: 'left',
+        align: 'right',
         format: (etf) => {
           const val = (etf as ETF & { monthlySpendableCashYield?: number | null })
             .monthlySpendableCashYield;

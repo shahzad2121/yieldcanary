@@ -63,6 +63,28 @@ const COLUMNS: InsightsListColumn[] = [
       etf.priceAvg90d != null ? `$${etf.priceAvg90d.toFixed(2)}` : '—',
     cellClassName: 'font-mono text-sm text-muted-foreground',
   },
+  {
+    id: 'discountPct',
+    label: 'Discount%',
+    width: 'w-[95px]',
+    align: 'right',
+    format: (etf) => {
+      const price = etf.latestAdjClose;
+      const avg90 = etf.priceAvg90d;
+      if (price == null || avg90 == null || avg90 === 0) return '—';
+      const discount = ((avg90 - price) / avg90) * 100;
+      return `${discount.toFixed(2)}%`;
+    },
+    cellClassName: 'font-mono text-sm',
+    getValueClassName: (etf) => {
+      const price = etf.latestAdjClose;
+      const avg90 = etf.priceAvg90d;
+      if (price == null || avg90 == null || avg90 === 0) {
+        return 'text-muted-foreground';
+      }
+      return 'text-emerald-500';
+    },
+  },
 ];
 
 interface BuyZonePicksCardProps {
