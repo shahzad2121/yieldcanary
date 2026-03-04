@@ -70,6 +70,15 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Only process live-mode events: never update DB or send emails for test data
+  if (event.livemode !== true) {
+    console.log("[Webhook] Ignoring test-mode event (livemode=false), type:", event.type, "id:", event.id);
+    return new Response(JSON.stringify({ received: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+
   // Handle one-time payment (checkout.session.completed)
   // For subscriptions, customer.subscription.created will send the email
   if (event.type === "checkout.session.completed") {

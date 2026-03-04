@@ -74,6 +74,14 @@ const COLUMNS: InsightsListColumn[] = [
     format: (etf) => formatPercent(etf.trueIncomeYield),
     cellClassName: 'font-mono text-sm',
   },
+  {
+    id: 'totalReturn1Y',
+    label: 'Total Return 1Y',
+    width: 'w-[120px]',
+    align: 'left',
+    format: (etf) => formatPercent(getEffectiveReturn1Y(etf)),
+    cellClassName: 'font-mono text-sm',
+  },
 ];
 
 interface HighestYieldingLowRocCardProps {
