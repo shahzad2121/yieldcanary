@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   Table,
@@ -8,13 +9,15 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Check, Lock } from 'lucide-react';
+import { Check, Lock, ChevronDown, ChevronUp } from 'lucide-react';
 import { ETF } from '@/types/etf';
 import { CanaryStatusBadge } from '@/components/dashboard/CanaryStatusBadge';
 import { BlurredCell } from '@/components/dashboard/BlurredCell';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const VISIBLE_ROWS_BASIC = 3;
+/** Default number of rows shown before "See More". */
+const DEFAULT_INITIAL_ROWS = 5;
 
 export type InsightsListColumn = {
   id: string;
@@ -45,6 +48,8 @@ export interface InsightsListCardProps {
   onUpgrade: () => void;
   loading?: boolean;
   columns: InsightsListColumn[];
+  /** Rows shown before "See More". Omit or 0 to show all. */
+  initialRowsShown?: number;
 }
 
 export function InsightsListCard({
@@ -57,9 +62,14 @@ export function InsightsListCard({
   onUpgrade,
   loading = false,
   columns,
+  initialRowsShown = DEFAULT_INITIAL_ROWS,
 }: InsightsListCardProps) {
+  const [expanded, setExpanded] = useState(false);
   const visibleCount =
     plan === 'advanced' ? list.length : plan === 'basic' ? VISIBLE_ROWS_BASIC : 0;
+  const canExpand = initialRowsShown > 0 && list.length > initialRowsShown;
+  const rowsToShow = canExpand && !expanded ? initialRowsShown : list.length;
+  const displayedList = list.slice(0, rowsToShow);
 
   if (loading) {
     return (
@@ -159,14 +169,14 @@ export function InsightsListCard({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {list.map((etf, index) => {
+              {displayedList.map((etf, index) => {
                 const isUnlocked = index < visibleCount;
                 return (
                   <TableRow key={etf.id}>
                     {columns.map((col) => (
                       <TableCell
                         key={col.id}
-                        className={`${col.width ?? ''} ${col.cellClassName ?? ''} ${col.align === 'right' ? 'text-right' : ''}`.trim()}
+                        className={`${col.width ?? ''} ${col.id === 'name' ? (col.cellClassName ?? '').replace(/\btruncate\b/g, '').trim() : (col.cellClassName ?? '')} ${col.align === 'right' ? 'text-right' : ''} ${col.id === 'name' ? 'max-w-[220px] align-top' : ''}`.trim()}
                       >
                         <div
                           className={
@@ -184,10 +194,10 @@ export function InsightsListCard({
                                 className={col.getValueClassName?.(etf) ?? col.valueClassName}
                               />
                             )
-                          ) : col.id === 'name' && isUnlocked && col.showNameTooltip ? (
+                          ) : col.id === 'name' ? (
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <div className="w-full min-w-0 overflow-hidden truncate text-left">
+                                <div className={`w-full min-w-0 text-left ${col.id === 'name' ? 'break-words whitespace-normal' : ''}`}>
                                   <BlurredCell
                                     value={col.format(etf)}
                                     isUnlocked={isUnlocked}
@@ -220,7 +230,7 @@ export function InsightsListCard({
 
         {/* Mobile: card-style layout inspired by dashboard stats */}
         <div className="space-y-2 md:hidden">
-          {list.map((etf, index) => {
+          {displayedList.map((etf, index) => {
             const isUnlocked = index < visibleCount;
 
             const tickerColumn = columns[0];
@@ -256,7 +266,7 @@ export function InsightsListCard({
                 {nameColumn && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <p className="text-xs text-muted-foreground line-clamp-2">
+                      <p className="text-xs text-muted-foreground break-words whitespace-normal">
                         {nameColumn.format(etf)}
                       </p>
                     </TooltipTrigger>
@@ -297,6 +307,29 @@ export function InsightsListCard({
             );
           })}
         </div>
+
+        {canExpand && (
+          <div className="mt-3 flex justify-center border-t border-border pt-3">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground gap-1"
+              onClick={() => setExpanded((e) => !e)}
+            >
+              {expanded ? (
+                <>
+                  <ChevronUp className="h-4 w-4" />
+                  See less
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  See more ({list.length - initialRowsShown} more)
+                </>
+              )}
+            </Button>
+          </div>
+        )}
 
         {(plan === 'free' ||
           (plan === 'basic' && list.length > VISIBLE_ROWS_BASIC)) && (
