@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   Table,
@@ -9,7 +9,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Check, Lock, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, Lock, ChevronDown } from 'lucide-react';
 import { ETF } from '@/types/etf';
 import { CanaryStatusBadge } from '@/components/dashboard/CanaryStatusBadge';
 import { BlurredCell } from '@/components/dashboard/BlurredCell';
@@ -64,11 +64,19 @@ export function InsightsListCard({
   columns,
   initialRowsShown = DEFAULT_INITIAL_ROWS,
 }: InsightsListCardProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [rowsToShow, setRowsToShow] = useState(() =>
+    initialRowsShown > 0 ? Math.min(initialRowsShown, list.length) : list.length
+  );
+
+  useEffect(() => {
+    setRowsToShow(
+      initialRowsShown > 0 ? Math.min(initialRowsShown, list.length) : list.length
+    );
+  }, [initialRowsShown, list.length]);
+
   const visibleCount =
     plan === 'advanced' ? list.length : plan === 'basic' ? VISIBLE_ROWS_BASIC : 0;
-  const canExpand = initialRowsShown > 0 && list.length > initialRowsShown;
-  const rowsToShow = canExpand && !expanded ? initialRowsShown : list.length;
+  const canExpand = initialRowsShown > 0 && rowsToShow < list.length;
   const displayedList = list.slice(0, rowsToShow);
 
   if (loading) {
@@ -314,19 +322,17 @@ export function InsightsListCard({
               size="sm"
               variant="ghost"
               className="text-muted-foreground hover:text-foreground gap-1"
-              onClick={() => setExpanded((e) => !e)}
+              onClick={() =>
+                setRowsToShow((current) =>
+                  Math.min(
+                    current + initialRowsShown,
+                    list.length
+                  )
+                )
+              }
             >
-              {expanded ? (
-                <>
-                  <ChevronUp className="h-4 w-4" />
-                  See less
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="h-4 w-4" />
-                  See more ({list.length - initialRowsShown} more)
-                </>
-              )}
+              <ChevronDown className="h-4 w-4" />
+              {`See more (${Math.min(initialRowsShown, list.length - rowsToShow)} more)`}
             </Button>
           </div>
         )}

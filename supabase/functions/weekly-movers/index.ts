@@ -186,13 +186,13 @@ async function computeWeeklyMovers(
   const gainers = [...movers]
     .filter((m) => m.score > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
+    .slice(0, 10);
 
   // Sort for losers (biggest deterioration first) - only include actual deteriorations (score < 0)
   const losers = [...movers]
     .filter((m) => m.score < 0)
     .sort((a, b) => a.score - b.score)
-    .slice(0, 5);
+    .slice(0, 10);
 
   return {
     success: true,
