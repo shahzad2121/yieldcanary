@@ -6,6 +6,8 @@ import {
 import type { ETF } from '@/types/etf';
 import { useWeeklyMovers, type WeeklyMover } from '@/hooks/useWeeklyMovers';
 
+const TOP_N = 10;
+
 interface WeeklyDeteriorationsCardProps {
   plan: 'free' | 'basic' | 'advanced';
   onUpgrade: () => void;
@@ -29,10 +31,12 @@ export function WeeklyDeteriorationsCard({
 
   const rows: Row[] = useMemo(() => {
     if (!data || data.status !== 'ok') return [];
-    return data.losers.map((mover) => ({
-      ...mover,
-      id: mover.ticker,
-    }));
+    return data.losers
+      .slice(0, TOP_N)
+      .map((mover) => ({
+        ...mover,
+        id: mover.ticker,
+      }));
   }, [data]);
 
   const columns: InsightsListColumn[] = useMemo(
@@ -108,6 +112,7 @@ export function WeeklyDeteriorationsCard({
       onUpgrade={onUpgrade}
       loading={isLoading}
       columns={columns}
+      initialRowsShown={5}
     />
   );
 }

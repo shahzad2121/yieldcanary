@@ -5,7 +5,8 @@ import {
   type InsightsListColumn,
 } from '@/components/insights/InsightsListCard';
 
-const TOP_N = 10;
+// Fetch a bit more so "See more" can reveal additional items
+const TOP_N = 15;
 
 function formatPercent(value: number | null | undefined): string {
   if (value === null || value === undefined) return '—';
@@ -101,6 +102,7 @@ export function YieldTrapsCard({
       onUpgrade={onUpgrade}
       loading={loading}
       columns={COLUMNS}
+      initialRowsShown={10}
     />
   );
 }

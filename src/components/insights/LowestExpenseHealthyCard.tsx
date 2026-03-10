@@ -6,7 +6,8 @@ import {
 } from '@/components/insights/InsightsListCard';
 import { formatCurrencyInBillions } from '@/lib/utils';
 
-const TOP_N = 10;
+// Fetch a bit more so "See more" can reveal additional items
+const TOP_N = 15;
 
 function formatPercent(value: number | null | undefined): string {
   if (value === null || value === undefined) return '—';
@@ -111,6 +112,7 @@ export function LowestExpenseHealthyCard({
       onUpgrade={onUpgrade}
       loading={loading}
       columns={columns}
+      initialRowsShown={10}
     />
   );
 }

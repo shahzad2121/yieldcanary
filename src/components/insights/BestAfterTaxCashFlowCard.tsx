@@ -10,7 +10,8 @@ import {
   calcTakeHomeCashReturnYTD,
 } from '@/lib/utils';
 
-const TOP_N = 10;
+// Fetch a bit more so "See more" can reveal additional items
+const TOP_N = 15;
 const DEFAULT_TAX_RATE = 20;
 
 function isLessThanOneYear(inceptionDate: string): boolean {
@@ -161,6 +162,7 @@ export function BestAfterTaxCashFlowCard({
       onUpgrade={onUpgrade}
       loading={loading}
       columns={columns}
+      initialRowsShown={10}
     />
   );
 }
