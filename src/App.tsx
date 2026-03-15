@@ -10,6 +10,8 @@ import { useAutoLogout } from "@/hooks/useAutoLogout";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { CookieConsent } from "@/components/CookieConsent";
 import { ToltScript } from "@/components/ToltScript";
+import { EtfDeepDiveProvider } from "@/context/EtfDeepDiveContext";
+import { EtfDeepDiveModal } from "@/components/etf-deep-dive/EtfDeepDiveModal";
 import Landing from "./pages/Landing";
 import DashboardPage from "./pages/DashboardPage";
 import WatchlistPage from "./pages/WatchlistPage";
@@ -41,26 +43,29 @@ const App = () => {
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              {/* Must be inside BrowserRouter so useNavigate has router context */}
-              <ScrollToTop />
-              <CookieConsent />
-              <AutoLogoutManager />
-              <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/watchlist" element={<WatchlistPage />} />
-                <Route path="/insights" element={<InsightsPage />} />
-                {/* Legal Pages */}
-                <Route path="/legal/terms" element={<TermsOfService />} />
-                <Route path="/legal/privacy" element={<PrivacyPolicy />} />
-                <Route path="/legal/refund" element={<RefundPolicy />} />
-                <Route path="/legal/cookies" element={<CookiePolicy />} />
-                <Route path="/legal/do-not-sell" element={<DoNotSellMyInfo />} />
-                <Route path="/affiliates" element={<Affiliates />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <EtfDeepDiveProvider>
+                {/* Must be inside BrowserRouter so useNavigate has router context */}
+                <ScrollToTop />
+                <CookieConsent />
+                <AutoLogoutManager />
+                <Routes>
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/watchlist" element={<WatchlistPage />} />
+                  <Route path="/insights" element={<InsightsPage />} />
+                  {/* Legal Pages */}
+                  <Route path="/legal/terms" element={<TermsOfService />} />
+                  <Route path="/legal/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/legal/refund" element={<RefundPolicy />} />
+                  <Route path="/legal/cookies" element={<CookiePolicy />} />
+                  <Route path="/legal/do-not-sell" element={<DoNotSellMyInfo />} />
+                  <Route path="/affiliates" element={<Affiliates />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <EtfDeepDiveModal />
+              </EtfDeepDiveProvider>
             </BrowserRouter>
           </TooltipProvider>
         </QueryClientProvider>

@@ -12,6 +12,7 @@ import { Footer } from '@/components/Footer';
 import { MarketingStats } from '@/components/MarketingStats';
 import { DashboardScreenshot } from '@/components/DashboardScreenshot';
 import { useToast } from '@/hooks/use-toast';
+import Newsletter from '@/components/landing/Newsletter';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -465,6 +466,9 @@ const Landing = () => {
             </div>
           </div>
         </section>
+
+        {/* Newsletter */}
+        <Newsletter />
 
         {/* Footer */}
         <Footer />

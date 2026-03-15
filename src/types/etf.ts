@@ -28,6 +28,12 @@ export interface ETF {
   canaryStatus: CanaryStatus;
   aum: number;
   expenseRatio: number;
+  /** Beta vs benchmark from FMP profile. */
+  beta: number | null;
+  /** Fund strategy/objective from FMP etf/info. */
+  description: string | null;
+  /** Official fund or issuer URL from FMP etf/info. */
+  website: string | null;
   payoutFrequency: PayoutFrequency | null;
   
   // Return columns

@@ -514,6 +514,30 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
     if not name:
         name = ticker
     
+    # Get issuer (fund company) from FMP etf/info etfCompany
+    issuer = None
+    if etf_info and etf_info.get('etfCompany'):
+        issuer = etf_info.get('etfCompany')
+    
+    # Get beta from FMP profile (vs benchmark)
+    beta = None
+    if profile and profile.get('beta') is not None:
+        try:
+            beta = round(float(profile.get('beta')), 4)
+        except (TypeError, ValueError):
+            pass
+    
+    # Get description and website from FMP etf/info (Strategy & Objective)
+    description = None
+    website = None
+    if etf_info:
+        raw_desc = etf_info.get('description')
+        if raw_desc and isinstance(raw_desc, str) and raw_desc.strip():
+            description = raw_desc.strip()
+        raw_web = etf_info.get('website')
+        if raw_web and isinstance(raw_web, str) and raw_web.strip():
+            website = raw_web.strip()
+    
     # Get inception date
     inception_date = None
     inception_str = None
@@ -677,6 +701,10 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
     return {
         'ticker': ticker,
         'name': name,
+        'issuer': issuer,
+        'beta': beta,
+        'description': description,
+        'website': website,
         'inception_date': inception_date.strftime('%Y-%m-%d') if inception_date else None,
         'aum': aum,
         'expense_ratio': expense_ratio,
