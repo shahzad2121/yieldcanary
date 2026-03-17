@@ -87,13 +87,34 @@ export async function cancelSubscriptionWithReason(params: CancelSubscriptionPar
   return { cancels_at: data.cancels_at };
 }
 
-export type PricingPlan = 'basic_monthly' | 'basic_yearly' | 'advanced_monthly' | 'advanced_yearly' | 'one_dollar';
+/** Call cancel-newsletter-subscription-test Edge Function. Cancels newsletter immediately in test mode. */
+export async function cancelNewsletterSubscription(): Promise<CancelSubscriptionResult> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (!supabaseUrl) return { error: 'VITE_SUPABASE_URL is not set' };
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) return { error: 'Please sign in to cancel your newsletter.' };
+  const response = await fetch(`${supabaseUrl}/functions/v1/cancel-newsletter-subscription-test`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({}),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) return { error: (data.error as string) || 'Failed to cancel newsletter' };
+  return { cancels_at: data.cancels_at };
+}
+
+export type PricingPlan = 'basic_monthly' | 'basic_yearly' | 'advanced_monthly' | 'advanced_yearly' | 'one_dollar' | 'newsletter_monthly' | 'newsletter_yearly';
 
 const PRICE_IDS: Record<PricingPlan, string> = {
   basic_monthly: import.meta.env.VITE_BASIC_MONTHLY_PRICE || '',
   basic_yearly: import.meta.env.VITE_BASIC_YEARLY_PRICE || '',
   advanced_monthly: import.meta.env.VITE_ADVANCED_MONTHLY_PRICE || '',
   advanced_yearly: import.meta.env.VITE_ADVANCED_YEARLY_PRICE || '',
+  newsletter_monthly: import.meta.env.VITE_NEWSLETTER_MONTHLY_PRICE || '',
+  newsletter_yearly: import.meta.env.VITE_NEWSLETTER_YEARLY_PRICE || '',
   one_dollar:
     import.meta.env.VITE_HALF_DOLLAR_PRICE ||
     
@@ -120,6 +141,16 @@ export async function redirectToCheckout(plan: PricingPlan, email?: string) {
       throw new Error('VITE_SUPABASE_URL is not set');
     }
 
+    // Resolve email if not provided
+    let resolvedEmail = email;
+    if (!resolvedEmail) {
+      const { data: { session: emailSession } } = await supabase.auth.getSession();
+      resolvedEmail = emailSession?.user?.email ?? undefined;
+    }
+    if (!resolvedEmail) {
+      throw new Error('User email not found. Please sign in again.');
+    }
+
     // Get current session for authorization
     const { data: { session } } = await supabase.auth.getSession();
 
@@ -139,7 +170,7 @@ export async function redirectToCheckout(plan: PricingPlan, email?: string) {
         : '';
     const body: { priceId: string; email?: string; successUrl: string; cancelUrl: string; tolt_referral?: string } = {
       priceId,
-      email,
+      email: resolvedEmail,
       successUrl: `${window.location.origin}/?payment=success`,
       cancelUrl: `${window.location.origin}/?payment=cancelled`,
     };
@@ -191,6 +222,10 @@ export function getPlanName(plan: PricingPlan): string {
       return 'Advanced - Yearly';
     case 'one_dollar':
       return 'One-Time Access';
+    case 'newsletter_monthly':
+      return 'Newsletter - Monthly';
+    case 'newsletter_yearly':
+      return 'Newsletter - Yearly';
     default:
       return 'Unknown Plan';
   }
@@ -208,6 +243,10 @@ export function getPlanPrice(plan: PricingPlan): string {
       return '$189/year';
     case 'one_dollar':
       return '$0.50';
+    case 'newsletter_monthly':
+      return '$5/month';
+    case 'newsletter_yearly':
+      return '$49/year';
     default:
       return '$0';
   }

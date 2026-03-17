@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
+import {
   ChevronDown, 
   ChevronUp, 
   Download, 
@@ -47,6 +47,7 @@ import {
   calcTakeHomeCashReturnInception,
   calcMonthlySpendableCashYield,
 } from '@/lib/utils';
+import { EtfTickerChip } from '@/components/etf-deep-dive/EtfTickerChip';
 
 interface ETFTableProps {
   etfs: ETF[];
@@ -558,7 +559,9 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
                         <Star className={`h-4 w-4 ${isInWatchlist(etf.ticker) ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} />
                       </button>
                     </TableCell>
-                    <TableCell className={`${COLUMN_CONFIG.ticker.width} ${COLUMN_CONFIG.ticker.className} p-0 text-foreground text-sm`}>{etf.ticker}</TableCell>
+                    <TableCell className={`${COLUMN_CONFIG.ticker.width} ${COLUMN_CONFIG.ticker.className} p-0 text-foreground text-sm`}>
+                      <EtfTickerChip ticker={etf.ticker} baseEtf={etf} className="mx-auto" />
+                    </TableCell>
                     <TableCell className={`${COLUMN_CONFIG.name.width} ${COLUMN_CONFIG.name.className} text-muted-foreground p-1 text-sm`}>{etf.name}</TableCell>
                     <TableCell className={`${COLUMN_CONFIG.canaryStatus.width} p-0`}><CanaryStatusBadge status={etf.canaryStatus} /></TableCell>
                     <TableCell className={`${COLUMN_CONFIG.deathClock.width} text-sm`}><BlurredCell value={etf.deathClock} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
@@ -641,7 +644,7 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-foreground text-sm">{etf.ticker}</span>
+                    <EtfTickerChip ticker={etf.ticker} baseEtf={etf} />
                     <CanaryStatusBadge status={etf.canaryStatus} />
                   </div>
                   <p className="text-[11px] text-muted-foreground truncate mt-0.5">{etf.name}</p>

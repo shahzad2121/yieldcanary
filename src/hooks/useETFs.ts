@@ -23,6 +23,9 @@ function transformRowToETF(row: any): ETF {
     canaryStatus: row.canary_health as 'Healthy' | 'Dying' | 'Dead',
     aum: row.aum,
     expenseRatio: row.expense_ratio,
+    beta: row.beta ?? null,
+    description: row.description ?? null,
+    website: row.website ?? null,
     payoutFrequency: row.payout_frequency as 'Weekly' | 'Monthly' | 'Quarterly' | null,
     // Add all required price/dividend fields for client-side calculations
     price1YAgo: row.price_1y_ago,

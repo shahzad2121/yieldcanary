@@ -44,6 +44,13 @@
     --canary-blue-light: 200 75% 55%;
     --canary-red: 0 84% 50%;
     --canary-yellow: 45 93% 47%;
+
+    /* Chart palette (light) - muted brand: primary green (160), secondary blue (200) */
+    --chart-1: 160 45% 42%;  /* muted canary green - primary */
+    --chart-2: 200 35% 52%;  /* muted canary blue - secondary */
+    --chart-3: 160 40% 52%;  /* muted green - true income / dividend */
+    --chart-4: 0 50% 52%;    /* muted red - ROC / risk only */
+    --chart-5: 200 30% 58%;  /* muted blue - cumulative / accent */
     
     --table-row-hover: 160 85% 94%;
     --table-header: 200 70% 92%;
@@ -97,6 +104,13 @@
     --sidebar-accent: 200 70% 45%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 210 35% 20%;
+
+    /* Chart palette (dark) - muted brand: primary green, secondary blue */
+    --chart-1: 160 42% 52%;  /* muted canary green - primary */
+    --chart-2: 200 32% 58%;  /* muted canary blue - secondary */
+    --chart-3: 160 38% 60%;  /* muted green - true income / dividend */
+    --chart-4: 0 48% 58%;    /* muted red - ROC / risk only */
+    --chart-5: 200 28% 62%;  /* muted blue - cumulative / accent */
   }
 }
 

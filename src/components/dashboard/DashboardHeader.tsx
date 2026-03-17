@@ -17,7 +17,8 @@ import { useTheme } from '@/hooks/useTheme';
 import { SettingsModal } from './SettingsModal';
 import { FeedbackModal } from '@/components/modals/FeedbackModal';
 import { CancelSubscriptionModal } from './CancelSubscriptionModal';
-import { redirectToManageSubscription } from '@/integrations/stripe/checkout';
+import { redirectToManageSubscription, redirectToCheckout } from '@/integrations/stripe/checkout';
+import { ConfirmCancelNewsletterModal } from '@/components/landing/ConfirmCancelNewsletterModal';
 
 /** Mobile sticky header height (nav h-14 + search row h-9 + pb-2). Use for sticky elements that sit below the header. */
 export const DASHBOARD_HEADER_HEIGHT_MOBILE = '6.25rem';
@@ -29,6 +30,7 @@ interface DashboardHeaderProps {
   trialEndsAt?: string | null;
   cancelAtPeriodEnd?: boolean;
   cancelsAt?: string | null;
+  newsletterTier?: string | null;
   userEmail?: string;
   onUpgrade: () => void;
   searchQuery: string;
@@ -44,6 +46,7 @@ export function DashboardHeader({
   trialEndsAt = null,
   cancelAtPeriodEnd = false,
   cancelsAt = null,
+  newsletterTier = null,
   userEmail = 'user@example.com',
   onUpgrade,
   searchQuery,
@@ -56,6 +59,14 @@ export function DashboardHeader({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [isCancelNewsletterOpen, setIsCancelNewsletterOpen] = useState(false);
+
+  const hasNewsletter = newsletterTier === 'monthly' || newsletterTier === 'yearly';
+
+  console.log('[DashboardHeader] Newsletter state', {
+    newsletterTier,
+    hasNewsletter,
+  });
 
   const handleManageSubscription = async () => {
     setPortalLoading(true);
@@ -69,6 +80,23 @@ export function DashboardHeader({
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/');
+  };
+
+  const handleNewsletterUpgradeClick = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const email = session?.user?.email;
+
+      if (!email) {
+        // Optional: you could show a toast or redirect, but for now just return
+        console.error('[DashboardHeader] Newsletter upgrade: missing user email');
+        return;
+      }
+
+      await redirectToCheckout('newsletter_yearly', email);
+    } catch (e) {
+      console.error('[DashboardHeader] Newsletter upgrade failed:', e);
+    }
   };
 
   return (
@@ -202,6 +230,24 @@ export function DashboardHeader({
                   {isTrialing ? 'Cancel Trial' : 'Cancel subscription'}
                 </DropdownMenuItem>
               )}
+              {hasNewsletter && (
+                <DropdownMenuItem
+                  onClick={() => setIsCancelNewsletterOpen(true)}
+                  className="text-xs sm:text-sm text-destructive focus:text-destructive"
+                >
+                  <XCircle className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  Cancel newsletter
+                </DropdownMenuItem>
+              )}
+              {hasNewsletter && newsletterTier === 'monthly' && (
+                <DropdownMenuItem
+                  onClick={handleNewsletterUpgradeClick}
+                  className="text-xs sm:text-sm"
+                >
+                  <Crown className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  Upgrade newsletter to yearly
+                </DropdownMenuItem>
+              )}
              
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-xs sm:text-sm hover:cursor-pointer">
@@ -251,6 +297,13 @@ export function DashboardHeader({
         isOpen={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}
         isTrialing={isTrialing}
+        onSuccess={() => {
+          onSubscriptionCancelled?.();
+        }}
+      />
+      <ConfirmCancelNewsletterModal
+        isOpen={isCancelNewsletterOpen}
+        onClose={() => setIsCancelNewsletterOpen(false)}
         onSuccess={() => {
           onSubscriptionCancelled?.();
         }}

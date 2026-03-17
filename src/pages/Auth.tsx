@@ -96,8 +96,16 @@ export default function Auth() {
           }
 
           if (session?.user) {
-            console.log("Signed in normally, navigating to dashboard");
-            navigate("/dashboard");
+            const params = new URLSearchParams(window.location.search);
+            const redirectTo = params.get("redirect");
+            // Only allow same-origin path (e.g. /#newsletter); reject protocol-relative or external URLs
+            if (redirectTo && redirectTo.startsWith("/") && !redirectTo.includes("//")) {
+              console.log("Signed in, redirecting to", redirectTo);
+              navigate(redirectTo);
+            } else {
+              console.log("Signed in normally, navigating to dashboard");
+              navigate("/dashboard");
+            }
           }
         }
       }

@@ -13,6 +13,7 @@ export interface UserSubscription {
   trial_ends_at?: string | null;
   cancel_at_period_end?: boolean | null;
   cancels_at?: string | null;
+  newsletter_tier?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -55,7 +56,15 @@ export function useUserSubscription() {
       }
 
       if (data) {
-        setUser(data as UserSubscription);
+        const cast = data as UserSubscription;
+        console.log('[useUserSubscription] Loaded user subscription row', {
+          email: cast.email,
+          subscription_tier: cast.subscription_tier,
+          cancel_at_period_end: cast.cancel_at_period_end,
+          cancels_at: cast.cancels_at,
+          newsletter_tier: cast.newsletter_tier,
+        });
+        setUser(cast);
       } else {
         setUser(null);
       }
@@ -86,6 +95,7 @@ export function useUserSubscription() {
     trialEndsAt: user?.trial_ends_at ?? null,
     cancelAtPeriodEnd: user?.cancel_at_period_end ?? false,
     cancelsAt: user?.cancels_at ?? null,
+    newsletterTier: user?.newsletter_tier ?? null,
     refetch: fetchUserSubscription,
   };
 }

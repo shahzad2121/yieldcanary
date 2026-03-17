@@ -1,0 +1,46 @@
+# Send YieldCanary Weekly Newsletter every Monday morning.
+# Runs send-weekly-newsletter Edge Function (fetches insights, builds HTML, sends to subscribers via Resend).
+
+name: Weekly Newsletter
+
+on:
+  schedule:
+    # Every Monday at 8:00 AM UTC (e.g. 3:00 AM EST / 9:00 AM CET)
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+jobs:
+  send-newsletter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Invoke send-weekly-newsletter Edge Function
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY secrets"
+            exit 1
+          fi
+          url="${SUPABASE_URL}/functions/v1/send-weekly-newsletter"
+          echo "Calling $url ..."
+          res=$(curl -s -w "\n%{http_code}" -X POST "$url" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -d '{}')
+          http_code=$(echo "$res" | tail -n1)
+          body=$(echo "$res" | sed '$d')
+          echo "Response ($http_code): $body"
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "Edge function returned error status $http_code"
+            exit 1
+          fi
+          echo "Newsletter job completed successfully"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Weekly Newsletter" >> $GITHUB_STEP_SUMMARY
+          echo "- **Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Action:** Invoked \`send-weekly-newsletter\` Edge Function (subscribers receive email via Resend)." >> $GITHUB_STEP_SUMMARY

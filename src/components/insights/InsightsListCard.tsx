@@ -14,6 +14,7 @@ import { ETF } from '@/types/etf';
 import { CanaryStatusBadge } from '@/components/dashboard/CanaryStatusBadge';
 import { BlurredCell } from '@/components/dashboard/BlurredCell';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { EtfTickerChip } from '@/components/etf-deep-dive/EtfTickerChip';
 
 const VISIBLE_ROWS_BASIC = 3;
 /** Default number of rows shown before "See More". */
@@ -181,7 +182,7 @@ export function InsightsListCard({
                 const isUnlocked = index < visibleCount;
                 return (
                   <TableRow key={etf.id}>
-                    {columns.map((col) => (
+                    {columns.map((col, colIndex) => (
                       <TableCell
                         key={col.id}
                         className={`${col.width ?? ''} ${col.id === 'name' ? (col.cellClassName ?? '').replace(/\btruncate\b/g, '').trim() : (col.cellClassName ?? '')} ${col.align === 'right' ? 'text-right' : ''} ${col.id === 'name' ? 'max-w-[220px] align-top' : ''}`.trim()}
@@ -191,7 +192,9 @@ export function InsightsListCard({
                             col.align === 'right' ? 'w-full flex justify-end' : undefined
                           }
                         >
-                          {col.type === 'status' ? (
+                          {col.id === 'ticker' || colIndex === 0 ? (
+                            <EtfTickerChip ticker={col.format(etf)} baseEtf={etf} />
+                          ) : col.type === 'status' ? (
                             isUnlocked ? (
                               <CanaryStatusBadge status={etf.canaryStatus} />
                             ) : (
@@ -252,9 +255,7 @@ export function InsightsListCard({
               >
                 <div className="flex items-center justify-between gap-2">
                   {tickerColumn && (
-                    <span className="font-mono font-semibold text-sm">
-                      {tickerColumn.format(etf)}
-                    </span>
+                    <EtfTickerChip ticker={tickerColumn.format(etf)} baseEtf={etf} />
                   )}
                   {statusColumn && (
                     <div className="flex-shrink-0">
