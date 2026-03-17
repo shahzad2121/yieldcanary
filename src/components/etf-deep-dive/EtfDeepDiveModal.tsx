@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,8 +30,21 @@ const TABS: { id: EtfDeepDiveTabId; label: string }[] = [
 
 export function EtfDeepDiveModal() {
   const { isOpen, ticker, baseEtf, activeTab, closeDeepDive, setActiveTab } = useEtfDeepDive();
-  const { error } = useEtfDeepDiveData(ticker, baseEtf);
+  const { error, priceSeries } = useEtfDeepDiveData(ticker, baseEtf);
   const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
+
+  const dailyChangePct = useMemo<number | null>(() => {
+    if (!priceSeries || priceSeries.length < 2) return null;
+    const valid = priceSeries.filter(
+      (p): p is { date: string; close: number; volume: number | null } =>
+        p.close != null && p.close > 0,
+    );
+    if (valid.length < 2) return null;
+    const last = valid[valid.length - 1].close;
+    const prev = valid[valid.length - 2].close;
+    if (prev <= 0) return null;
+    return ((last - prev) / prev) * 100;
+  }, [priceSeries]);
 
   const handleTabClick = (tabId: EtfDeepDiveTabId) => {
     setActiveTab(tabId);
@@ -63,10 +76,26 @@ export function EtfDeepDiveModal() {
                 <span className="font-mono text-lg font-semibold sm:text-xl">
                   {baseEtf ? `$${baseEtf.latestAdjClose.toFixed(2)}` : "—"}
                 </span>
-                <Badge variant="outline" className="font-mono text-[11px]">
-                  {/* Daily % change placeholder */}
-                  +0.00%
-                </Badge>
+                {dailyChangePct != null ? (
+                  <Badge
+                    variant="outline"
+                    className={
+                      "font-mono text-[11px] " +
+                      (dailyChangePct > 0
+                        ? "text-emerald-600 dark:text-emerald-400 border-emerald-600/30 dark:border-emerald-400/30"
+                        : dailyChangePct < 0
+                          ? "text-red-600 dark:text-red-400 border-red-600/30 dark:border-red-400/30"
+                          : "")
+                    }
+                  >
+                    {dailyChangePct >= 0 ? "+" : ""}
+                    {dailyChangePct.toFixed(2)}%
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="font-mono text-[11px] text-muted-foreground">
+                    —
+                  </Badge>
+                )}
                 {baseEtf?.latestDate && (
                   <span className="text-[11px] text-muted-foreground">
                     As of {baseEtf.latestDate}
