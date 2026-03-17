@@ -44,7 +44,7 @@ export function EtfDeepDiveModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeDeepDive()}>
-      <DialogContent className="flex h-[90vh] max-h-[720px] w-full max-w-5xl flex-col overflow-hidden p-0">
+      <DialogContent className="custom-scrollbar flex max-h-[90vh] w-full max-w-5xl flex-col overflow-y-auto p-0 sm:h-[100vh] sm:max-h-[720px]">
         <div className="flex flex-col gap-3 border-b border-border bg-card px-4 pb-3 pt-4 sm:px-6 sm:pt-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-1">
@@ -151,7 +151,7 @@ export function EtfDeepDiveModal() {
           ))}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-3 sm:px-6 sm:pt-4">
+        <div className="custom-scrollbar md:min-h-0 min-h-[500px] flex-1 overflow-y-auto px-3 pb-4 pt-3 sm:px-6 sm:pt-4">
           <Suspense
             fallback={
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
