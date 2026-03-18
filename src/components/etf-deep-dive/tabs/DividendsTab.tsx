@@ -16,6 +16,14 @@ export default function DividendsTab() {
   );
   const { taxRate } = useUserTaxRate();
 
+  const formatDate = (value: string | null) => {
+    if (!value) return "—";
+    const parts = value.split("T")[0].split("-");
+    if (parts.length !== 3) return value;
+    const [yyyy, mm, dd] = parts;
+    return `${mm}-${dd}-${yyyy}`;
+  };
+
   const last12Dividends = dividendEvents.slice(-12);
   const totalDividendsLastYear = last12Dividends.reduce((sum, d) => sum + d.amount, 0);
   const effectiveTaxRate = taxRate ?? null;
@@ -202,12 +210,12 @@ export default function DividendsTab() {
                 </tr>
               </thead>
               <tbody>
-                {dividendEvents.map((d, idx) => (
+                {[...dividendEvents].reverse().map((d, idx) => (
                   <tr key={`${d.exDate ?? d.paymentDate ?? d.declarationDate ?? "row"}-${idx}`} className="border-b border-border/60 last:border-0">
-                    <td className="px-2 py-1">{d.declarationDate ?? "—"}</td>
-                    <td className="px-2 py-1">{d.exDate ?? "—"}</td>
-                    <td className="px-2 py-1">{d.recordDate ?? "—"}</td>
-                    <td className="px-2 py-1">{d.paymentDate ?? "—"}</td>
+                    <td className="px-2 py-1">{formatDate(d.declarationDate)}</td>
+                    <td className="px-2 py-1">{formatDate(d.exDate)}</td>
+                    <td className="px-2 py-1">{formatDate(d.recordDate)}</td>
+                    <td className="px-2 py-1">{formatDate(d.paymentDate)}</td>
                     <td className="px-2 py-1 text-right font-mono">
                       {d.amount.toFixed(4)}
                     </td>
