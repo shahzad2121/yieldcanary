@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEtfDeepDive } from "@/context/EtfDeepDiveContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useEtfNews } from "@/hooks/useEtfNews";
+import { formatMMDDYYYY, formatNewsDateTime } from "@/lib/formatDeepDiveDate";
 
 interface Notice19a1 {
   id: string;
@@ -61,31 +62,9 @@ export default function NewsFilingsTab() {
     fetchLatestNotice();
   }, [baseEtf?.id]);
 
-  const formatDate = (value: string | null) => {
-    if (!value) return "—";
-    try {
-      const d = new Date(value);
-      if (Number.isNaN(d.getTime())) return value;
-      return d.toISOString().split("T")[0];
-    } catch {
-      return value;
-    }
-  };
-
   const formatPercent = (value: number | null) => {
     if (value == null) return "—";
     return `${value.toFixed(2)}%`;
-  };
-
-  const formatPublished = (value: string) => {
-    if (!value) return "—";
-    try {
-      const d = new Date(value);
-      if (Number.isNaN(d.getTime())) return value;
-      return d.toISOString().replace("T", " ").slice(0, 16);
-    } catch {
-      return value;
-    }
   };
 
   return (
@@ -121,7 +100,7 @@ export default function NewsFilingsTab() {
                     Latest YC ROC snapshot
                   </span>
                   <span className="text-[11px] text-muted-foreground">
-                    Notice date: {formatDate(latestNotice.notice_date)}
+                    Notice date: {formatMMDDYYYY(latestNotice.notice_date)}
                   </span>
                 </div>
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -133,7 +112,7 @@ export default function NewsFilingsTab() {
                   </span>
                   {latestNotice.effective_date && (
                     <span className="text-[11px] text-muted-foreground">
-                      Effective as of {formatDate(latestNotice.effective_date)}
+                      Effective as of {formatMMDDYYYY(latestNotice.effective_date)}
                     </span>
                   )}
                 </div>
@@ -180,7 +159,7 @@ export default function NewsFilingsTab() {
                     {item.title || "View article"}
                   </a>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
-                    <span>{formatPublished(item.publishedDate)}</span>
+                    <span>{formatNewsDateTime(item.publishedDate)}</span>
                     {item.publisher && <span>• {item.publisher}</span>}
                     {!item.publisher && item.site && <span>• {item.site}</span>}
                   </div>

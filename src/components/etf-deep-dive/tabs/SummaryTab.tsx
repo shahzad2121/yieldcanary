@@ -9,6 +9,12 @@ import {
 } from "@/components/ui/chart";
 import { useUserTaxRate } from "@/hooks/useUserTaxRate";
 import { getChartColors } from "@/lib/chartColors";
+import { formatMMDDYYYY } from "@/lib/formatDeepDiveDate";
+import {
+  dividendComboTooltipFormatter,
+  getDividendComboChartLayout,
+  priceVolumeTooltipFormatter,
+} from "@/lib/echartsDividendLayout";
 import ReactECharts from "echarts-for-react";
 
 export default function SummaryTab() {
@@ -72,12 +78,17 @@ export default function SummaryTab() {
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "cross" },
+        formatter: priceVolumeTooltipFormatter,
       },
       grid: { left: 40, right: 40, top: 20, bottom: 60 },
       xAxis: {
         type: "category",
         data: categories,
-        axisLabel: { fontSize: 10 },
+        axisLabel: {
+          fontSize: 10,
+          hideOverlap: true,
+          formatter: (v: string) => formatMMDDYYYY(v),
+        },
         splitLine: { show: false },
       },
       yAxis: [
@@ -177,17 +188,22 @@ export default function SummaryTab() {
     const c = getChartColors();
     const categories = dividendBuckets.map((b) => b.label);
 
+    const layout = getDividendComboChartLayout();
     return {
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "shadow" },
+        formatter: dividendComboTooltipFormatter,
       },
-      legend: { top: 0 },
-      grid: { left: 40, right: 40, top: 30, bottom: 52 },
+      ...layout,
       xAxis: {
         type: "category",
         data: categories,
-        axisLabel: { fontSize: 10 },
+        axisLabel: {
+          fontSize: 10,
+          hideOverlap: true,
+          formatter: (v: string) => formatMMDDYYYY(v),
+        },
         splitLine: { show: false },
       },
       yAxis: [
@@ -330,7 +346,10 @@ export default function SummaryTab() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 text-xs sm:grid-cols-2 md:grid-cols-4">
-            <FactItem label="Inception Date" value={baseEtf?.inceptionDate ?? "—"} />
+            <FactItem
+              label="Inception Date"
+              value={baseEtf?.inceptionDate ? formatMMDDYYYY(baseEtf.inceptionDate) : "—"}
+            />
             <FactItem label="Issuer" value={baseEtf?.issuer ?? "—"} />
             <FactItem label="AUM" value={baseEtf?.aum != null ? formatAum(baseEtf.aum) : "—"} />
             <FactItem label="Expense Ratio" value={baseEtf ? `${baseEtf.expenseRatio.toFixed(2)}%` : "—"} />

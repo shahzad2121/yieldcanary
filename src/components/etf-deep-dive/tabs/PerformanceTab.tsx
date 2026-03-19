@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EtfDeepDiveSectionSeparator } from "../EtfDeepDiveModal";
 import { ChartContainer } from "@/components/ui/chart";
 import { getChartColors } from "@/lib/chartColors";
+import { formatMMDDYYYY } from "@/lib/formatDeepDiveDate";
 import ReactECharts from "echarts-for-react";
 
 function formatPercent(value: number | null | undefined): string {
@@ -83,7 +84,11 @@ export default function PerformanceTab() {
       xAxis: {
         type: "category",
         data: categories,
-        axisLabel: { fontSize: 10 },
+        axisLabel: {
+          fontSize: 10,
+          hideOverlap: true,
+          formatter: (v: string) => formatMMDDYYYY(v),
+        },
         splitLine: { show: false },
       },
       yAxis: {
