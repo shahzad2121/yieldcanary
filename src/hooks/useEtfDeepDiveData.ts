@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ETF } from "@/types/etf";
+import { formatMMDDYYYY } from "@/lib/formatDeepDiveDate";
 
 type Timeframe = "1M" | "3M" | "6M" | "1Y" | "ALL";
 
@@ -177,10 +178,10 @@ export function useEtfDeepDiveData(ticker: string | null, baseEtf: ETF | null): 
         bucketStart.setDate(bucketStart.getDate() - bucketStart.getDay());
         const iso = bucketStart.toISOString().split("T")[0];
         bucketKey = `W-${iso}`;
-        label = iso;
+        label = formatMMDDYYYY(iso);
       } else {
         bucketKey = `M-${year}-${month + 1}`;
-        label = `${year}-${String(month + 1).padStart(2, "0")}`;
+        label = formatMMDDYYYY(`${year}-${String(month + 1).padStart(2, "0")}`);
       }
 
       if (!byBucket[bucketKey]) {

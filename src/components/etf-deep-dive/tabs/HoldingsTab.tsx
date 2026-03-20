@@ -1,27 +1,17 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EtfDeepDiveSectionSeparator } from "../EtfDeepDiveModal";
 import { useEtfDeepDive } from "@/context/EtfDeepDiveContext";
 import { useEtfDeepDiveData } from "@/hooks/useEtfDeepDiveData";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-} from "@/components/ui/chart";
-import {
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-} from "recharts";
+import { ChartContainer } from "@/components/ui/chart";
 import { getChartColors } from "@/lib/chartColors";
 import ReactECharts from "echarts-for-react";
+import { EChartPngExportButton } from "../EChartPngExportButton";
 
 export default function HoldingsTab() {
   const { baseEtf, ticker } = useEtfDeepDive();
-  const { holdingsTop10, sectors } = useEtfDeepDiveData(ticker, baseEtf);
+  const { sectors } = useEtfDeepDiveData(ticker, baseEtf);
+  const sectorChartRef = useRef<InstanceType<typeof ReactECharts>>(null);
 
   const sectorChartOption = useMemo(() => {
     if (!sectors.length) return {};
@@ -103,79 +93,21 @@ export default function HoldingsTab() {
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="h-56">
+        <Card className="flex h-56 flex-col">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Top Holdings</CardTitle>
           </CardHeader>
-          <CardContent className="h-full overflow-auto">
-            <div className="max-h-44 overflow-auto">
-              <table className="w-full table-auto border-collapse text-[11px] sm:text-xs">
-                <thead className="border-b border-border bg-muted/40">
-                  <tr className="text-left">
-                    <th className="px-2 py-1 font-medium">Ticker</th>
-                    <th className="px-2 py-1 font-medium">Name</th>
-                    <th className="px-2 py-1 text-right font-medium">Weight</th>
-                    <th className="px-2 py-1 font-medium">Sector</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {holdingsTop10.map((h, idx) => (
-                    <tr key={`${h.symbol ?? h.name ?? "holding"}-${idx}`} className="border-b border-border/60 last:border-0">
-                      <td className="px-2 py-1 font-mono">{h.symbol ?? "—"}</td>
-                      <td className="px-2 py-1">{h.name ?? "—"}</td>
-                      <td className="px-2 py-1 text-right font-mono">
-                        {h.weight != null ? `${h.weight.toFixed(2)}%` : "—"}
-                      </td>
-                      <td className="px-2 py-1">{h.sector ?? "—"}</td>
-                    </tr>
-                  ))}
-                  {holdingsTop10.length === 0 && (
-                    <tr>
-                      <td
-                        className="px-2 py-3 text-center text-muted-foreground"
-                        colSpan={4}
-                      >
-                        
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+          <CardContent className="flex flex-1 items-center justify-center px-4">
+            <p className="text-sm font-medium text-muted-foreground">Coming soon</p>
           </CardContent>
         </Card>
 
-        <Card className="h-56">
+        <Card className="flex h-56 flex-col">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Holdings Allocation</CardTitle>
           </CardHeader>
-          <CardContent className="h-full">
-            <div className="h-44">
-              <ChartContainer
-                id="etf-holdings-pie"
-                className="h-full w-full"
-                config={{}}
-              >
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Pie
-                      data={holdingsTop10}
-                      dataKey="weight"
-                      nameKey="symbol"
-                      innerRadius={32}
-                      outerRadius={58}
-                      paddingAngle={1.5}
-                    >
-                      {holdingsTop10.map((_, index) => (
-                        <Cell key={index} fill={`var(--chart-${(index % 5) + 1})`} />
-                      ))}
-                    </Pie>
-                    <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                    <ChartLegend content={<ChartLegendContent nameKey="symbol" />} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </div>
+          <CardContent className="flex flex-1 items-center justify-center px-4">
+            <p className="text-sm font-medium text-muted-foreground">Coming soon</p>
           </CardContent>
         </Card>
       </div>
@@ -184,7 +116,16 @@ export default function HoldingsTab() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Sector Allocation</CardTitle>
+          <div className="flex items-center gap-1">
+            <CardTitle className="text-sm">Sector Allocation</CardTitle>
+            {ticker && sectors.length > 0 ? (
+              <EChartPngExportButton
+                chartRef={sectorChartRef}
+                filename={`${ticker}-sector-allocation`}
+                className="shrink-0"
+              />
+            ) : null}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="h-72">
@@ -196,6 +137,7 @@ export default function HoldingsTab() {
               }}
             >
               <ReactECharts
+                ref={sectorChartRef}
                 option={sectorChartOption}
                 style={{ height: "100%", width: "100%" }}
               />

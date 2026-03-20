@@ -5,14 +5,16 @@ interface FilterBarProps {
   statusFilter: CanaryStatus | 'all';
   onStatusFilterChange: (status: CanaryStatus | 'all') => void;
   onClearFilters: () => void;
+  /** When true, show Clear (status, header search, URL compare params, etc. are active in parent). */
+  showClearButton: boolean;
 }
 
 export function FilterBar({
   statusFilter,
   onStatusFilterChange,
   onClearFilters,
+  showClearButton,
 }: FilterBarProps) {
-  const hasActiveFilters = statusFilter !== 'all';
 
   return (
     <div className="flex flex-wrap items-center gap-2 xs:gap-3">
@@ -64,8 +66,8 @@ export function FilterBar({
           Dead
         </button>
       </div>
-      {/* Clear Filters */}
-      {hasActiveFilters && (
+      {/* Clear Filters — driven by parent so search + compare URL params also surface Clear */}
+      {showClearButton && (
         <button
           className="h-6 xs:h-7 px-1.5 xs:px-2 text-xs xs:text-sm text-muted-foreground hover:text-foreground rounded-md transition-colors focus:outline-none flex items-center"
           onClick={onClearFilters}

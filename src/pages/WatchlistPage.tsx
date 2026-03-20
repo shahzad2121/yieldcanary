@@ -119,6 +119,7 @@ const WatchlistPage = () => {
             statusFilter={statusFilter}
             onStatusFilterChange={setStatusFilter}
             onClearFilters={handleClearFilters}
+            showClearButton={statusFilter !== 'all' || searchQuery.trim() !== ''}
           />
 
           {/* Watchlist Summary (above the list) */}

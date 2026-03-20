@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useEtfDeepDive } from "@/context/EtfDeepDiveContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,19 @@ import {
 } from "@/components/ui/chart";
 import { useUserTaxRate } from "@/hooks/useUserTaxRate";
 import { getChartColors } from "@/lib/chartColors";
+import { formatMMDDYYYY } from "@/lib/formatDeepDiveDate";
+import {
+  dividendComboTooltipFormatter,
+  getDividendComboChartLayout,
+  priceVolumeTooltipFormatter,
+} from "@/lib/echartsDividendLayout";
 import ReactECharts from "echarts-for-react";
+import { EChartPngExportButton } from "../EChartPngExportButton";
 
 export default function SummaryTab() {
   const { baseEtf, ticker } = useEtfDeepDive();
+  const priceChartRef = useRef<InstanceType<typeof ReactECharts>>(null);
+  const dividendSummaryChartRef = useRef<InstanceType<typeof ReactECharts>>(null);
   const {
     timeframe,
     setTimeframe,
@@ -72,12 +81,17 @@ export default function SummaryTab() {
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "cross" },
+        formatter: priceVolumeTooltipFormatter,
       },
       grid: { left: 40, right: 40, top: 20, bottom: 60 },
       xAxis: {
         type: "category",
         data: categories,
-        axisLabel: { fontSize: 10 },
+        axisLabel: {
+          fontSize: 10,
+          hideOverlap: true,
+          formatter: (v: string) => formatMMDDYYYY(v),
+        },
         splitLine: { show: false },
       },
       yAxis: [
@@ -177,17 +191,22 @@ export default function SummaryTab() {
     const c = getChartColors();
     const categories = dividendBuckets.map((b) => b.label);
 
+    const layout = getDividendComboChartLayout();
     return {
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "shadow" },
+        formatter: dividendComboTooltipFormatter,
       },
-      legend: { top: 0 },
-      grid: { left: 40, right: 40, top: 30, bottom: 52 },
+      ...layout,
       xAxis: {
         type: "category",
         data: categories,
-        axisLabel: { fontSize: 10 },
+        axisLabel: {
+          fontSize: 10,
+          hideOverlap: true,
+          formatter: (v: string) => formatMMDDYYYY(v),
+        },
         splitLine: { show: false },
       },
       yAxis: [
@@ -275,7 +294,16 @@ export default function SummaryTab() {
     <div className="space-y-4">
       <Card className="h-[260px]">
         <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-          <CardTitle className="text-sm">Price & Volume</CardTitle>
+          <div className="flex min-w-0 items-center gap-1">
+            <CardTitle className="text-sm">Price & Volume</CardTitle>
+            {ticker ? (
+              <EChartPngExportButton
+                chartRef={priceChartRef}
+                filename={`${ticker}-price-chart`}
+                className="shrink-0"
+              />
+            ) : null}
+          </div>
           <TimeframeSelector value={timeframe} onChange={setTimeframe} />
         </CardHeader>
         <CardContent className="h-full">
@@ -290,6 +318,7 @@ export default function SummaryTab() {
               }}
             >
               <ReactECharts
+                ref={priceChartRef}
                 option={priceChartOption}
                 style={{ height: "100%", width: "100%" }}
               />
@@ -300,7 +329,16 @@ export default function SummaryTab() {
 
       <Card className="h-[260px]">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Dividend History</CardTitle>
+          <div className="flex items-center gap-1">
+            <CardTitle className="text-sm">Dividend History</CardTitle>
+            {ticker ? (
+              <EChartPngExportButton
+                chartRef={dividendSummaryChartRef}
+                filename={`${ticker}-dividend-summary`}
+                className="shrink-0"
+              />
+            ) : null}
+          </div>
         </CardHeader>
         <CardContent className="h-full">
           <div className="h-52">
@@ -314,6 +352,7 @@ export default function SummaryTab() {
               }}
             >
               <ReactECharts
+                ref={dividendSummaryChartRef}
                 option={dividendSummaryOption}
                 style={{ height: "100%", width: "100%" }}
               />
@@ -330,7 +369,10 @@ export default function SummaryTab() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 text-xs sm:grid-cols-2 md:grid-cols-4">
-            <FactItem label="Inception Date" value={baseEtf?.inceptionDate ?? "—"} />
+            <FactItem
+              label="Inception Date"
+              value={baseEtf?.inceptionDate ? formatMMDDYYYY(baseEtf.inceptionDate) : "—"}
+            />
             <FactItem label="Issuer" value={baseEtf?.issuer ?? "—"} />
             <FactItem label="AUM" value={baseEtf?.aum != null ? formatAum(baseEtf.aum) : "—"} />
             <FactItem label="Expense Ratio" value={baseEtf ? `${baseEtf.expenseRatio.toFixed(2)}%` : "—"} />

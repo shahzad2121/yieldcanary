@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,10 @@ import { CanaryStatusBadge } from "@/components/dashboard/CanaryStatusBadge";
 import { Star } from "lucide-react";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { useEtfDeepDiveData } from "@/hooks/useEtfDeepDiveData";
+import { useUserSubscription } from "@/hooks/useUserSubscription";
+import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
+import { useNavigate } from "react-router-dom";
+import { formatMMDDYYYY } from "@/lib/formatDeepDiveDate";
 
 const SummaryTab = lazy(() => import("./tabs/SummaryTab"));
 const DividendsTab = lazy(() => import("./tabs/DividendsTab"));
@@ -32,6 +36,21 @@ export function EtfDeepDiveModal() {
   const { isOpen, ticker, baseEtf, activeTab, closeDeepDive, setActiveTab } = useEtfDeepDive();
   const { error, priceSeries } = useEtfDeepDiveData(ticker, baseEtf);
   const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
+  const { user: subscriptionUser, loading: userLoading } = useUserSubscription();
+  const navigate = useNavigate();
+
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+
+  type Plan = "free" | "basic" | "advanced";
+  const subscriptionTier = subscriptionUser?.subscription_tier ?? null;
+  const plan: Plan =
+    subscriptionTier === "advanced"
+      ? "advanced"
+      : subscriptionTier === "basic"
+        ? "basic"
+        : "free";
+  const isPaid = plan !== "free";
+  const shouldBlur = userLoading ? true : !isPaid;
 
   const dailyChangePct = useMemo<number | null>(() => {
     if (!priceSeries || priceSeries.length < 2) return null;
@@ -51,8 +70,16 @@ export function EtfDeepDiveModal() {
   };
 
   const handleCompareClick = () => {
-    // Placeholder: wiring to filtered dashboard view will be added later.
+    const issuer = baseEtf?.issuer?.trim();
+    if (!issuer) return;
+    const params = new URLSearchParams();
+    params.set("compare", "issuer");
+    params.set("issuer", issuer);
+    if (ticker) {
+      params.set("exclude", ticker);
+    }
     closeDeepDive();
+    navigate(`/dashboard?${params.toString()}`);
   };
 
   return (
@@ -98,7 +125,7 @@ export function EtfDeepDiveModal() {
                 )}
                 {baseEtf?.latestDate && (
                   <span className="text-[11px] text-muted-foreground">
-                    As of {baseEtf.latestDate}
+                    As of {formatMMDDYYYY(baseEtf.latestDate)}
                   </span>
                 )}
               </div>
@@ -132,6 +159,7 @@ export function EtfDeepDiveModal() {
                 variant="outline"
                 size="sm"
                 className="w-full justify-center sm:w-auto"
+                disabled={!baseEtf?.issuer?.trim()}
                 onClick={handleCompareClick}
               >
                 Compare to Similar
@@ -160,44 +188,73 @@ export function EtfDeepDiveModal() {
           </div>
         )}
 
-        <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-border px-2 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => handleTabClick(tab.id)}
-              className={[
-                "whitespace-nowrap rounded-full px-3 py-1 transition-colors",
-                activeTab === tab.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <div className="relative">
+          <div className={shouldBlur ? "custom-scrollbar blur-[4px] pointer-events-none" : ""}>
+            <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-border px-2 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => handleTabClick(tab.id)}
+                  className={[
+                    "whitespace-nowrap rounded-full px-3 py-1 transition-colors",
+                    activeTab === tab.id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-        <div className="custom-scrollbar md:min-h-0 min-h-[500px] flex-1 overflow-y-auto px-3 pb-4 pt-3 sm:px-6 sm:pt-4">
-          <Suspense
-            fallback={
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                Loading details…
+            <div className="custom-scrollbar md:min-h-0 min-h-[500px] flex-1 overflow-y-auto px-3 pb-4 pt-3 sm:px-6 sm:pt-4">
+              <Suspense
+                fallback={
+                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                    Loading details…
+                  </div>
+                }
+              >
+                {activeTab === "summary" && <SummaryTab />}
+                {activeTab === "dividends" && <DividendsTab />}
+                {activeTab === "performance" && <PerformanceTab />}
+                {activeTab === "holdings" && <HoldingsTab />}
+                {activeTab === "expenses" && <ExpensesTab />}
+                {activeTab === "riskTax" && <RiskTaxTab />}
+                {activeTab === "newsFilings" && <NewsFilingsTab />}
+              </Suspense>
+            </div>
+          </div>
+
+          {shouldBlur && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/70 p-6 text-center backdrop-blur-sm">
+              <div className="text-sm font-medium text-foreground">
+                Unlock Basic or Advanced to view the full ETF deep-dive
               </div>
-            }
-          >
-            {activeTab === "summary" && <SummaryTab />}
-            {activeTab === "dividends" && <DividendsTab />}
-            {activeTab === "performance" && <PerformanceTab />}
-            {activeTab === "holdings" && <HoldingsTab />}
-            {activeTab === "expenses" && <ExpensesTab />}
-            {activeTab === "riskTax" && <RiskTaxTab />}
-            {activeTab === "newsFilings" && <NewsFilingsTab />}
-          </Suspense>
+              <Button
+                type="button"
+                size="sm"
+                className="h-9"
+                onClick={() => setIsUpgradeModalOpen(true)}
+              >
+                Upgrade
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Free users see blurred details.
+              </p>
+            </div>
+          )}
         </div>
       </DialogContent>
+
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        onUpgrade={() => setIsUpgradeModalOpen(false)}
+      />
     </Dialog>
   );
 }

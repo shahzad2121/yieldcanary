@@ -11,8 +11,10 @@ import { useUserSubscription } from '@/hooks/useUserSubscription';
 import { CanaryStatus } from '@/types/etf';
 import { supabase } from '@/integrations/supabase/client';
 import { Footer } from '@/components/Footer';
+import { useSearchParams } from 'react-router-dom';
 
 export function Dashboard() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { etfs, loading, error } = useETFs();
   const {
     user: subscriptionUser,
@@ -28,6 +30,18 @@ export function Dashboard() {
   const [statusFilter, setStatusFilter] = useState<CanaryStatus | 'all'>('all');
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string>('');
+  const compareMode = searchParams.get('compare');
+  const compareIssuerRaw = searchParams.get('issuer');
+  const compareExcludeTicker = searchParams.get('exclude');
+  const compareIssuer = compareIssuerRaw?.trim() ?? '';
+  const hasCompareIssuer = compareMode === 'issuer' && compareIssuer.length > 0;
+  const hasCompareParams =
+    Boolean(compareMode) ||
+    Boolean(compareIssuerRaw?.trim()) ||
+    Boolean(compareExcludeTicker?.trim());
+
+  const showClearButton =
+    statusFilter !== 'all' || searchQuery.trim() !== '' || hasCompareParams;
 
   // Plan derivation: distinguish between 'free', 'basic', and 'advanced'
   type Plan = 'free' | 'basic' | 'advanced';
@@ -61,13 +75,45 @@ export function Dashboard() {
       // Status filter
       const statusMatch = statusFilter === 'all' || etf.canaryStatus === statusFilter;
 
-      return searchMatch && statusMatch;
+      // Optional compare-by-issuer filter from deep-dive link
+      const issuerMatch = !hasCompareIssuer
+        ? true
+        : (etf.issuer ?? '').trim().toLowerCase() === compareIssuer.toLowerCase();
+
+      // Optional exclude ticker (used by deep-dive compare link to hide source ETF)
+      const excludeMatch = compareExcludeTicker
+        ? etf.ticker.toLowerCase() !== compareExcludeTicker.toLowerCase()
+        : true;
+
+      return searchMatch && statusMatch && issuerMatch && excludeMatch;
     });
-  }, [etfs, searchQuery, statusFilter]);
+  }, [etfs, searchQuery, statusFilter, hasCompareIssuer, compareIssuer, compareExcludeTicker]);
+
+  /** ETFs matching issuer compare + exclude only (ignore search/status) — for empty-state copy */
+  const compareIssuerOnlyMatches = useMemo(() => {
+    if (!hasCompareIssuer) return [];
+    return etfs.filter((etf) => {
+      const issuerMatch =
+        (etf.issuer ?? '').trim().toLowerCase() === compareIssuer.toLowerCase();
+      const excludeMatch = compareExcludeTicker
+        ? etf.ticker.toLowerCase() !== compareExcludeTicker.toLowerCase()
+        : true;
+      return issuerMatch && excludeMatch;
+    });
+  }, [etfs, hasCompareIssuer, compareIssuer, compareExcludeTicker]);
+
+  const isCompareIssuerNoRows =
+    hasCompareIssuer && compareIssuerOnlyMatches.length === 0;
 
   const handleClearFilters = () => {
     setStatusFilter('all');
     setSearchQuery('');
+    if (!hasCompareParams) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('compare');
+    next.delete('issuer');
+    next.delete('exclude');
+    setSearchParams(next, { replace: true });
   };
 
   const isDataLoading = loading || userLoading;
@@ -114,11 +160,51 @@ export function Dashboard() {
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}
           onClearFilters={handleClearFilters}
+          showClearButton={showClearButton}
         />
+        {hasCompareIssuer && (
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+            <span className="rounded-md border border-border bg-muted/40 px-2 py-1">
+              Comparing by issuer: <span className="font-medium text-foreground">{compareIssuer}</span>
+            </span>
+          </div>
+        )}
 
         {/* ETF Table */}
         {isDataLoading ? (
           <ETFTableSkeleton />
+        ) : filteredETFs.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-8 sm:py-10 text-center space-y-3">
+            {isCompareIssuerNoRows ? (
+              <>
+                <p className="text-sm sm:text-base text-foreground font-medium">
+                  No ETFs found for issuer{' '}
+                  <span className="font-semibold">{compareIssuer}</span>.
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
+                  Clear compare filter to return to the full dashboard.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm sm:text-base text-foreground font-medium">
+                  No ETFs match your current filters
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
+                  Try clearing search, status, or the issuer compare filter to see more results.
+                </p>
+              </>
+            )}
+            {showClearButton && (
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-1.5 text-xs sm:text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
         ) : (
           <ETFTable
             etfs={filteredETFs}
