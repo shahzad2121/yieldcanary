@@ -220,7 +220,7 @@ export default function DividendsTab() {
                   <th className="px-2 py-1 font-medium">Record</th>
                   <th className="px-2 py-1 font-medium">Payment</th>
                   <th className="px-2 py-1 font-medium text-right">Cash Amount</th>
-                  <th className="px-2 py-1 font-medium text-right">ROC %</th>
+                  {/* <th className="px-2 py-1 font-medium text-right">ROC %</th> */}
                   {/* <th className="px-2 py-1 font-medium text-right">Qualified %</th> */}
                 </tr>
               </thead>
@@ -234,9 +234,9 @@ export default function DividendsTab() {
                     <td className="px-2 py-1 text-right font-mono">
                       {d.amount.toFixed(4)}
                     </td>
-                    <td className="px-2 py-1 text-right font-mono">
+                    {/* <td className="px-2 py-1 text-right font-mono">
                       {baseEtf ? `${baseEtf.rocPercent.toFixed(2)}%` : "—"}
-                    </td>
+                    </td> */}
                     {/* <td className="px-2 py-1 text-right font-mono">—</td> */}
                   </tr>
                 ))}
