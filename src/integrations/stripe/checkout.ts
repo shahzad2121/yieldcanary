@@ -87,13 +87,13 @@ export async function cancelSubscriptionWithReason(params: CancelSubscriptionPar
   return { cancels_at: data.cancels_at };
 }
 
-/** Call cancel-newsletter-subscription-test Edge Function. Cancels newsletter immediately in test mode. */
+/** Call cancel-newsletter-subscription Edge Function. Cancels newsletter immediately. */
 export async function cancelNewsletterSubscription(): Promise<CancelSubscriptionResult> {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   if (!supabaseUrl) return { error: 'VITE_SUPABASE_URL is not set' };
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.access_token) return { error: 'Please sign in to cancel your newsletter.' };
-  const response = await fetch(`${supabaseUrl}/functions/v1/cancel-newsletter-subscription-test`, {
+  const response = await fetch(`${supabaseUrl}/functions/v1/cancel-newsletter-subscription`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
