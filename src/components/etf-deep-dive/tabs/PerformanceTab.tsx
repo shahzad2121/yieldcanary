@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useEtfDeepDive } from "@/context/EtfDeepDiveContext";
 import { useEtfDeepDiveData } from "@/hooks/useEtfDeepDiveData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { ChartContainer } from "@/components/ui/chart";
 import { getChartColors } from "@/lib/chartColors";
 import { formatMMDDYYYY } from "@/lib/formatDeepDiveDate";
 import ReactECharts from "echarts-for-react";
+import { EChartPngExportButton } from "../EChartPngExportButton";
 
 function formatPercent(value: number | null | undefined): string {
   if (value == null) return "—";
@@ -16,6 +17,7 @@ function formatPercent(value: number | null | undefined): string {
 export default function PerformanceTab() {
   const { baseEtf, ticker } = useEtfDeepDive();
   const { priceSeries } = useEtfDeepDiveData(ticker, baseEtf);
+  const growthChartRef = useRef<InstanceType<typeof ReactECharts>>(null);
 
   const growthOf10kSeries = useMemo(() => {
     const valid = priceSeries.filter(
@@ -148,7 +150,16 @@ export default function PerformanceTab() {
     <div className="space-y-4">
       <Card className="h-[260px]">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Growth of $10,000</CardTitle>
+          <div className="flex items-center gap-1">
+            <CardTitle className="text-sm">Growth of $10,000</CardTitle>
+            {ticker && growthOf10kSeries.length > 0 ? (
+              <EChartPngExportButton
+                chartRef={growthChartRef}
+                filename={`${ticker}-growth-10k`}
+                className="shrink-0"
+              />
+            ) : null}
+          </div>
         </CardHeader>
         <CardContent className="h-full">
           <div className="h-52">
@@ -159,6 +170,7 @@ export default function PerformanceTab() {
                 config={{ value: { label: "Value", color: getChartColors().chart1 } }}
               >
                 <ReactECharts
+                  ref={growthChartRef}
                   option={growthChartOption}
                   style={{ height: "100%", width: "100%" }}
                 />

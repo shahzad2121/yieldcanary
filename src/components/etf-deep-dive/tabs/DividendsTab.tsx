@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EtfDeepDiveSectionSeparator } from "../EtfDeepDiveModal";
 import { useEtfDeepDive } from "@/context/EtfDeepDiveContext";
@@ -12,9 +12,11 @@ import {
   getDividendComboChartLayout,
 } from "@/lib/echartsDividendLayout";
 import ReactECharts from "echarts-for-react";
+import { EChartPngExportButton } from "../EChartPngExportButton";
 
 export default function DividendsTab() {
   const { baseEtf, ticker } = useEtfDeepDive();
+  const dividendHistoryChartRef = useRef<InstanceType<typeof ReactECharts>>(null);
   const { dividendBuckets, dividendAnalytics, dividendEvents } = useEtfDeepDiveData(
     ticker,
     baseEtf,
@@ -139,7 +141,16 @@ export default function DividendsTab() {
     <div className="space-y-4">
       <Card className="h-64">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Dividend History</CardTitle>
+          <div className="flex items-center gap-1">
+            <CardTitle className="text-sm">Dividend History</CardTitle>
+            {ticker ? (
+              <EChartPngExportButton
+                chartRef={dividendHistoryChartRef}
+                filename={`${ticker}-dividend-history`}
+                className="shrink-0"
+              />
+            ) : null}
+          </div>
         </CardHeader>
         <CardContent className="h-full">
           <div className="h-52">
@@ -153,6 +164,7 @@ export default function DividendsTab() {
               }}
             >
               <ReactECharts
+                ref={dividendHistoryChartRef}
                 option={dividendChartOption}
                 style={{ height: "100%", width: "100%" }}
               />
