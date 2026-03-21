@@ -8,7 +8,14 @@
 // ============================================
 
 export type SubscriptionStatus = 'free' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid';
-export type EmailType = 'trial_started' | 'trial_ending_reminder' | 'trial_converted_to_paid' | 'payment_failed' | 'subscription_cancelled';
+export type EmailType =
+  | 'trial_started'
+  | 'trial_ending_reminder'
+  | 'trial_converted_to_paid'
+  | 'payment_failed'
+  | 'subscription_cancelled'
+  | 'newsletter_subscribed'
+  | 'newsletter_cancelled';
 export type EmailStatus = 'sent' | 'failed' | 'bounced' | 'delivered';
 
 export interface StripeSubscription {

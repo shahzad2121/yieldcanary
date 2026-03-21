@@ -120,6 +120,27 @@ Deno.serve(async (req) => {
             }),
           });
           console.log("[Webhook] [NEWSLETTER] User newsletter subscription set:", emailForNewsletter, "plan:", plan, "status:", updateRes.status);
+          if (updateRes.ok) {
+            const user = await getUserByEmail(
+              supabaseUrl,
+              serviceRoleKey,
+              emailForNewsletter,
+              "id,name,username"
+            );
+            if (user?.id) {
+              await sendTransactionalEmail(
+                supabaseUrl,
+                serviceRoleKey,
+                user.id,
+                emailForNewsletter,
+                "newsletter_subscribed",
+                "newsletter_subscribed",
+                {
+                  first_name: user.name || user.username || emailForNewsletter.split("@")[0],
+                }
+              );
+            }
+          }
         }
       } else {
         console.log("[Webhook] Subscription checkout - skipping email (customer.subscription.created will send it)");
@@ -300,6 +321,19 @@ Deno.serve(async (req) => {
             body: JSON.stringify({ newsletter_tier: "none", stripe_newsletter_subscription_id: null, updated_at: new Date().toISOString() }),
           });
           console.log("[Webhook] [NEWSLETTER] Newsletter subscription cleared for:", email, "status:", clearRes.status);
+          if (clearRes.ok && user.id) {
+            await sendTransactionalEmail(
+              supabaseUrl,
+              serviceRoleKey,
+              user.id,
+              email,
+              "newsletter_cancelled",
+              "newsletter_cancelled",
+              {
+                first_name: user.name || user.username || email.split("@")[0],
+              }
+            );
+          }
         }
         if (userAny.stripe_subscription_id === subscriptionId) {
           console.log("[Webhook] [TRIAL/DOWNGRADE] Downgrading user (app subscription deleted):", email);

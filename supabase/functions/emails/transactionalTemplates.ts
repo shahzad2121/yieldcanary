@@ -1,4 +1,5 @@
 import { trialEmailTemplates } from "./trialTemplates.ts";
+import { newsletterEmailTemplates } from "./newsletterTemplates.ts";
 
 export type TransactionalEmailTemplate = {
   id:
@@ -13,6 +14,8 @@ export type TransactionalEmailTemplate = {
     | 'trial_converted_to_paid'
     | 'payment_failed'
     | 'subscription_cancelled'
+    | 'newsletter_subscribed'
+    | 'newsletter_cancelled'
     | 'cancellation_scheduled'
     | 'cancellation_reason_to_support';
   title: string;
@@ -1558,4 +1561,6 @@ export const transactionalEmailTemplates: TransactionalEmailTemplate[] = [
   },
   // Import and merge trial email templates
   ...trialEmailTemplates,
+  // Import and merge newsletter email templates
+  ...newsletterEmailTemplates,
 ];
