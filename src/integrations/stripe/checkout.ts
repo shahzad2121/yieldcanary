@@ -87,34 +87,13 @@ export async function cancelSubscriptionWithReason(params: CancelSubscriptionPar
   return { cancels_at: data.cancels_at };
 }
 
-/** Call cancel-newsletter-subscription Edge Function. Cancels newsletter immediately. */
-export async function cancelNewsletterSubscription(): Promise<CancelSubscriptionResult> {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  if (!supabaseUrl) return { error: 'VITE_SUPABASE_URL is not set' };
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) return { error: 'Please sign in to cancel your newsletter.' };
-  const response = await fetch(`${supabaseUrl}/functions/v1/cancel-newsletter-subscription`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({}),
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) return { error: (data.error as string) || 'Failed to cancel newsletter' };
-  return { cancels_at: data.cancels_at };
-}
-
-export type PricingPlan = 'basic_monthly' | 'basic_yearly' | 'advanced_monthly' | 'advanced_yearly' | 'one_dollar' | 'newsletter_monthly' | 'newsletter_yearly';
+export type PricingPlan = 'basic_monthly' | 'basic_yearly' | 'advanced_monthly' | 'advanced_yearly' | 'one_dollar';
 
 const PRICE_IDS: Record<PricingPlan, string> = {
   basic_monthly: import.meta.env.VITE_BASIC_MONTHLY_PRICE || '',
   basic_yearly: import.meta.env.VITE_BASIC_YEARLY_PRICE || '',
   advanced_monthly: import.meta.env.VITE_ADVANCED_MONTHLY_PRICE || '',
   advanced_yearly: import.meta.env.VITE_ADVANCED_YEARLY_PRICE || '',
-  newsletter_monthly: import.meta.env.VITE_NEWSLETTER_MONTHLY_PRICE || '',
-  newsletter_yearly: import.meta.env.VITE_NEWSLETTER_YEARLY_PRICE || '',
   one_dollar:
     import.meta.env.VITE_HALF_DOLLAR_PRICE ||
     
@@ -222,10 +201,6 @@ export function getPlanName(plan: PricingPlan): string {
       return 'Advanced - Yearly';
     case 'one_dollar':
       return 'One-Time Access';
-    case 'newsletter_monthly':
-      return 'Newsletter - Monthly';
-    case 'newsletter_yearly':
-      return 'Newsletter - Yearly';
     default:
       return 'Unknown Plan';
   }
@@ -243,10 +218,6 @@ export function getPlanPrice(plan: PricingPlan): string {
       return '$189/year';
     case 'one_dollar':
       return '$0.50';
-    case 'newsletter_monthly':
-      return '$5/month';
-    case 'newsletter_yearly':
-      return '$49/year';
     default:
       return '$0';
   }

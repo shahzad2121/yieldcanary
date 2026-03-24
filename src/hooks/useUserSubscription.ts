@@ -87,6 +87,13 @@ export function useUserSubscription() {
     return () => subscription?.unsubscribe();
   }, []);
 
+  const subscriptionStatus = user?.subscription_status ?? null;
+  const subscriptionTier = user?.subscription_tier ?? null;
+  /** Weekly email is included with Basic/Advanced while subscription is active or trialing */
+  const hasBundledNewsletterAccess =
+    (subscriptionTier === 'basic' || subscriptionTier === 'advanced') &&
+    (subscriptionStatus === 'active' || subscriptionStatus === 'trialing');
+
   return {
     user,
     loading,
@@ -95,7 +102,9 @@ export function useUserSubscription() {
     trialEndsAt: user?.trial_ends_at ?? null,
     cancelAtPeriodEnd: user?.cancel_at_period_end ?? false,
     cancelsAt: user?.cancels_at ?? null,
+    /** Legacy newsletter-only SKU; unused now that newsletter is bundled */
     newsletterTier: user?.newsletter_tier ?? null,
+    hasBundledNewsletterAccess,
     refetch: fetchUserSubscription,
   };
 }

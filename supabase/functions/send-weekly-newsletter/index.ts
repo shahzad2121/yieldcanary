@@ -183,7 +183,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-hei
 .f a{color:#0da472;text-decoration:none;font-weight:500}
 .fc{font-size:11px;color:#64748b;margin-top:16px}
 @media(max-width:600px){body{padding:8px}.h,.x{padding:20px 16px}.h h1{font-size:20px}.s{padding:16px;margin:12px 0}.r{font-size:13px}.a{padding:8px 16px;font-size:12px}.f{padding:20px 16px}}
-</style></head><body><div class="c"><div class="h"><h1>🐦 YieldCanary</h1><p>YieldCanary Weekly — ${dateStr}</p></div><div class="x"><div class="s"><h3>📊 Buy Zone Picks</h3><div>${buyZoneRowsHtml}</div><a href="${appUrl}/insights" class="a">See all Buy Zone picks →</a></div><div class="s"><h3>📅 Top Monthly Payers</h3><div>${monthlyRowsHtml}</div><a href="${appUrl}/insights" class="a">See all monthly payers →</a></div><div class="s"><h3>📅 Top Weekly Payers</h3><div>${weeklyRowsHtml}</div><a href="${appUrl}/insights" class="a">See all weekly payers →</a></div><div class="s"><h3>📈 ${moversHeader}</h3><p class="ms">Biggest improvements</p><div>${gainersHtml}</div><p class="ms" style="margin-top:12px">Biggest deteriorations</p><div>${losersHtml}</div><a href="${appUrl}/insights" class="a">See movers in Insights →</a></div></div><div class="f"><p class="ft">You're receiving this because you subscribed to the YieldCanary Weekly Newsletter.</p><p class="ft"><a href="${appUrl}">Open YieldCanary</a> · Manage subscription in your account.</p><p class="fc">© 2026 YieldCanary. All rights reserved.</p></div></div></body></html>`;
+</style></head><body><div class="c"><div class="h"><h1>🐦 YieldCanary</h1><p>YieldCanary Weekly — ${dateStr}</p></div><div class="x"><div class="s"><h3>📊 Buy Zone Picks</h3><div>${buyZoneRowsHtml}</div><a href="${appUrl}/insights" class="a">See all Buy Zone picks →</a></div><div class="s"><h3>📅 Top Monthly Payers</h3><div>${monthlyRowsHtml}</div><a href="${appUrl}/insights" class="a">See all monthly payers →</a></div><div class="s"><h3>📅 Top Weekly Payers</h3><div>${weeklyRowsHtml}</div><a href="${appUrl}/insights" class="a">See all weekly payers →</a></div><div class="s"><h3>📈 ${moversHeader}</h3><p class="ms">Biggest improvements</p><div>${gainersHtml}</div><p class="ms" style="margin-top:12px">Biggest deteriorations</p><div>${losersHtml}</div><a href="${appUrl}/insights" class="a">See movers in Insights →</a></div></div><div class="f"><p class="ft">You're receiving this because you have an active Basic or Advanced YieldCanary subscription.</p><p class="ft"><a href="${appUrl}">Open YieldCanary</a> · Manage your plan in your account.</p><p class="fc">© 2026 YieldCanary. All rights reserved.</p></div></div></body></html>`;
 }
 
 async function fetchInsights(supabaseUrl: string, serviceRoleKey: string): Promise<InsightsPayload> {
@@ -205,11 +205,16 @@ async function fetchInsights(supabaseUrl: string, serviceRoleKey: string): Promi
   return json as InsightsPayload;
 }
 
+/**
+ * Weekly newsletter is bundled with Basic and Advanced app subscriptions.
+ * Recipients: active or trialing subscribers on those tiers (same entitlement as in-app access).
+ */
 async function getSubscriberEmails(supabase: ReturnType<typeof createClient>): Promise<string[]> {
   const { data, error } = await supabase
     .from("users")
     .select("email")
-    .in("newsletter_tier", ["monthly", "yearly"]);
+    .in("subscription_tier", ["basic", "advanced"])
+    .in("subscription_status", ["active", "trialing"]);
   if (error) {
     throw new Error(`Failed to fetch subscribers: ${error.message}`);
   }

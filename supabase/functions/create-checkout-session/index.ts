@@ -55,21 +55,32 @@ Deno.serve(async (req) => {
 
     console.log(`[Checkout] Price ${priceId} is ${priceData.type}, using mode: ${mode}`);
 
-    // Newsletter product: no app validation, no trial, add metadata for webhook
-    const newsletterMonthlyPrice =
+    // Standalone newsletter SKUs are retired — weekly email is included with Basic/Advanced
+    const legacyNewsletterMonthly =
       Deno.env.get("NEWSLETTER_MONTHLY_PRICE_ID") ?? "";
-    const newsletterYearlyPrice =
+    const legacyNewsletterYearly =
       Deno.env.get("NEWSLETTER_YEARLY_PRICE_ID") ?? "";
-    const isNewsletter =
-      (newsletterMonthlyPrice && priceId === newsletterMonthlyPrice) ||
-      (newsletterYearlyPrice && priceId === newsletterYearlyPrice);
-    const newsletterPlan = priceId === newsletterYearlyPrice ? "yearly" : "monthly";
-    if (isNewsletter) {
-      console.log("[Checkout] [NEWSLETTER] Newsletter checkout - plan:", newsletterPlan);
+    const isDeprecatedNewsletterPrice =
+      (legacyNewsletterMonthly && priceId === legacyNewsletterMonthly) ||
+      (legacyNewsletterYearly && priceId === legacyNewsletterYearly);
+    if (isDeprecatedNewsletterPrice) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "The newsletter is included with Basic and Advanced. Subscribe to a plan instead.",
+        }),
+        {
+          status: 400,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Content-Type": "application/json",
+          },
+        }
+      );
     }
-   
-    // Validate: Prevent subscribing if user already has active subscription (app subscriptions only; skip for newsletter)
-    if (mode === "subscription" && email && !isNewsletter) {
+
+    // Validate: Prevent duplicate or invalid app subscriptions
+    if (mode === "subscription" && email) {
       const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
       const serviceRoleKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
       
@@ -260,9 +271,9 @@ Deno.serve(async (req) => {
       bodyParams["invoice_creation[enabled]"] = "true";
     }
 
-    // Trial: 30 days for affiliate (Tolt referral), 7 days otherwise. Newsletter has no trial.
+    // Trial: 30 days for affiliate (Tolt referral), 7 days otherwise. Newsletter is bundled; no separate SKU.
     const isAffiliate = typeof toltReferral === "string" && toltReferral.trim().length > 0;
-    if (mode === "subscription" && !isNewsletter) {
+    if (mode === "subscription") {
       const trialDays = isAffiliate ? "30" : "7";
       bodyParams["subscription_data[trial_period_days]"] = trialDays;
       if (isAffiliate) {
@@ -274,12 +285,6 @@ Deno.serve(async (req) => {
     }
     if (isAffiliate && (typeof toltReferral === "string" && toltReferral.trim())) {
       bodyParams["metadata[tolt_referral]"] = toltReferral.trim();
-    }
-
-    // Newsletter: pass metadata so webhook can set newsletter_tier and stripe_newsletter_subscription_id
-    if (mode === "subscription" && isNewsletter) {
-      bodyParams["metadata[product_type]"] = "newsletter";
-      bodyParams["metadata[newsletter_plan]"] = newsletterPlan;
     }
 
     // Persist affiliate attribution on user record when we have email and referral
