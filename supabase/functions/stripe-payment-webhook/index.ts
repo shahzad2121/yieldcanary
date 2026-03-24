@@ -11,6 +11,7 @@ import {
   downgradeUserToFree,
   sendTransactionalEmail,
   createPriceIdToTierMapper,
+  extractSubscriptionPeriodBounds,
   type EmailType,
 } from "./stripe-webhook-helpers.ts";
 
@@ -456,21 +457,15 @@ Deno.serve(async (req) => {
 
       if (isActiveOrTrialing) {
         // Step 4a: Grant access (active or trialing) - update user with tier and period dates
-        const periodStart = fullSubscription.current_period_start 
-          || fullSubscription.items?.data?.[0]?.current_period_start
-          || subscription.current_period_start
-          || null;
-        const periodEnd = fullSubscription.current_period_end
-          || fullSubscription.items?.data?.[0]?.current_period_end
-          || subscription.current_period_end
-          || null;
-        
-        const subscriptionStart = periodStart
-          ? new Date(periodStart * 1000).toISOString()
-          : null;
-        const subscriptionEnd = periodEnd
-          ? new Date(periodEnd * 1000).toISOString()
-          : null;
+        const fromApiBounds = extractSubscriptionPeriodBounds(fullSubscription);
+        const fromWebhookBounds = extractSubscriptionPeriodBounds(subscription);
+        const periodStart = fromApiBounds.periodStart ?? fromWebhookBounds.periodStart;
+        const periodEnd = fromApiBounds.periodEnd ?? fromWebhookBounds.periodEnd;
+
+        const subscriptionStart =
+          periodStart != null ? new Date(periodStart * 1000).toISOString().slice(0, 10) : null;
+        const subscriptionEnd =
+          periodEnd != null ? new Date(periodEnd * 1000).toISOString().slice(0, 10) : null;
 
         const trialEndsAt = subStatus === "trialing" && trialEnd
           ? new Date(trialEnd * 1000).toISOString()
