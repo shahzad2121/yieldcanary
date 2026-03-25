@@ -50,6 +50,14 @@ type InsightsPayload = {
 const MAX_ITEMS_PER_SECTION = 5;
 const SUPPORT_EMAIL = "support@yieldcanary.com";
 
+/**
+ * TEMP — set to "" to send to all subscribers again.
+ * When non-empty: cron / normal run sends only if this email matches a user that is
+ * Basic or Advanced with subscription_status active or trialing (same rules as batch).
+ * If not eligible, no emails are sent (check logs).
+ */
+const TEMP_CRON_SEND_ONLY_EMAIL = "";
+
 function corsHeaders(): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": "*",
@@ -225,6 +233,33 @@ async function getSubscriberEmails(supabase: ReturnType<typeof createClient>): P
   return [...new Set(emails)];
 }
 
+/** Single temp recipient only if they pass the same eligibility rules as getSubscriberEmails. */
+async function getTempCronRecipientIfEligible(
+  supabase: ReturnType<typeof createClient>,
+  rawEmail: string
+): Promise<string[]> {
+  const trimmed = rawEmail.trim();
+  if (!trimmed) return [];
+  const { data, error } = await supabase
+    .from("users")
+    .select("email")
+    .ilike("email", trimmed)
+    .in("subscription_tier", ["basic", "advanced"])
+    .in("subscription_status", ["active", "trialing"])
+    .maybeSingle();
+  if (error) {
+    throw new Error(`Temp recipient lookup failed: ${error.message}`);
+  }
+  if (!data?.email) {
+    console.warn(
+      "[send-weekly-newsletter] TEMP_CRON_SEND_ONLY_EMAIL not eligible (need basic/advanced + active/trialing):",
+      trimmed
+    );
+    return [];
+  }
+  return [data.email as string];
+}
+
 async function sendViaResend(
   to: string,
   subject: string,
@@ -318,8 +353,18 @@ Deno.serve(async (req) => {
       recipients = [SUPPORT_EMAIL];
       console.log("[send-weekly-newsletter] Preview mode: sending only to", SUPPORT_EMAIL);
     } else {
-      recipients = await getSubscriberEmails(supabase);
-      console.log("[send-weekly-newsletter] Sending to", recipients.length, "subscribers");
+      const tempOnly = TEMP_CRON_SEND_ONLY_EMAIL.trim();
+      if (tempOnly) {
+        recipients = await getTempCronRecipientIfEligible(supabase, tempOnly);
+        console.log(
+          "[send-weekly-newsletter] TEMP_CRON_SEND_ONLY_EMAIL mode: eligible recipients =",
+          recipients.length,
+          recipients.length ? recipients[0] : "(none)"
+        );
+      } else {
+        recipients = await getSubscriberEmails(supabase);
+        console.log("[send-weekly-newsletter] Sending to", recipients.length, "subscribers");
+      }
     }
 
     let sent = 0;
@@ -340,6 +385,8 @@ Deno.serve(async (req) => {
         sent,
         total: recipients.length,
         preview,
+        temp_send_only:
+          !preview && TEMP_CRON_SEND_ONLY_EMAIL.trim().length > 0,
       }),
       { status: 200, headers: corsHeaders() }
     );
