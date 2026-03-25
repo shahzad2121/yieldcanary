@@ -25,12 +25,48 @@ export interface StripeSubscription {
   items?: {
     data?: Array<{
       price?: { id: string };
+      current_period_start?: number | null;
+      current_period_end?: number | null;
     }>;
   };
   trial_start?: number | null;
   trial_end?: number | null;
   current_period_start?: number | null;
   current_period_end?: number | null;
+}
+
+/** Stripe may return Unix seconds as number or string; webhook payloads sometimes omit top-level period fields. */
+function normalizeEpochSeconds(value: unknown): number | null {
+  if (value == null) return null;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+/** Prefer subscription-level period; fall back to first subscription item (Stripe API / newer billing layouts). */
+export function extractSubscriptionPeriodBounds(sub: StripeSubscription | Record<string, unknown>): {
+  periodStart: number | null;
+  periodEnd: number | null;
+} {
+  const s = sub as Record<string, unknown>;
+  let periodStart = normalizeEpochSeconds(s.current_period_start);
+  let periodEnd = normalizeEpochSeconds(s.current_period_end);
+
+  const items = s.items as { data?: Array<Record<string, unknown>> } | undefined;
+  const first = items?.data?.[0];
+  if (first) {
+    if (periodStart == null) {
+      periodStart = normalizeEpochSeconds(first.current_period_start);
+    }
+    if (periodEnd == null) {
+      periodEnd = normalizeEpochSeconds(first.current_period_end);
+    }
+  }
+
+  return { periodStart, periodEnd };
 }
 
 export interface User {
@@ -41,6 +77,8 @@ export interface User {
   subscription_tier?: string | null;
   subscription_status?: SubscriptionStatus;
   trial_converted_to_paid?: boolean;
+  /** Set when user has ever entered Stripe trialing (standard or affiliate); never cleared. */
+  has_used_trial?: boolean;
 }
 
 // ============================================
@@ -303,20 +341,44 @@ export async function updateUserSubscriptionFromStripe(
       });
       if (subscriptionRes.ok) {
         fullSubscription = await subscriptionRes.json();
+      } else {
+        const errText = await subscriptionRes.text();
+        console.warn(
+          `[Helper] Stripe GET subscription ${subscriptionRes.status}:`,
+          errText.slice(0, 500)
+        );
       }
     } catch (subError) {
       console.error("[Helper] Error fetching subscription:", subError);
     }
   }
 
-  const periodStart = fullSubscription.current_period_start || null;
-  const periodEnd = fullSubscription.current_period_end || null;
-  const trialStart = fullSubscription.trial_start ?? null;
-  const trialEnd = fullSubscription.trial_end ?? null;
+  const fromApi = extractSubscriptionPeriodBounds(fullSubscription);
+  const fromWebhook = extractSubscriptionPeriodBounds(subscription);
+  const periodStart = fromApi.periodStart ?? fromWebhook.periodStart;
+  const periodEnd = fromApi.periodEnd ?? fromWebhook.periodEnd;
 
-  const subscriptionStart = periodStart ? new Date(periodStart * 1000).toISOString() : null;
-  const subscriptionEnd = periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
-  const trialEndsAt = trialEnd ? new Date(trialEnd * 1000).toISOString() : null;
+  if (periodStart == null || periodEnd == null) {
+    console.warn(
+      "[Helper] Missing subscription period after API+webhook merge — subscription_start/end will be null. subId:",
+      subscriptionId,
+      "fromApi:",
+      fromApi,
+      "fromWebhook:",
+      fromWebhook
+    );
+  }
+
+  const trialEnd =
+    normalizeEpochSeconds((fullSubscription as Record<string, unknown>).trial_end) ??
+    normalizeEpochSeconds((subscription as Record<string, unknown>).trial_end);
+
+  // users.subscription_* columns are DATE in original schema — use YYYY-MM-DD for reliable PostgREST writes
+  const subscriptionStart =
+    periodStart != null ? new Date(periodStart * 1000).toISOString().slice(0, 10) : null;
+  const subscriptionEnd =
+    periodEnd != null ? new Date(periodEnd * 1000).toISOString().slice(0, 10) : null;
+  const trialEndsAt = trialEnd != null ? new Date(trialEnd * 1000).toISOString() : null;
 
   const subStatus = fullSubscription.status || subscription.status || "";
   const subscriptionStatus = mapStripeStatusToSubscriptionStatus(
@@ -340,6 +402,11 @@ export async function updateUserSubscriptionFromStripe(
     subscription_status: subscriptionStatus,
     updated_at: new Date().toISOString(),
   };
+
+  // Lifetime: Stripe keeps trial_end on the subscription after trialing → active; set flag for trialing or any trial window.
+  if (subStatus === "trialing" || trialEnd != null) {
+    updateData.has_used_trial = true;
+  }
 
   if (trialConverted) {
     updateData.trial_converted_to_paid = true;

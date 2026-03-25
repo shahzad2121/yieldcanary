@@ -11,6 +11,8 @@ export interface UserSubscription {
   subscription_end: string | null;
   subscription_status?: string | null;
   trial_ends_at?: string | null;
+  /** Set server-side when user has ever been in Stripe trialing; never cleared. */
+  has_used_trial?: boolean | null;
   cancel_at_period_end?: boolean | null;
   cancels_at?: string | null;
   newsletter_tier?: string | null;

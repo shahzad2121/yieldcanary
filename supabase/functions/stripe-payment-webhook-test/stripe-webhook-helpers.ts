@@ -397,6 +397,10 @@ export async function updateUserSubscriptionFromStripe(
     subscription_status: subscriptionStatus,
     updated_at: new Date().toISOString(),
   };
+
+  if (subStatus === "trialing" || trialEnd != null) {
+    updateData.has_used_trial = true;
+  }
   
   // Set trial_converted_to_paid if this is a conversion
   if (trialConverted) {
