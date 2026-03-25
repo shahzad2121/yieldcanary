@@ -35,6 +35,12 @@ Deno.serve(async (req) => {
       throw new Error("STRIPE_SECRET_KEY not set");
     }
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const serviceRoleKey =
+      Deno.env.get("SERVICE_ROLE_KEY") ??
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+      "";
+
     // Fetch price details from Stripe to determine if it's recurring or one-time
     const priceRes = await fetch(`https://api.stripe.com/v1/prices/${priceId}`, {
       method: "GET",
@@ -67,19 +73,61 @@ Deno.serve(async (req) => {
     if (isNewsletter) {
       console.log("[Checkout] [NEWSLETTER] Newsletter checkout - plan:", newsletterPlan);
     }
-   
+
+    /** Lifetime trial flag: omit Stripe trial if true. Fail closed (no trial) if we cannot read profile. */
+    let hasUsedTrial = false;
+    let stripeCustomerId: string | null = null;
+    type AppUserProfile = {
+      has_used_trial?: boolean | null;
+      stripe_customer_id?: string | null;
+      is_paid?: boolean;
+      subscription_tier?: string | null;
+      subscription_end?: string | null;
+    };
+    let appUserProfile: AppUserProfile | null = null;
+
+    if (mode === "subscription" && email && !isNewsletter) {
+      if (supabaseUrl && serviceRoleKey) {
+        const profileRes = await fetch(
+          `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=has_used_trial,stripe_customer_id,is_paid,subscription_tier,subscription_end`,
+          {
+            headers: {
+              apikey: serviceRoleKey,
+              Authorization: `Bearer ${serviceRoleKey}`,
+            },
+          }
+        );
+        if (profileRes.ok) {
+          const rows = await profileRes.json();
+          appUserProfile = rows?.[0] ?? null;
+          if (appUserProfile) {
+            hasUsedTrial = appUserProfile.has_used_trial === true;
+            stripeCustomerId = appUserProfile.stripe_customer_id ?? null;
+          }
+        } else {
+          console.warn(
+            "[Checkout] User profile fetch failed; skipping trial (fail closed). status:",
+            profileRes.status
+          );
+          hasUsedTrial = true;
+        }
+      } else {
+        console.warn(
+          "[Checkout] Missing SUPABASE_URL or service role key; skipping trial (fail closed)"
+        );
+        hasUsedTrial = true;
+      }
+    }
+
     // Validate: Prevent subscribing if user already has active subscription (app subscriptions only; skip for newsletter)
     if (mode === "subscription" && email && !isNewsletter) {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-      const serviceRoleKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
-      
       if (supabaseUrl && serviceRoleKey) {
         // Map priceId to tier
-          const basicMonthlyPrice = Deno.env.get("VITE_BASIC_MONTHLY_PRICE") || Deno.env.get("BASIC_MONTHLY_PRICE") || "";
-          const basicYearlyPrice = Deno.env.get("VITE_BASIC_YEARLY_PRICE") || Deno.env.get("BASIC_YEARLY_PRICE") || "";
-          const advancedMonthlyPrice = Deno.env.get("VITE_ADVANCED_MONTHLY_PRICE") || Deno.env.get("ADVANCED_MONTHLY_PRICE") || "";
-          const advancedYearlyPrice = Deno.env.get("VITE_ADVANCED_YEARLY_PRICE") || Deno.env.get("ADVANCED_YEARLY_PRICE") || "";
-        
+        const basicMonthlyPrice = Deno.env.get("VITE_BASIC_MONTHLY_PRICE") || Deno.env.get("BASIC_MONTHLY_PRICE") || "";
+        const basicYearlyPrice = Deno.env.get("VITE_BASIC_YEARLY_PRICE") || Deno.env.get("BASIC_YEARLY_PRICE") || "";
+        const advancedMonthlyPrice = Deno.env.get("VITE_ADVANCED_MONTHLY_PRICE") || Deno.env.get("ADVANCED_MONTHLY_PRICE") || "";
+        const advancedYearlyPrice = Deno.env.get("VITE_ADVANCED_YEARLY_PRICE") || Deno.env.get("ADVANCED_YEARLY_PRICE") || "";
+
         let requestedTier: string | null = null;
         if (priceId === advancedMonthlyPrice || priceId === advancedYearlyPrice) {
           requestedTier = "advanced";
@@ -96,11 +144,11 @@ Deno.serve(async (req) => {
               headers: { Authorization: `Bearer ${stripeSecret}` },
             }
           );
-          
+
           if (customersRes.ok) {
             const customersData = await customersRes.json();
             const customers = customersData.data || [];
-            
+
             for (const customer of customers) {
               const subscriptionsRes = await fetch(
                 `https://api.stripe.com/v1/subscriptions?customer=${customer.id}&status=all&limit=100`,
@@ -109,48 +157,48 @@ Deno.serve(async (req) => {
                   headers: { Authorization: `Bearer ${stripeSecret}` },
                 }
               );
-              
+
               if (subscriptionsRes.ok) {
                 const subscriptionsData = await subscriptionsRes.json();
                 const subscriptions = (subscriptionsData.data || []).filter(
-                  (sub: any) => sub.status === "active" || sub.status === "trialing"
+                  (sub: { status?: string }) => sub.status === "active" || sub.status === "trialing"
                 );
-                
+
                 if (subscriptions.length > 0) {
                   for (const subscription of subscriptions) {
                     const subPriceId = subscription.items?.data?.[0]?.price?.id;
-                    const subTier = 
+                    const subTier =
                       (subPriceId === advancedMonthlyPrice || subPriceId === advancedYearlyPrice) ? "advanced" :
                       (subPriceId === basicMonthlyPrice || subPriceId === basicYearlyPrice) ? "basic" :
                       null;
-                    
+
                     // Block 1: Exact duplicate (same priceId)
                     if (subPriceId === priceId) {
-                      return new Response(JSON.stringify({ 
-                        error: `You already have an active subscription to this exact plan. Please manage your existing subscription.` 
-                      }), { 
+                      return new Response(JSON.stringify({
+                        error: `You already have an active subscription to this exact plan. Please manage your existing subscription.`,
+                      }), {
                         status: 400,
-                        headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" }
+                        headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
                       });
                     }
-                    
+
                     // Block 2: Same tier (prevents basic_monthly → basic_yearly, etc.)
                     if (subTier && requestedTier && subTier === requestedTier) {
-                      return new Response(JSON.stringify({ 
-                        error: `You already have an active ${subTier} subscription. Please cancel your existing subscription first or upgrade to a different tier.` 
-                      }), { 
+                      return new Response(JSON.stringify({
+                        error: `You already have an active ${subTier} subscription. Please cancel your existing subscription first or upgrade to a different tier.`,
+                      }), {
                         status: 400,
-                        headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" }
+                        headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
                       });
                     }
-                    
+
                     // Block 3: Downgrade attempt (advanced → basic)
                     if (subTier === "advanced" && requestedTier === "basic") {
-                      return new Response(JSON.stringify({ 
-                        error: `You currently have an Advanced subscription. Please cancel it first before subscribing to Basic.` 
-                      }), { 
+                      return new Response(JSON.stringify({
+                        error: `You currently have an Advanced subscription. Please cancel it first before subscribing to Basic.`,
+                      }), {
                         status: 400,
-                        headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" }
+                        headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
                       });
                     }
                   }
@@ -158,83 +206,46 @@ Deno.serve(async (req) => {
               }
             }
           }
-          
-          // GUARD CHECK 2: Check database (backup validation)
-          const userRes = await fetch(
-            `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=is_paid,subscription_tier,subscription_end,stripe_customer_id`,
-            {
-              headers: {
-                apikey: serviceRoleKey,
-                Authorization: `Bearer ${serviceRoleKey}`,
-              },
-            }
-          );
-          
-          if (userRes.ok) {
-            const users = await userRes.json();
-            if (users && users.length > 0) {
-              const user = users[0];
-              const currentTier = user.subscription_tier || "free";
-              const isPaid = user.is_paid === true;
-              const subscriptionEnd = user.subscription_end
-                ? new Date(user.subscription_end)
-                : null;
-              const isActive = isPaid && subscriptionEnd && subscriptionEnd > new Date();
-              
-              // Block if active subscription exists (unless upgrading)
-              if (isActive) {
-                // Allow upgrade (basic → advanced)
-                if (currentTier === "basic" && requestedTier === "advanced") {
-                  // Allow - this is an upgrade
-                } 
-                // Block same tier
-                else if (currentTier === requestedTier) {
-                  return new Response(JSON.stringify({ 
-                    error: `You already have an active ${currentTier} subscription. Please manage your existing subscription.` 
-                  }), { 
-                    status: 400,
-                    headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" }
-                  });
-                }
-                // Block downgrade
-                else if (currentTier === "advanced" && requestedTier === "basic") {
-                  return new Response(JSON.stringify({ 
-                    error: `You currently have an Advanced subscription. Please manage your existing subscription.` 
-                  }), { 
-                    status: 400,
-                    headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" }
-                  });
-                }
+
+          // GUARD CHECK 2: Check database (backup validation) — same row as trial gating
+          if (appUserProfile) {
+            const user = appUserProfile;
+            const currentTier = user.subscription_tier || "free";
+            const isPaid = user.is_paid === true;
+            const subscriptionEnd = user.subscription_end
+              ? new Date(user.subscription_end)
+              : null;
+            const isActive = isPaid && subscriptionEnd && subscriptionEnd > new Date();
+
+            // Block if active subscription exists (unless upgrading)
+            if (isActive) {
+              // Allow upgrade (basic → advanced)
+              if (currentTier === "basic" && requestedTier === "advanced") {
+                // Allow - this is an upgrade
+              }
+              // Block same tier
+              else if (currentTier === requestedTier) {
+                return new Response(JSON.stringify({
+                  error: `You already have an active ${currentTier} subscription. Please manage your existing subscription.`,
+                }), {
+                  status: 400,
+                  headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
+                });
+              }
+              // Block downgrade
+              else if (currentTier === "advanced" && requestedTier === "basic") {
+                return new Response(JSON.stringify({
+                  error: `You currently have an Advanced subscription. Please manage your existing subscription.`,
+                }), {
+                  status: 400,
+                  headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
+                });
               }
             }
           }
         }
       } else {
-        console.warn(`[Checkout] Missing SUPABASE_URL or SERVICE_ROLE_KEY. Skipping subscription validation.`);
-      }
-    }
-
-    // Reuse existing Stripe customer ID if available
-    let stripeCustomerId: string | null = null;
-    if (email) {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-      const serviceRoleKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
-      
-      if (supabaseUrl && serviceRoleKey) {
-        const customerRes = await fetch(
-          `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=stripe_customer_id`,
-          {
-            headers: {
-              apikey: serviceRoleKey,
-              Authorization: `Bearer ${serviceRoleKey}`,
-            },
-          }
-        );
-
-        if (customerRes.ok) {
-          const users = await customerRes.json();
-          stripeCustomerId = users?.[0]?.stripe_customer_id ?? null;
-        }
+        console.warn("[Checkout] Missing SUPABASE_URL or service role key. Skipping subscription validation.");
       }
     }
 
@@ -261,15 +272,20 @@ Deno.serve(async (req) => {
     }
 
     // Trial: 30 days for affiliate (Tolt referral), 7 days otherwise. Newsletter has no trial.
+    // Skipped when users.has_used_trial is true (lifetime per app user, includes affiliate trials).
     const isAffiliate = typeof toltReferral === "string" && toltReferral.trim().length > 0;
     if (mode === "subscription" && !isNewsletter) {
-      const trialDays = isAffiliate ? "30" : "7";
-      bodyParams["subscription_data[trial_period_days]"] = trialDays;
-      if (isAffiliate) {
-        bodyParams["subscription_data[metadata][tolt_referral]"] = toltReferral.trim();
-        console.log("[Checkout] [TRIAL] 30-day affiliate trial; tolt_referral sent to Stripe metadata");
+      if (!hasUsedTrial) {
+        const trialDays = isAffiliate ? "30" : "7";
+        bodyParams["subscription_data[trial_period_days]"] = trialDays;
+        if (isAffiliate) {
+          bodyParams["subscription_data[metadata][tolt_referral]"] = toltReferral.trim();
+          console.log("[Checkout] [TRIAL] 30-day affiliate trial; tolt_referral sent to Stripe metadata");
+        } else {
+          console.log("[Checkout] [TRIAL] 7-day free trial enabled for subscription (card required, first charge after trial)");
+        }
       } else {
-        console.log("[Checkout] [TRIAL] 7-day free trial enabled for subscription (card required, first charge after trial)");
+        console.log("[Checkout] [TRIAL] Skipping trial — user has_used_trial already");
       }
     }
     if (isAffiliate && (typeof toltReferral === "string" && toltReferral.trim())) {
@@ -284,8 +300,6 @@ Deno.serve(async (req) => {
 
     // Persist affiliate attribution on user record when we have email and referral
     if (email && isAffiliate && typeof toltReferral === "string" && toltReferral.trim()) {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-      const serviceRoleKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
       if (supabaseUrl && serviceRoleKey) {
         await fetch(
           `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`,
