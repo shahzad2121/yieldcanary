@@ -14,9 +14,9 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), { 
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
-      headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" }
+      headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
     });
   }
 
@@ -24,9 +24,9 @@ Deno.serve(async (req) => {
     const { priceId, email, successUrl, cancelUrl, tolt_referral: toltReferral } = await req.json();
 
     if (!priceId) {
-      return new Response(JSON.stringify({ error: "Missing priceId" }), { 
+      return new Response(JSON.stringify({ error: "Missing priceId" }), {
         status: 400,
-        headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" }
+        headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
       });
     }
 
@@ -61,14 +61,14 @@ Deno.serve(async (req) => {
 
     console.log(`[Checkout] Price ${priceId} is ${priceData.type}, using mode: ${mode}`);
 
-    // Newsletter product: no app validation, no trial, add metadata for webhook
+    // Identify standalone newsletter SKUs (separate product from app tiers)
     const newsletterMonthlyPrice =
       Deno.env.get("NEWSLETTER_MONTHLY_PRICE_ID") ?? "";
     const newsletterYearlyPrice =
       Deno.env.get("NEWSLETTER_YEARLY_PRICE_ID") ?? "";
     const isNewsletter =
-      (newsletterMonthlyPrice && priceId === newsletterMonthlyPrice) ||
-      (newsletterYearlyPrice && priceId === newsletterYearlyPrice);
+      (!!newsletterMonthlyPrice && priceId === newsletterMonthlyPrice) ||
+      (!!newsletterYearlyPrice && priceId === newsletterYearlyPrice);
     const newsletterPlan = priceId === newsletterYearlyPrice ? "yearly" : "monthly";
     if (isNewsletter) {
       console.log("[Checkout] [NEWSLETTER] Newsletter checkout - plan:", newsletterPlan);
@@ -107,26 +107,30 @@ Deno.serve(async (req) => {
         } else {
           console.warn(
             "[Checkout] User profile fetch failed; skipping trial (fail closed). status:",
-            profileRes.status
+            profileRes.status,
           );
           hasUsedTrial = true;
         }
       } else {
         console.warn(
-          "[Checkout] Missing SUPABASE_URL or service role key; skipping trial (fail closed)"
+          "[Checkout] Missing SUPABASE_URL or service role key; skipping trial (fail closed)",
         );
         hasUsedTrial = true;
       }
     }
 
-    // Validate: Prevent subscribing if user already has active subscription (app subscriptions only; skip for newsletter)
+    // Validate: prevent duplicate or invalid app subscriptions (skip for newsletter)
     if (mode === "subscription" && email && !isNewsletter) {
       if (supabaseUrl && serviceRoleKey) {
         // Map priceId to tier
-        const basicMonthlyPrice = Deno.env.get("VITE_BASIC_MONTHLY_PRICE") || Deno.env.get("BASIC_MONTHLY_PRICE") || "";
-        const basicYearlyPrice = Deno.env.get("VITE_BASIC_YEARLY_PRICE") || Deno.env.get("BASIC_YEARLY_PRICE") || "";
-        const advancedMonthlyPrice = Deno.env.get("VITE_ADVANCED_MONTHLY_PRICE") || Deno.env.get("ADVANCED_MONTHLY_PRICE") || "";
-        const advancedYearlyPrice = Deno.env.get("VITE_ADVANCED_YEARLY_PRICE") || Deno.env.get("ADVANCED_YEARLY_PRICE") || "";
+        const basicMonthlyPrice =
+          Deno.env.get("VITE_BASIC_MONTHLY_PRICE") || Deno.env.get("BASIC_MONTHLY_PRICE") || "";
+        const basicYearlyPrice =
+          Deno.env.get("VITE_BASIC_YEARLY_PRICE") || Deno.env.get("BASIC_YEARLY_PRICE") || "";
+        const advancedMonthlyPrice =
+          Deno.env.get("VITE_ADVANCED_MONTHLY_PRICE") || Deno.env.get("ADVANCED_MONTHLY_PRICE") || "";
+        const advancedYearlyPrice =
+          Deno.env.get("VITE_ADVANCED_YEARLY_PRICE") || Deno.env.get("ADVANCED_YEARLY_PRICE") || "";
 
         let requestedTier: string | null = null;
         if (priceId === advancedMonthlyPrice || priceId === advancedYearlyPrice) {
@@ -142,7 +146,7 @@ Deno.serve(async (req) => {
             {
               method: "GET",
               headers: { Authorization: `Bearer ${stripeSecret}` },
-            }
+            },
           );
 
           if (customersRes.ok) {
@@ -155,51 +159,74 @@ Deno.serve(async (req) => {
                 {
                   method: "GET",
                   headers: { Authorization: `Bearer ${stripeSecret}` },
-                }
+                },
               );
 
               if (subscriptionsRes.ok) {
                 const subscriptionsData = await subscriptionsRes.json();
                 const subscriptions = (subscriptionsData.data || []).filter(
-                  (sub: { status?: string }) => sub.status === "active" || sub.status === "trialing"
+                  (sub: { status?: string }) => sub.status === "active" || sub.status === "trialing",
                 );
 
                 if (subscriptions.length > 0) {
                   for (const subscription of subscriptions) {
                     const subPriceId = subscription.items?.data?.[0]?.price?.id;
                     const subTier =
-                      (subPriceId === advancedMonthlyPrice || subPriceId === advancedYearlyPrice) ? "advanced" :
-                      (subPriceId === basicMonthlyPrice || subPriceId === basicYearlyPrice) ? "basic" :
-                      null;
+                      (subPriceId === advancedMonthlyPrice || subPriceId === advancedYearlyPrice)
+                        ? "advanced"
+                        : (subPriceId === basicMonthlyPrice || subPriceId === basicYearlyPrice)
+                        ? "basic"
+                        : null;
 
                     // Block 1: Exact duplicate (same priceId)
                     if (subPriceId === priceId) {
-                      return new Response(JSON.stringify({
-                        error: `You already have an active subscription to this exact plan. Please manage your existing subscription.`,
-                      }), {
-                        status: 400,
-                        headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
-                      });
+                      return new Response(
+                        JSON.stringify({
+                          error:
+                            `You already have an active subscription to this exact plan. Please manage your existing subscription.`,
+                        }),
+                        {
+                          status: 400,
+                          headers: {
+                            "Access-Control-Allow-Origin": "*",
+                            "Content-Type": "application/json",
+                          },
+                        },
+                      );
                     }
 
                     // Block 2: Same tier (prevents basic_monthly → basic_yearly, etc.)
                     if (subTier && requestedTier && subTier === requestedTier) {
-                      return new Response(JSON.stringify({
-                        error: `You already have an active ${subTier} subscription. Please cancel your existing subscription first or upgrade to a different tier.`,
-                      }), {
-                        status: 400,
-                        headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
-                      });
+                      return new Response(
+                        JSON.stringify({
+                          error:
+                            `You already have an active ${subTier} subscription. Please cancel your existing subscription first or upgrade to a different tier.`,
+                        }),
+                        {
+                          status: 400,
+                          headers: {
+                            "Access-Control-Allow-Origin": "*",
+                            "Content-Type": "application/json",
+                          },
+                        },
+                      );
                     }
 
                     // Block 3: Downgrade attempt (advanced → basic)
                     if (subTier === "advanced" && requestedTier === "basic") {
-                      return new Response(JSON.stringify({
-                        error: `You currently have an Advanced subscription. Please cancel it first before subscribing to Basic.`,
-                      }), {
-                        status: 400,
-                        headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
-                      });
+                      return new Response(
+                        JSON.stringify({
+                          error:
+                            `You currently have an Advanced subscription. Please cancel it first before subscribing to Basic.`,
+                        }),
+                        {
+                          status: 400,
+                          headers: {
+                            "Access-Control-Allow-Origin": "*",
+                            "Content-Type": "application/json",
+                          },
+                        },
+                      );
                     }
                   }
                 }
@@ -225,21 +252,35 @@ Deno.serve(async (req) => {
               }
               // Block same tier
               else if (currentTier === requestedTier) {
-                return new Response(JSON.stringify({
-                  error: `You already have an active ${currentTier} subscription. Please manage your existing subscription.`,
-                }), {
-                  status: 400,
-                  headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
-                });
+                return new Response(
+                  JSON.stringify({
+                    error:
+                      `You already have an active ${currentTier} subscription. Please manage your existing subscription.`,
+                  }),
+                  {
+                    status: 400,
+                    headers: {
+                      "Access-Control-Allow-Origin": "*",
+                      "Content-Type": "application/json",
+                    },
+                  },
+                );
               }
               // Block downgrade
               else if (currentTier === "advanced" && requestedTier === "basic") {
-                return new Response(JSON.stringify({
-                  error: `You currently have an Advanced subscription. Please manage your existing subscription.`,
-                }), {
-                  status: 400,
-                  headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
-                });
+                return new Response(
+                  JSON.stringify({
+                    error:
+                      `You currently have an Advanced subscription. Please manage your existing subscription.`,
+                  }),
+                  {
+                    status: 400,
+                    headers: {
+                      "Access-Control-Allow-Origin": "*",
+                      "Content-Type": "application/json",
+                    },
+                  },
+                );
               }
             }
           }
@@ -280,19 +321,23 @@ Deno.serve(async (req) => {
         bodyParams["subscription_data[trial_period_days]"] = trialDays;
         if (isAffiliate) {
           bodyParams["subscription_data[metadata][tolt_referral]"] = toltReferral.trim();
-          console.log("[Checkout] [TRIAL] 30-day affiliate trial; tolt_referral sent to Stripe metadata");
+          console.log(
+            "[Checkout] [TRIAL] 30-day affiliate trial; tolt_referral sent to Stripe metadata",
+          );
         } else {
-          console.log("[Checkout] [TRIAL] 7-day free trial enabled for subscription (card required, first charge after trial)");
+          console.log(
+            "[Checkout] [TRIAL] 7-day free trial enabled for subscription (card required, first charge after trial)",
+          );
         }
       } else {
         console.log("[Checkout] [TRIAL] Skipping trial — user has_used_trial already");
       }
     }
-    if (isAffiliate && (typeof toltReferral === "string" && toltReferral.trim())) {
+    if (isAffiliate && typeof toltReferral === "string" && toltReferral.trim()) {
       bodyParams["metadata[tolt_referral]"] = toltReferral.trim();
     }
 
-    // Newsletter: pass metadata so webhook can set newsletter_tier and stripe_newsletter_subscription_id
+    // Newsletter: inject metadata so the webhook can identify this as a newsletter subscription
     if (mode === "subscription" && isNewsletter) {
       bodyParams["metadata[product_type]"] = "newsletter";
       bodyParams["metadata[newsletter_plan]"] = newsletterPlan;
@@ -315,7 +360,7 @@ Deno.serve(async (req) => {
               is_affiliate_user: true,
               affiliate_signup_date: new Date().toISOString(),
             }),
-          }
+          },
         );
       }
     }
@@ -336,16 +381,16 @@ Deno.serve(async (req) => {
     }
 
     const session = await checkoutRes.json();
-    return new Response(JSON.stringify({ sessionId: session.id }), { 
+    return new Response(JSON.stringify({ sessionId: session.id }), {
       status: 200,
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
     });
   } catch (error) {
     console.error("Error creating checkout session:", error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: errorMessage }), { 
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
-      headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" }
+      headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" },
     });
   }
 });

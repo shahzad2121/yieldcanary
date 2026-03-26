@@ -7,7 +7,7 @@ const CORS_HEADERS = {
   "Content-Type": "application/json",
 };
 
-function jsonResponse(body, status) {
+function jsonResponse(body: Record<string, unknown>, status: number) {
   return new Response(JSON.stringify(body), { status, headers: CORS_HEADERS });
 }
 
@@ -21,14 +21,17 @@ Deno.serve(async (req) => {
   }
 
   try {
-    console.log("[cancel-newsletter-test] Request started");
+    console.log("[cancel-newsletter] Request started");
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return jsonResponse({ error: "Missing or invalid Authorization header" }, 401);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const serviceRoleKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+    const serviceRoleKey =
+      Deno.env.get("SERVICE_ROLE_KEY") ??
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
+      "";
     const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
 
     if (!supabaseUrl || !serviceRoleKey) {
@@ -38,6 +41,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Stripe is not configured" }, 500);
     }
 
+    // Verify the calling user's JWT via Supabase auth
     const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
       headers: { Authorization: authHeader, apikey: serviceRoleKey },
     });
@@ -49,8 +53,9 @@ Deno.serve(async (req) => {
     if (!email) {
       return jsonResponse({ error: "User email not found" }, 401);
     }
-    console.log("[cancel-newsletter-test] Auth OK", { email });
+    console.log("[cancel-newsletter] Auth OK", { email });
 
+    // Load the user row to get their newsletter subscription ID
     const usersRes = await fetch(
       `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}&select=id,stripe_newsletter_subscription_id`,
       {
@@ -70,26 +75,24 @@ Deno.serve(async (req) => {
     if (!subscriptionId) {
       return jsonResponse({ error: "No active newsletter subscription to cancel" }, 400);
     }
-    console.log("[cancel-newsletter-test] Loaded user + newsletter subscription", {
-      user_id: user.id,
-      subscriptionId,
-    });
+    console.log("[cancel-newsletter] Cancelling Stripe subscription", { subscriptionId });
 
-    // Immediately cancel the Stripe subscription (test mode)
+    // Immediately cancel in Stripe (no period-end grace; matches current policy)
     const deleteRes = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${stripeSecret}`,
-      },
+      headers: { Authorization: `Bearer ${stripeSecret}` },
     });
     if (!deleteRes.ok) {
       const errText = await deleteRes.text();
-      console.error("[cancel-newsletter-test] Stripe DELETE subscription error:", errText);
-      return jsonResponse({ error: "Could not cancel newsletter. Please try again or contact support." }, 500);
+      console.error("[cancel-newsletter] Stripe DELETE error:", errText);
+      return jsonResponse(
+        { error: "Could not cancel newsletter. Please try again or contact support." },
+        500
+      );
     }
-    console.log("[cancel-newsletter-test] Stripe subscription deleted immediately", { subscriptionId });
+    console.log("[cancel-newsletter] Stripe subscription deleted", { subscriptionId });
 
-    // Clear newsletter fields in users table so user is no longer a subscriber
+    // Clear newsletter fields so the user stops receiving the weekly send
     const nowIso = new Date().toISOString();
     const updateRes = await fetch(
       `${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`,
@@ -101,7 +104,7 @@ Deno.serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          newsletter_tier: 'none',
+          newsletter_tier: "none",
           stripe_newsletter_subscription_id: null,
           updated_at: nowIso,
         }),
@@ -110,20 +113,17 @@ Deno.serve(async (req) => {
 
     if (!updateRes.ok) {
       const errText = await updateRes.text();
-      console.error("[cancel-newsletter-test] Failed to clear newsletter fields:", errText);
+      console.error("[cancel-newsletter] Failed to clear newsletter fields:", errText);
       return jsonResponse(
-        { error: "Newsletter was cancelled, but we could not update your account. Please contact support." },
+        { error: "Newsletter cancelled but account not updated. Please contact support." },
         500
       );
     }
 
-    console.log("[cancel-newsletter-test] User newsletter fields cleared", {
-      email,
-    });
-
+    console.log("[cancel-newsletter] Newsletter fields cleared", { email });
     return jsonResponse({ success: true }, 200);
   } catch (e) {
-    console.error("[cancel-newsletter-test] Unexpected error:", e);
+    console.error("[cancel-newsletter] Unexpected error:", e);
     return jsonResponse({ error: "Something went wrong" }, 500);
   }
 });

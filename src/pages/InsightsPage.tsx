@@ -37,7 +37,16 @@ const InsightsPage = () => {
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const navigate = useNavigate();
   const { etfs, loading: etfsLoading } = useETFs();
-  const { user: subscriptionUser, loading: userLoading, isTrialing, trialEndsAt, cancelAtPeriodEnd, cancelsAt, refetch: refetchSubscription } = useUserSubscription();
+  const {
+    user: subscriptionUser,
+    loading: userLoading,
+    isTrialing,
+    trialEndsAt,
+    cancelAtPeriodEnd,
+    cancelsAt,
+    newsletterTier,
+    refetch: refetchSubscription,
+  } = useUserSubscription();
   const { sectionOrder, setSectionOrder } = useInsightsSectionOrder();
 
   const subscriptionTier = subscriptionUser?.subscription_tier ?? null;
@@ -94,6 +103,7 @@ const InsightsPage = () => {
             trialEndsAt={trialEndsAt}
             cancelAtPeriodEnd={cancelAtPeriodEnd}
             cancelsAt={cancelsAt}
+            newsletterTier={newsletterTier}
             userEmail={userEmail}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}

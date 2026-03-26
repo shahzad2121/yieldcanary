@@ -50,6 +50,14 @@ type InsightsPayload = {
 const MAX_ITEMS_PER_SECTION = 5;
 const SUPPORT_EMAIL = "support@yieldcanary.com";
 
+/**
+ * TEMP — set to "" to send to all subscribers again.
+ * When non-empty: cron / normal run sends only if this email matches a user that is
+ * Basic or Advanced with subscription_status active or trialing (same rules as batch).
+ * If not eligible, no emails are sent (check logs).
+ */
+const TEMP_CRON_SEND_ONLY_EMAIL = "";
+
 function corsHeaders(): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": "*",
@@ -183,7 +191,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-hei
 .f a{color:#0da472;text-decoration:none;font-weight:500}
 .fc{font-size:11px;color:#64748b;margin-top:16px}
 @media(max-width:600px){body{padding:8px}.h,.x{padding:20px 16px}.h h1{font-size:20px}.s{padding:16px;margin:12px 0}.r{font-size:13px}.a{padding:8px 16px;font-size:12px}.f{padding:20px 16px}}
-</style></head><body><div class="c"><div class="h"><h1>🐦 YieldCanary</h1><p>YieldCanary Weekly — ${dateStr}</p></div><div class="x"><div class="s"><h3>📊 Buy Zone Picks</h3><div>${buyZoneRowsHtml}</div><a href="${appUrl}/insights" class="a">See all Buy Zone picks →</a></div><div class="s"><h3>📅 Top Monthly Payers</h3><div>${monthlyRowsHtml}</div><a href="${appUrl}/insights" class="a">See all monthly payers →</a></div><div class="s"><h3>📅 Top Weekly Payers</h3><div>${weeklyRowsHtml}</div><a href="${appUrl}/insights" class="a">See all weekly payers →</a></div><div class="s"><h3>📈 ${moversHeader}</h3><p class="ms">Biggest improvements</p><div>${gainersHtml}</div><p class="ms" style="margin-top:12px">Biggest deteriorations</p><div>${losersHtml}</div><a href="${appUrl}/insights" class="a">See movers in Insights →</a></div></div><div class="f"><p class="ft">You're receiving this because you subscribed to the YieldCanary Weekly Newsletter.</p><p class="ft"><a href="${appUrl}">Open YieldCanary</a> · Manage subscription in your account.</p><p class="fc">© 2026 YieldCanary. All rights reserved.</p></div></div></body></html>`;
+</style></head><body><div class="c"><div class="h"><h1>🐦 YieldCanary</h1><p>YieldCanary Weekly — ${dateStr}</p></div><div class="x"><div class="s"><h3>📊 Buy Zone Picks</h3><div>${buyZoneRowsHtml}</div><a href="${appUrl}/insights" class="a">See all Buy Zone picks →</a></div><div class="s"><h3>📅 Top Monthly Payers</h3><div>${monthlyRowsHtml}</div><a href="${appUrl}/insights" class="a">See all monthly payers →</a></div><div class="s"><h3>📅 Top Weekly Payers</h3><div>${weeklyRowsHtml}</div><a href="${appUrl}/insights" class="a">See all weekly payers →</a></div><div class="s"><h3>📈 ${moversHeader}</h3><p class="ms">Biggest improvements</p><div>${gainersHtml}</div><p class="ms" style="margin-top:12px">Biggest deteriorations</p><div>${losersHtml}</div><a href="${appUrl}/insights" class="a">See movers in Insights →</a></div></div><div class="f"><p class="ft">You're receiving this because you have an active YieldCanary plan or newsletter subscription.</p><p class="ft"><a href="${appUrl}">Open YieldCanary</a> · Manage your subscription in your account.</p><p class="fc">© 2026 YieldCanary. All rights reserved.</p></div></div></body></html>`;
 }
 
 async function fetchInsights(supabaseUrl: string, serviceRoleKey: string): Promise<InsightsPayload> {
@@ -205,19 +213,77 @@ async function fetchInsights(supabaseUrl: string, serviceRoleKey: string): Promi
   return json as InsightsPayload;
 }
 
+/**
+ * Weekly newsletter recipients = union of:
+ * A) Basic/Advanced app subscribers (active or trialing) — newsletter bundled with plan
+ * B) Standalone newsletter subscribers (newsletter_tier monthly or yearly)
+ * Results are email-deduped so paying app users who also hold a newsletter sub receive only one copy.
+ */
 async function getSubscriberEmails(supabase: ReturnType<typeof createClient>): Promise<string[]> {
-  const { data, error } = await supabase
-    .from("users")
-    .select("email")
-    .in("newsletter_tier", ["monthly", "yearly"]);
-  if (error) {
-    throw new Error(`Failed to fetch subscribers: ${error.message}`);
+  const [appResult, nlResult] = await Promise.all([
+    supabase
+      .from("users")
+      .select("email")
+      .in("subscription_tier", ["basic", "advanced"])
+      .in("subscription_status", ["active", "trialing"]),
+    supabase
+      .from("users")
+      .select("email")
+      .in("newsletter_tier", ["monthly", "yearly"]),
+  ]);
+
+  if (appResult.error) {
+    throw new Error(`Failed to fetch app subscribers: ${appResult.error.message}`);
   }
-  const rows = (data ?? []) as { email?: string }[];
-  const emails = rows
-    .map((r) => r.email)
-    .filter((e): e is string => typeof e === "string" && e.length > 0);
-  return [...new Set(emails)];
+  if (nlResult.error) {
+    throw new Error(`Failed to fetch newsletter subscribers: ${nlResult.error.message}`);
+  }
+
+  const toEmail = (r: { email?: string }): string | null =>
+    typeof r.email === "string" && r.email.length > 0 ? r.email : null;
+
+  const appEmails = (appResult.data ?? []).map(toEmail).filter((e): e is string => e !== null);
+  const nlEmails = (nlResult.data ?? []).map(toEmail).filter((e): e is string => e !== null);
+
+  return [...new Set([...appEmails, ...nlEmails])];
+}
+
+/** Single temp recipient: eligible if they qualify under either recipient rule (app plan OR newsletter sub). */
+async function getTempCronRecipientIfEligible(
+  supabase: ReturnType<typeof createClient>,
+  rawEmail: string
+): Promise<string[]> {
+  const trimmed = rawEmail.trim();
+  if (!trimmed) return [];
+
+  const [appResult, nlResult] = await Promise.all([
+    supabase
+      .from("users")
+      .select("email")
+      .ilike("email", trimmed)
+      .in("subscription_tier", ["basic", "advanced"])
+      .in("subscription_status", ["active", "trialing"])
+      .maybeSingle(),
+    supabase
+      .from("users")
+      .select("email")
+      .ilike("email", trimmed)
+      .in("newsletter_tier", ["monthly", "yearly"])
+      .maybeSingle(),
+  ]);
+
+  if (appResult.error) throw new Error(`Temp recipient app lookup failed: ${appResult.error.message}`);
+  if (nlResult.error) throw new Error(`Temp recipient newsletter lookup failed: ${nlResult.error.message}`);
+
+  const email = (appResult.data?.email ?? nlResult.data?.email) as string | undefined;
+  if (!email) {
+    console.warn(
+      "[send-weekly-newsletter] TEMP_CRON_SEND_ONLY_EMAIL not eligible (need basic/advanced active/trialing OR newsletter monthly/yearly):",
+      trimmed
+    );
+    return [];
+  }
+  return [email];
 }
 
 async function sendViaResend(
@@ -313,8 +379,18 @@ Deno.serve(async (req) => {
       recipients = [SUPPORT_EMAIL];
       console.log("[send-weekly-newsletter] Preview mode: sending only to", SUPPORT_EMAIL);
     } else {
-      recipients = await getSubscriberEmails(supabase);
-      console.log("[send-weekly-newsletter] Sending to", recipients.length, "subscribers");
+      const tempOnly = TEMP_CRON_SEND_ONLY_EMAIL.trim();
+      if (tempOnly) {
+        recipients = await getTempCronRecipientIfEligible(supabase, tempOnly);
+        console.log(
+          "[send-weekly-newsletter] TEMP_CRON_SEND_ONLY_EMAIL mode: eligible recipients =",
+          recipients.length,
+          recipients.length ? recipients[0] : "(none)"
+        );
+      } else {
+        recipients = await getSubscriberEmails(supabase);
+        console.log("[send-weekly-newsletter] Sending to", recipients.length, "subscribers");
+      }
     }
 
     let sent = 0;
@@ -335,6 +411,8 @@ Deno.serve(async (req) => {
         sent,
         total: recipients.length,
         preview,
+        temp_send_only:
+          !preview && TEMP_CRON_SEND_ONLY_EMAIL.trim().length > 0,
       }),
       { status: 200, headers: corsHeaders() }
     );

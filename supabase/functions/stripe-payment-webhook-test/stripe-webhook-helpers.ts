@@ -453,6 +453,8 @@ export async function downgradeUserToFree(
         trial_ends_at: null,
         subscription_status: "free",
         trial_converted_to_paid: false,
+        cancel_at_period_end: false,
+        cancels_at: null,
         updated_at: new Date().toISOString(),
       }),
     }

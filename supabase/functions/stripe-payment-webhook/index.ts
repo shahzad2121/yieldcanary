@@ -27,9 +27,11 @@ const advancedMonthlyPrice = Deno.env.get("VITE_ADVANCED_MONTHLY_PRICE") || "";
 const advancedYearlyPrice = Deno.env.get("VITE_ADVANCED_YEARLY_PRICE") || "";
 const newsletterMonthlyPrice = Deno.env.get("NEWSLETTER_MONTHLY_PRICE_ID") ?? "";
 const newsletterYearlyPrice = Deno.env.get("NEWSLETTER_YEARLY_PRICE_ID") ?? "";
+
 const isNewsletterPriceId = (priceId: string) =>
-  (newsletterMonthlyPrice && priceId === newsletterMonthlyPrice) ||
-  (newsletterYearlyPrice && priceId === newsletterYearlyPrice);
+  (!!newsletterMonthlyPrice && priceId === newsletterMonthlyPrice) ||
+  (!!newsletterYearlyPrice && priceId === newsletterYearlyPrice);
+
 const newsletterPlanFromPriceId = (priceId: string) =>
   priceId === newsletterYearlyPrice ? "yearly" : "monthly";
 
@@ -101,11 +103,13 @@ Deno.serve(async (req) => {
     if (mode === "subscription") {
       const metadata = session.metadata || {};
       if (metadata.product_type === "newsletter") {
+        // Newsletter standalone subscription: set newsletter_tier + stripe_newsletter_subscription_id
         const subId = session.subscription;
         const plan = metadata.newsletter_plan === "yearly" ? "yearly" : "monthly";
-        const emailForNewsletter = customerEmail || (session.customer && typeof session.customer === "string"
-          ? await getStripeCustomerEmail(session.customer, stripeSecret)
-          : null);
+        const emailForNewsletter = customerEmail ||
+          (typeof session.customer === "string"
+            ? await getStripeCustomerEmail(session.customer, stripeSecret)
+            : null);
         if (emailForNewsletter && subId) {
           const updateRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(emailForNewsletter)}`, {
             method: "PATCH",
@@ -120,14 +124,9 @@ Deno.serve(async (req) => {
               updated_at: new Date().toISOString(),
             }),
           });
-          console.log("[Webhook] [NEWSLETTER] User newsletter subscription set:", emailForNewsletter, "plan:", plan, "status:", updateRes.status);
+          console.log("[Webhook] [NEWSLETTER] Newsletter subscription set:", emailForNewsletter, "plan:", plan, "status:", updateRes.status);
           if (updateRes.ok) {
-            const user = await getUserByEmail(
-              supabaseUrl,
-              serviceRoleKey,
-              emailForNewsletter,
-              "id,name,username"
-            );
+            const user = await getUserByEmail(supabaseUrl, serviceRoleKey, emailForNewsletter, "id,name,username");
             if (user?.id) {
               await sendTransactionalEmail(
                 supabaseUrl,
@@ -136,14 +135,13 @@ Deno.serve(async (req) => {
                 emailForNewsletter,
                 "newsletter_subscribed",
                 "newsletter_subscribed",
-                {
-                  first_name: user.name || user.username || emailForNewsletter.split("@")[0],
-                }
+                { first_name: user.name || user.username || emailForNewsletter.split("@")[0] }
               );
             }
           }
         }
       } else {
+        // App subscription: customer.subscription.created will set tier + send email
         console.log("[Webhook] Subscription checkout - skipping email (customer.subscription.created will send it)");
         if (customerEmail) {
           const sessionCustomerId = typeof session.customer === "string"
@@ -300,7 +298,7 @@ Deno.serve(async (req) => {
       }
     }
   }
-  // ----- customer.subscription.deleted: clear newsletter or downgrade app user -----
+  // ----- customer.subscription.deleted: clear newsletter OR downgrade app user -----
   if (event.type === "customer.subscription.deleted") {
     const subscription = event.data.object;
     const subscriptionId = subscription.id;
@@ -312,30 +310,45 @@ Deno.serve(async (req) => {
     const email = customerId ? await getStripeCustomerEmail(customerId, stripeSecret) : null;
 
     if (email) {
-      const user = await getUserByEmail(supabaseUrl, serviceRoleKey, email, "id,name,username,subscription_tier,stripe_subscription_id,stripe_newsletter_subscription_id");
+      const user = await getUserByEmail(
+        supabaseUrl,
+        serviceRoleKey,
+        email,
+        "id,name,username,subscription_tier,stripe_subscription_id,stripe_newsletter_subscription_id"
+      );
       if (user) {
-        const userAny = user as { stripe_subscription_id?: string | null; stripe_newsletter_subscription_id?: string | null };
+        const userAny = user as {
+          stripe_subscription_id?: string | null;
+          stripe_newsletter_subscription_id?: string | null;
+        };
+
+        // Newsletter subscription deleted: clear newsletter fields only
         if (userAny.stripe_newsletter_subscription_id === subscriptionId) {
+          console.log("[Webhook] [NEWSLETTER] Newsletter subscription deleted:", email);
           const clearRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
             method: "PATCH",
-            headers: { "apikey": serviceRoleKey, "Authorization": `Bearer ${serviceRoleKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ newsletter_tier: "none", stripe_newsletter_subscription_id: null, updated_at: new Date().toISOString() }),
+            headers: {
+              "apikey": serviceRoleKey,
+              "Authorization": `Bearer ${serviceRoleKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              newsletter_tier: "none",
+              stripe_newsletter_subscription_id: null,
+              updated_at: new Date().toISOString(),
+            }),
           });
-          console.log("[Webhook] [NEWSLETTER] Newsletter subscription cleared for:", email, "status:", clearRes.status);
+          console.log("[Webhook] [NEWSLETTER] Newsletter fields cleared:", email, "status:", clearRes.status);
           if (clearRes.ok && user.id) {
             await sendTransactionalEmail(
-              supabaseUrl,
-              serviceRoleKey,
-              user.id,
-              email,
-              "newsletter_cancelled",
-              "newsletter_cancelled",
-              {
-                first_name: user.name || user.username || email.split("@")[0],
-              }
+              supabaseUrl, serviceRoleKey, user.id, email,
+              "newsletter_cancelled", "newsletter_cancelled",
+              { first_name: user.name || user.username || email.split("@")[0] }
             );
           }
         }
+
+        // App subscription deleted: downgrade to free (newsletter fields untouched)
         if (userAny.stripe_subscription_id === subscriptionId) {
           console.log("[Webhook] [TRIAL/DOWNGRADE] Downgrading user (app subscription deleted):", email);
           const downgraded = await downgradeUserToFree(supabaseUrl, serviceRoleKey, email);
@@ -365,7 +378,7 @@ Deno.serve(async (req) => {
     
     console.log(`[Webhook] [FLOW] subscription event - priceId: ${priceId}, subscriptionId: ${subscriptionId}`);
     
-    // Step 2: Map price ID to tier (or newsletter)
+    // Step 2: Determine if this is a newsletter or app subscription
     const isNewsletterSub = isNewsletterPriceId(priceId);
     const newTier = priceIdToTier(priceId);
     console.log(`[Webhook] Mapped priceId ${priceId} to tier: ${newTier}, isNewsletter: ${isNewsletterSub}`);
@@ -428,11 +441,16 @@ Deno.serve(async (req) => {
     }
 
     if (email) {
+      // Newsletter subscription created/updated: update newsletter_tier only; skip all app flows
       if (isNewsletterSub) {
         const plan = newsletterPlanFromPriceId(priceId);
         const updateRes = await fetch(`${supabaseUrl}/rest/v1/users?email=eq.${encodeURIComponent(email)}`, {
           method: "PATCH",
-          headers: { "apikey": serviceRoleKey, "Authorization": `Bearer ${serviceRoleKey}`, "Content-Type": "application/json" },
+          headers: {
+            "apikey": serviceRoleKey,
+            "Authorization": `Bearer ${serviceRoleKey}`,
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             newsletter_tier: plan,
             stripe_newsletter_subscription_id: subscriptionId,
@@ -620,7 +638,7 @@ Deno.serve(async (req) => {
           console.error("[Webhook] [TRIAL/DOWNGRADE] Failed to downgrade:", email);
         }
       }
-      }
+      } // end of app-subscription else branch
     }
   }
 

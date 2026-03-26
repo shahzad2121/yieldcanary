@@ -72,20 +72,22 @@ Deno.serve(async (req) => {
 
     console.log(`[Checkout] [FLOW] priceId=${priceId}, type=${priceData.type}, mode=${mode}, email=${email}`);
 
-    // Newsletter product: no app validation, no trial, add metadata for webhook
-    const newsletterMonthlyPrice = Deno.env.get("NEWSLETTER_MONTHLY_PRICE_ID") ?? "price_1T9s8EJYaJlmvTvCgEQlA03h";
-    const newsletterYearlyPrice = Deno.env.get("NEWSLETTER_YEARLY_PRICE_ID") ?? "price_1T9sAyJYaJlmvTvCgxgcu0Oi";
+    // Identify standalone newsletter SKUs (separate product from app tiers)
+    const newsletterMonthlyPrice =
+      Deno.env.get("NEWSLETTER_MONTHLY_PRICE_ID") ?? "price_1T9s8EJYaJlmvTvCgEQlA03h";
+    const newsletterYearlyPrice =
+      Deno.env.get("NEWSLETTER_YEARLY_PRICE_ID") ?? "price_1T9sAyJYaJlmvTvCgxgcu0Oi";
     const isNewsletter =
-      (newsletterMonthlyPrice && priceId === newsletterMonthlyPrice) ||
-      (newsletterYearlyPrice && priceId === newsletterYearlyPrice);
+      (!!newsletterMonthlyPrice && priceId === newsletterMonthlyPrice) ||
+      (!!newsletterYearlyPrice && priceId === newsletterYearlyPrice);
     const newsletterPlan = priceId === newsletterYearlyPrice ? "yearly" : "monthly";
     if (isNewsletter) {
-      console.log("[Checkout] [NEWSLETTER] Newsletter checkout - plan:", newsletterPlan);
+      console.log("[Checkout] [NEWSLETTER] Newsletter checkout (test) - plan:", newsletterPlan);
     }
 
     /* --------------------------------------------------
        2️⃣ P0 — SMART SUBSCRIPTION VALIDATION
-       Allows upgrades, blocks duplicates & downgrades (app only; skip for newsletter)
+       Allows upgrades, blocks duplicates & downgrades (skip for newsletter)
     -------------------------------------------------- */
     if (mode === "subscription" && !isNewsletter) {
       // Map priceId to tier (app plans only)
@@ -305,13 +307,13 @@ Deno.serve(async (req) => {
       bodyParams["invoice_creation[enabled]"] = "true";
     }
 
-    // 7-day free trial for app subscriptions only; newsletter has no trial
+    // Trial only for app plans; newsletter has no trial period
     if (mode === "subscription" && !isNewsletter) {
       bodyParams["subscription_data[trial_period_days]"] = "7";
       console.log("[Checkout] [TRIAL] 7-day free trial enabled for subscription (card required, first charge after trial)");
     }
 
-    // Newsletter: pass metadata so webhook can set newsletter_tier and stripe_newsletter_subscription_id
+    // Newsletter metadata so the webhook can identify the product type
     if (mode === "subscription" && isNewsletter) {
       bodyParams["metadata[product_type]"] = "newsletter";
       bodyParams["metadata[newsletter_plan]"] = newsletterPlan;

@@ -39,7 +39,8 @@ export function ConfirmCancelNewsletterModal({
 
       toast({
         title: 'Newsletter cancelled',
-        description: "Your newsletter subscription has been cancelled immediately. You won't receive further weekly emails.",
+        description:
+          "Your newsletter subscription has been cancelled immediately. You won't receive further weekly emails.",
       });
 
       onSuccess();
@@ -64,7 +65,8 @@ export function ConfirmCancelNewsletterModal({
         <DialogHeader>
           <DialogTitle>Cancel newsletter now?</DialogTitle>
           <DialogDescription>
-            This will cancel your newsletter subscription immediately. You will stop receiving the YieldCanary Weekly Newsletter.
+            This will cancel your newsletter subscription immediately. You will stop receiving the
+            YieldCanary Weekly Newsletter.
           </DialogDescription>
         </DialogHeader>
         {error && <p className="text-sm text-destructive">{error}</p>}
@@ -72,11 +74,7 @@ export function ConfirmCancelNewsletterModal({
           <Button variant="outline" onClick={handleClose} disabled={loading}>
             Keep subscription
           </Button>
-          <Button
-            variant="destructive"
-            onClick={handleConfirm}
-            disabled={loading}
-          >
+          <Button variant="destructive" onClick={handleConfirm} disabled={loading}>
             {loading ? 'Cancelling...' : 'Yes, cancel now'}
           </Button>
         </DialogFooter>
@@ -84,3 +82,4 @@ export function ConfirmCancelNewsletterModal({
     </Dialog>
   );
 }
+

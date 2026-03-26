@@ -17,7 +17,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { SettingsModal } from './SettingsModal';
 import { FeedbackModal } from '@/components/modals/FeedbackModal';
 import { CancelSubscriptionModal } from './CancelSubscriptionModal';
-import { redirectToManageSubscription, redirectToCheckout } from '@/integrations/stripe/checkout';
+import { redirectToCheckout, redirectToManageSubscription } from '@/integrations/stripe/checkout';
 import { ConfirmCancelNewsletterModal } from '@/components/landing/ConfirmCancelNewsletterModal';
 
 /** Mobile sticky header height (nav h-14 + search row h-9 + pb-2). Use for sticky elements that sit below the header. */
@@ -61,12 +61,8 @@ export function DashboardHeader({
   const [portalLoading, setPortalLoading] = useState(false);
   const [isCancelNewsletterOpen, setIsCancelNewsletterOpen] = useState(false);
 
-  const hasNewsletter = newsletterTier === 'monthly' || newsletterTier === 'yearly';
-
-  console.log('[DashboardHeader] Newsletter state', {
-    newsletterTier,
-    hasNewsletter,
-  });
+  const tierNorm = (newsletterTier ?? '').trim().toLowerCase();
+  const hasNewsletter = tierNorm === 'monthly' || tierNorm === 'yearly';
 
   const handleManageSubscription = async () => {
     setPortalLoading(true);
@@ -88,7 +84,6 @@ export function DashboardHeader({
       const email = session?.user?.email;
 
       if (!email) {
-        // Optional: you could show a toast or redirect, but for now just return
         console.error('[DashboardHeader] Newsletter upgrade: missing user email');
         return;
       }
@@ -236,10 +231,10 @@ export function DashboardHeader({
                   className="text-xs sm:text-sm text-destructive focus:text-destructive"
                 >
                   <XCircle className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  Cancel newsletter
+                  Cancel Newsletter
                 </DropdownMenuItem>
               )}
-              {hasNewsletter && newsletterTier === 'monthly' && (
+              {hasNewsletter && tierNorm === 'monthly' && (
                 <DropdownMenuItem
                   onClick={handleNewsletterUpgradeClick}
                   className="text-xs sm:text-sm"
@@ -248,7 +243,6 @@ export function DashboardHeader({
                   Upgrade newsletter to yearly
                 </DropdownMenuItem>
               )}
-             
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-xs sm:text-sm hover:cursor-pointer">
                 <LogOut className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />

@@ -89,6 +89,22 @@ export function useUserSubscription() {
     return () => subscription?.unsubscribe();
   }, []);
 
+  const subscriptionStatus = user?.subscription_status ?? null;
+  const subscriptionTier = user?.subscription_tier ?? null;
+  const newsletterTier = user?.newsletter_tier ?? null;
+
+  /** Weekly email is included with Basic/Advanced while subscription is active or trialing */
+  const hasBundledNewsletterAccess =
+    (subscriptionTier === 'basic' || subscriptionTier === 'advanced') &&
+    (subscriptionStatus === 'active' || subscriptionStatus === 'trialing');
+
+  /** Standalone newsletter subscription (monthly or yearly) */
+  const hasStandaloneNewsletterAccess =
+    newsletterTier === 'monthly' || newsletterTier === 'yearly';
+
+  /** Combined: receives the weekly newsletter by any entitlement */
+  const hasNewsletterAccess = hasBundledNewsletterAccess || hasStandaloneNewsletterAccess;
+
   return {
     user,
     loading,
@@ -97,7 +113,10 @@ export function useUserSubscription() {
     trialEndsAt: user?.trial_ends_at ?? null,
     cancelAtPeriodEnd: user?.cancel_at_period_end ?? false,
     cancelsAt: user?.cancels_at ?? null,
-    newsletterTier: user?.newsletter_tier ?? null,
+    newsletterTier,
+    hasBundledNewsletterAccess,
+    hasStandaloneNewsletterAccess,
+    hasNewsletterAccess,
     refetch: fetchUserSubscription,
   };
 }
