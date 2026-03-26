@@ -23,6 +23,7 @@ export function Dashboard() {
     trialEndsAt,
     cancelAtPeriodEnd,
     cancelsAt,
+    newsletterTier,
     refetch: refetchSubscription,
   } = useUserSubscription();
   const [searchQuery, setSearchQuery] = useState('');
@@ -126,6 +127,7 @@ export function Dashboard() {
         trialEndsAt={trialEndsAt}
         cancelAtPeriodEnd={cancelAtPeriodEnd}
         cancelsAt={cancelsAt}
+        newsletterTier={newsletterTier}
         userEmail={userEmail}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}

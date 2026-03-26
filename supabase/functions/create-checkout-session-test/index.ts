@@ -72,34 +72,24 @@ Deno.serve(async (req) => {
 
     console.log(`[Checkout] [FLOW] priceId=${priceId}, type=${priceData.type}, mode=${mode}, email=${email}`);
 
-    const legacyNewsletterMonthly =
+    // Identify standalone newsletter SKUs (separate product from app tiers)
+    const newsletterMonthlyPrice =
       Deno.env.get("NEWSLETTER_MONTHLY_PRICE_ID") ?? "price_1T9s8EJYaJlmvTvCgEQlA03h";
-    const legacyNewsletterYearly =
+    const newsletterYearlyPrice =
       Deno.env.get("NEWSLETTER_YEARLY_PRICE_ID") ?? "price_1T9sAyJYaJlmvTvCgxgcu0Oi";
-    const isDeprecatedNewsletterPrice =
-      (legacyNewsletterMonthly && priceId === legacyNewsletterMonthly) ||
-      (legacyNewsletterYearly && priceId === legacyNewsletterYearly);
-    if (isDeprecatedNewsletterPrice) {
-      return new Response(
-        JSON.stringify({
-          error:
-            "The newsletter is included with Basic and Advanced. Subscribe to a plan instead.",
-        }),
-        {
-          status: 400,
-          headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Content-Type": "application/json",
-          },
-        }
-      );
+    const isNewsletter =
+      (!!newsletterMonthlyPrice && priceId === newsletterMonthlyPrice) ||
+      (!!newsletterYearlyPrice && priceId === newsletterYearlyPrice);
+    const newsletterPlan = priceId === newsletterYearlyPrice ? "yearly" : "monthly";
+    if (isNewsletter) {
+      console.log("[Checkout] [NEWSLETTER] Newsletter checkout (test) - plan:", newsletterPlan);
     }
 
     /* --------------------------------------------------
        2️⃣ P0 — SMART SUBSCRIPTION VALIDATION
-       Allows upgrades, blocks duplicates & downgrades
+       Allows upgrades, blocks duplicates & downgrades (skip for newsletter)
     -------------------------------------------------- */
-    if (mode === "subscription") {
+    if (mode === "subscription" && !isNewsletter) {
       // Map priceId to tier (app plans only)
       const basicMonthlyPrice = "price_1SkSYWJYaJlmvTvCIy15xocG";
       const basicYearlyPrice = "price_1Sn62YJYaJlmvTvCNWddZaeG";
@@ -317,9 +307,16 @@ Deno.serve(async (req) => {
       bodyParams["invoice_creation[enabled]"] = "true";
     }
 
-    if (mode === "subscription") {
+    // Trial only for app plans; newsletter has no trial period
+    if (mode === "subscription" && !isNewsletter) {
       bodyParams["subscription_data[trial_period_days]"] = "7";
       console.log("[Checkout] [TRIAL] 7-day free trial enabled for subscription (card required, first charge after trial)");
+    }
+
+    // Newsletter metadata so the webhook can identify the product type
+    if (mode === "subscription" && isNewsletter) {
+      bodyParams["metadata[product_type]"] = "newsletter";
+      bodyParams["metadata[newsletter_plan]"] = newsletterPlan;
     }
 
     console.log("[Checkout] Creating session with params:", JSON.stringify({ ...bodyParams }, null, 2));
