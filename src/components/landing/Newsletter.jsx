@@ -33,7 +33,7 @@ export default function Newsletter() {
             YieldCanary Weekly Newsletter
           </h2>
           <p className="text-sm xs:text-base sm:text-lg text-muted-foreground max-w-xl mx-auto px-2">
-            Curated insights every Monday morning. Top ETF income opportunities,
+            Curated insights in your inbox each week. Top ETF income opportunities,
             biggest movers, and buy-zone picks delivered to your inbox.
             Included free with Basic and Advanced plans or subscribe standalone.
           </p>
@@ -45,7 +45,7 @@ export default function Newsletter() {
               // Basic / Advanced subscriber: newsletter is included
               <p className="text-sm text-muted-foreground max-w-md">
                 You&apos;re all set — the weekly newsletter is included with your plan.
-                It arrives every Monday morning at the email on your account.
+                It arrives weekly at the email on your account.
               </p>
             ) : hasStandaloneNewsletterAccess ? (
               // Standalone newsletter subscriber
