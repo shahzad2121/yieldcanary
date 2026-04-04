@@ -78,6 +78,15 @@ const WatchlistPage = () => {
   const isDataLoading = etfsLoading || userLoading || watchlistLoading;
   const error = etfsError;
 
+  const filterBar = (
+    <FilterBar
+      statusFilter={statusFilter}
+      onStatusFilterChange={setStatusFilter}
+      onClearFilters={handleClearFilters}
+      showClearButton={statusFilter !== 'all' || searchQuery.trim() !== ''}
+    />
+  );
+
   return (
     <>
       <Helmet>
@@ -104,13 +113,13 @@ const WatchlistPage = () => {
           onSubscriptionCancelled={refetchSubscription}
         />
 
-        <main className="container px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        <main className="container">
           {/* Hero Section */}
           <div className="text-center space-y-1 sm:space-y-2 py-2 sm:py-4">
-            <h1 className="text-xl sm:text-3xl md:text-4xl font-bold tracking-tight text-foreground px-2">
+            <h1 className="text-xl sm:text-3xl md:text-3xl font-bold tracking-tight text-foreground px-2">
               Your Watchlist
             </h1>
-            <p className="text-xs sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto px-2">
+            <p className="text-xs sm:text-base md:text-md text-muted-foreground max-w-2xl mx-auto px-2">
               All the ETFs you&apos;ve starred in one place. Use this to keep an eye on funds you care about most.
             </p>
           </div>
@@ -124,30 +133,34 @@ const WatchlistPage = () => {
           {/* Killer Stats (based only on watchlist ETFs) */}
           {isDataLoading ? <KillerStatsSkeleton /> : <KillerStats etfs={filteredWatchlistETFs} />}
 
-          {/* Filters */}
-          <FilterBar
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-            onClearFilters={handleClearFilters}
-            showClearButton={statusFilter !== 'all' || searchQuery.trim() !== ''}
-          />
-
-          {/* Watchlist Summary (above the list) */}
-          {isDataLoading ? <WatchlistSummarySkeleton /> : <WatchlistSummary etfs={filteredWatchlistETFs} />}
-
-          {/* Watchlist Table */}
+          {/* Watchlist Table + filters (Export gated to paid when table is shown) */}
           {isDataLoading ? (
-            <ETFTableSkeleton />
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2">
+                <div className="min-w-0 flex-1">{filterBar}</div>
+              </div>
+              <WatchlistSummarySkeleton />
+              <ETFTableSkeleton />
+            </>
           ) : filteredWatchlistETFs.length === 0 ? (
-            <div className="border border-dashed border-border rounded-xl p-6 text-center text-sm text-muted-foreground">
-              You don&apos;t have any ETFs in your watchlist yet. Star ETFs on the main dashboard to see them here.
-            </div>
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2">
+                <div className="min-w-0 flex-1">{filterBar}</div>
+              </div>
+              <WatchlistSummary etfs={filteredWatchlistETFs} />
+              <div className="border border-dashed border-border rounded-xl p-6 text-center text-sm text-muted-foreground">
+                You don&apos;t have any ETFs in your watchlist yet. Star ETFs on the main dashboard to
+                see them here.
+              </div>
+            </>
           ) : (
             <ETFTable
               etfs={filteredWatchlistETFs}
               plan={plan}
               isPaid={isPaid}
               onUpgrade={() => {}}
+              filterSlot={filterBar}
+              belowToolbarSlot={<WatchlistSummary etfs={filteredWatchlistETFs} />}
             />
           )}
 

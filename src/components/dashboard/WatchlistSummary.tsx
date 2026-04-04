@@ -53,7 +53,7 @@ export function WatchlistSummary({ etfs }: WatchlistSummaryProps) {
       : null;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 sm:p-5 space-y-4">
+    <div className="rounded-lg border border-border bg-card p-4 sm:p-5 mb-4 space-y-4">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-muted-foreground">
         <span className="font-medium text-foreground">Total ETFs: {totalEtfs}</span>
       </div>

@@ -117,11 +117,8 @@ Deno.serve(async (req) => {
 
     const jobs = (claimed ?? []) as EmailJobRow[];
     /** When set, only this address is sent via Resend; other jobs are marked sent without emailing (queue + batching still run). Unset in production. */
-    const sendOnlyToRaw = Deno.env.get("NEWSLETTER_SEND_ONLY_TO_EMAIL")?.trim();
-    const sendOnlyTo =
-      sendOnlyToRaw && sendOnlyToRaw.length > 0
-        ? sendOnlyToRaw.toLowerCase()
-        : null;
+    /** Test: only this inbox gets Resend; others are marked sent without email. Remove or gate for production. */
+    const sendOnlyTo = null;
 
     let sent = 0;
     let failed = 0;
@@ -165,7 +162,7 @@ Deno.serve(async (req) => {
           .from("email_jobs")
           .update({
             status: "sent",
-            last_error: "skipped: NEWSLETTER_SEND_ONLY_TO_EMAIL (no Resend)",
+            last_error: "dry_run: no Resend (test inbox only)",
             updated_at: nowIso,
           })
           .eq("id", job.id);

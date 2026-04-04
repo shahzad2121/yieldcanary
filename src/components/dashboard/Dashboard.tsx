@@ -118,6 +118,25 @@ export function Dashboard() {
 
   const isDataLoading = loading || userLoading;
 
+  const filterBar = (
+    <FilterBar
+      statusFilter={statusFilter}
+      onStatusFilterChange={setStatusFilter}
+      onClearFilters={handleClearFilters}
+      showClearButton={showClearButton}
+    />
+  );
+
+  const compareIssuerChip =
+    hasCompareIssuer ? (
+      <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+        <span className="rounded-md border border-border bg-muted/40 px-2 py-1">
+          Comparing by issuer:{' '}
+          <span className="font-medium text-foreground">{compareIssuer}</span>
+        </span>
+      </div>
+    ) : null;
+
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader
@@ -135,13 +154,13 @@ export function Dashboard() {
         onSubscriptionCancelled={refetchSubscription}
       />
 
-      <main className="container py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <main className="container">
         {/* Hero Section */}
-        <div className="text-center space-y-1 sm:space-y-2 py-2 sm:py-4">
-          <h1 className="text-xl sm:text-3xl md:text-4xl font-bold tracking-tight text-foreground px-2">
+        <div className="text-center space-y-1 sm:space-y-2 py-1 sm:py-4">
+          <h1 className="text-md sm:text-xl md:text-3xl font-bold tracking-tight text-foreground px-2">
             Which ETFs are healthy vs quietly dying?
           </h1>
-          <p className="text-xs sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto px-2">
+          <p className="text-xs sm:text-base md:text-sm text-muted-foreground max-w-2xl mx-auto px-2">
             See through the marketing. Know exactly what lands in your pocket after taxes.
           </p>
         </div>
@@ -155,26 +174,22 @@ export function Dashboard() {
         {/* Killer Stats */}
         {isDataLoading ? <KillerStatsSkeleton /> : <KillerStats etfs={filteredETFs} />}
 
-        {/* Filters */}
-        <FilterBar
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          onClearFilters={handleClearFilters}
-          showClearButton={showClearButton}
-        />
-        {hasCompareIssuer && (
-          <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-            <span className="rounded-md border border-border bg-muted/40 px-2 py-1">
-              Comparing by issuer: <span className="font-medium text-foreground">{compareIssuer}</span>
-            </span>
-          </div>
-        )}
-
         {/* ETF Table */}
         {isDataLoading ? (
-          <ETFTableSkeleton />
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2">
+              <div className="min-w-0 flex-1">{filterBar}</div>
+            </div>
+            {compareIssuerChip}
+            <ETFTableSkeleton />
+          </>
         ) : filteredETFs.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-8 sm:py-10 text-center space-y-3">
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2">
+              <div className="min-w-0 flex-1">{filterBar}</div>
+            </div>
+            {compareIssuerChip}
+            <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-8 sm:py-10 text-center space-y-3">
             {isCompareIssuerNoRows ? (
               <>
                 <p className="text-sm sm:text-base text-foreground font-medium">
@@ -205,12 +220,15 @@ export function Dashboard() {
               </button>
             )}
           </div>
+          </>
         ) : (
           <ETFTable
             etfs={filteredETFs}
             plan={plan}
             isPaid={isPaid}
             onUpgrade={() => setIsUpgradeModalOpen(true)}
+            filterSlot={filterBar}
+            belowToolbarSlot={compareIssuerChip}
           />
         )}
 
