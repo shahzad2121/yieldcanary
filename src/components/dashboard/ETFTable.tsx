@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
 import {
   Table,
   TableBody,
@@ -54,6 +54,10 @@ interface ETFTableProps {
   plan: 'free' | 'basic' | 'advanced';
   isPaid: boolean;
   onUpgrade: () => void;
+  /** Renders left side of the top toolbar (e.g. FilterBar) so filters + Export stay on one row. */
+  filterSlot?: ReactNode;
+  /** Renders between the toolbar and the table (e.g. compare chip, watchlist summary). */
+  belowToolbarSlot?: ReactNode;
 }
 
 type SortKey = keyof ETF | 'monthlySpendableCashYield';
@@ -101,17 +105,26 @@ const MOBILE_SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'expenseRatio', label: 'Expense' },
 ];
 
+/** Desktop name column width in px — keep in sync with <colgroup> third <col>. */
+const ETF_DESKTOP_NAME_COL_PX = 250;
+
 // Column configuration: width and base className for each column
 const COLUMN_CONFIG = {
   star: { width: 'w-10', className: '' },
   ticker: { width: 'w-20', className: 'font-mono font-semibold text-center' },
-  name: { width: 'min-w-[150px] max-w-[200px]', className: 'truncate' },
+  name: {
+    // Must match colgroup third <col> (ETF_DESKTOP_NAME_COL_PX) so sticky + wrapping stay aligned.
+    width: 'min-w-[200px] w-[320px] max-w-[320px]',
+    className:
+      'whitespace-normal break-words [word-break:break-word] leading-snug min-w-0',
+  },
   canaryStatus: { width: 'w-32', className: '' },
   deathClock: { width: 'w-28', className: '' },
   trueIncomeYield: { width: 'w-32', className: '' },
   totalReturn1Y: { width: 'w-32', className: '' },
-  takeHomeCashReturn: { width: 'min-w-[150px]', className: '' },
-  monthlySpendableCashYield: { width: 'min-w-[180px]', className: '' },
+  /** Fixed width like other metric cols — long headers wrap (see SortableHeader). Avoid min-w-* so cols don’t eat horizontal space. */
+  takeHomeCashReturn: { width: 'w-32 max-w-[8rem]', className: '' },
+  monthlySpendableCashYield: { width: 'w-32 max-w-[8rem]', className: '' },
   price: { width: 'w-24', className: 'font-mono' },
   headlineYield: { width: 'w-28', className: 'font-mono' },
   advertisedYield: { width: 'w-28', className: 'font-mono' },
@@ -121,7 +134,31 @@ const COLUMN_CONFIG = {
   expenseRatio: { width: 'w-24', className: 'font-mono' },
 } as const;
 
-export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
+/**
+ * Sticky offsets must match colgroup widths: 2.5rem + 5rem = 7.5rem (w-10 + w-20).
+ * Opaque row hover on sticky cells only — semi-transparent bg lets scrolled cells show through.
+ */
+const STICKY_STAR_TH =
+  'etf-desktop-sticky-star sticky left-0 z-[36] bg-muted';
+const STICKY_TICKER_TH =
+  'etf-desktop-sticky-ticker sticky left-10 z-[35] bg-muted';
+const STICKY_NAME_TH =
+  'etf-desktop-sticky-name sticky left-[7.5rem] z-[34] bg-muted';
+const STICKY_STAR_TD =
+  'sticky left-0 z-[5] bg-background group-hover:bg-muted';
+const STICKY_TICKER_TD =
+  'sticky left-10 z-[6] bg-background group-hover:bg-muted';
+const STICKY_NAME_TD =
+  'sticky left-[7.5rem] z-[7] bg-background group-hover:bg-muted';
+
+export function ETFTable({
+  etfs,
+  plan,
+  isPaid,
+  onUpgrade,
+  filterSlot,
+  belowToolbarSlot,
+}: ETFTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT_KEY);
   const [sortDirection, setSortDirection] = useState<SortDirection>(DEFAULT_SORT_DIRECTION);
   // Default view mode: pins 4 free ETFs at top (only for free users)
@@ -437,25 +474,36 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
     URL.revokeObjectURL(url);
   };
 
-  const SortableHeader = ({ 
-    label, 
-    sortKeyProp, 
+  const SortableHeader = ({
+    label,
+    sortKeyProp,
     icon: Icon,
     className = '',
     isKiller = false,
-  }: { 
-    label: string; 
+    wrapHeader = false,
+  }: {
+    label: string;
     sortKeyProp: SortKey;
     icon?: typeof ChevronDown;
     className?: string;
     isKiller?: boolean;
+    /** Long labels: wrap in header so column stays narrow (e.g. Take-Home / Monthly yield). */
+    wrapHeader?: boolean;
   }) => {
     const tooltipText = COLUMN_TOOLTIPS[sortKeyProp] || '';
-    
+
     const headerContent = (
-      <div className="flex items-center gap-1.5">
-        {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
-        <span>{label}</span>
+      <div
+        className={`flex gap-1.5 ${wrapHeader ? 'items-start' : 'items-center'}`}
+      >
+        {Icon && (
+          <Icon
+            className={`h-3.5 w-3.5 shrink-0 text-muted-foreground ${wrapHeader ? 'mt-0.5' : ''}`}
+          />
+        )}
+        <span className={wrapHeader ? 'whitespace-normal text-left leading-tight' : ''}>
+          {label}
+        </span>
         {sortKey === sortKeyProp && (
           sortDirection === 'asc' 
             ? <ChevronUp className="h-3 w-3" /> 
@@ -465,8 +513,8 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
     );
 
     return (
-      <TableHead 
-        className={`cursor-pointer hover:bg-muted transition-colors etf-desktop-header-cell ${className}`}
+      <TableHead
+        className={`cursor-pointer hover:bg-muted transition-colors etf-desktop-header-cell ${wrapHeader ? 'whitespace-normal' : ''} ${className}`}
         onClick={() => handleSort(sortKeyProp)}
       >
         {tooltipText ? (
@@ -489,54 +537,94 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
     );
   };
 
+  const exportButton = isPaid ? (
+    <Button
+      variant="outline"
+      size="sm"
+      className="gap-2 text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4 shrink-0"
+      onClick={handleExportCSV}
+      disabled={!sortedETFs.length}
+    >
+      <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+      <span className="hidden xs:inline">Export CSV</span>
+    </Button>
+  ) : null;
+
+  const defaultViewButton =
+    !isPaid && !isDefaultView ? (
+      <Button
+        variant="outline"
+        size="sm"
+        className="gap-1.5 text-xs h-7 px-2 shrink-0"
+        onClick={handleResetToDefault}
+      >
+        <RotateCcw className="h-3 w-3" />
+        <span>Default View</span>
+      </Button>
+    ) : null;
+
   return (
-    <div className="space-y-4">
-      {/* Table Controls */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          {/* Default View button - only for free users when not in default view */}
-          {!isPaid && !isDefaultView && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 text-xs h-7 px-2"
-              onClick={handleResetToDefault}
-            >
-              <RotateCcw className="h-3 w-3" />
-              <span>Default View</span>
-            </Button>
-          )}
+    <div className="">
+      {/* Table controls: filters + Default view / Export (gating unchanged: Export only when isPaid) */}
+      {filterSlot ? (
+        <div className="flex flex-wrap items-center justify-between py-4 gap-x-3 gap-y-2">
+          <div className="min-w-0 flex-1">{filterSlot}</div>
+          <div className="flex shrink-0 items-center gap-2">
+            {defaultViewButton}
+            {exportButton}
+          </div>
         </div>
-        {isPaid && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4"
-            onClick={handleExportCSV}
-            disabled={!sortedETFs.length}
-          >
-            <Download className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden xs:inline">Export CSV</span>
-          </Button>
-        )}
-      </div>
+      ) : (
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">{defaultViewButton}</div>
+          {exportButton}
+        </div>
+      )}
+      {belowToolbarSlot}
 
       {/* Desktop Table - Hidden on mobile */}
-      <div className="hidden md:block rounded-xl border mx-3 border-border bg-background">
+      <div className="hidden md:block rounded-xl border border-border bg-background">
         <TooltipProvider delayDuration={300}>
           <div className="custom-scrollbar etf-desktop-table-scroll">
-            <Table className="[&>div>table]:!w-auto">
+            <Table className="etf-desktop-data-table border-separate border-spacing-0 w-max">
+              <colgroup>
+                <col style={{ width: '2.5rem' }} />
+                <col style={{ width: '5rem' }} />
+                <col style={{ width: `${ETF_DESKTOP_NAME_COL_PX}px` }} />
+              </colgroup>
               <TableHeader>
               <TableRow className="bg-muted hover:bg-muted/90">
-                <TableHead className={`${COLUMN_CONFIG.star.width} etf-desktop-header-cell etf-desktop-header-cell-first`} />
-                <SortableHeader label="Ticker" className={COLUMN_CONFIG.ticker.width} sortKeyProp="ticker" />
-                <SortableHeader label="Name" sortKeyProp="name" className={COLUMN_CONFIG.name.width} />
+                <TableHead
+                  className={`${COLUMN_CONFIG.star.width} etf-desktop-header-cell etf-desktop-header-cell-first ${STICKY_STAR_TH} px-0`}
+                />
+                <SortableHeader
+                  label="Ticker"
+                  className={`${COLUMN_CONFIG.ticker.width} ${STICKY_TICKER_TH} px-0`}
+                  sortKeyProp="ticker"
+                />
+                <SortableHeader
+                  label="Name"
+                  sortKeyProp="name"
+                  className={`${COLUMN_CONFIG.name.width} ${STICKY_NAME_TH}`}
+                />
                 <SortableHeader label="Canary Status" sortKeyProp="canaryStatus" className={COLUMN_CONFIG.canaryStatus.width} isKiller />
                 <SortableHeader label="Death Clock" sortKeyProp="deathClock" icon={Clock} className={COLUMN_CONFIG.deathClock.width} isKiller />
                 <SortableHeader label="True Income Yield" sortKeyProp="trueIncomeYield" icon={Percent} className={COLUMN_CONFIG.trueIncomeYield.width} isKiller />
                 <SortableHeader label="Total Return 1Y" sortKeyProp="totalReturn1Y" icon={TrendingUp} className={COLUMN_CONFIG.totalReturn1Y.width} isKiller />
-                <SortableHeader label="Take-Home Cash Return" sortKeyProp="takeHomeCashReturn1Y" icon={Banknote} className={`${COLUMN_CONFIG.takeHomeCashReturn.width} text-start`} />
-                <SortableHeader label="Monthly Spendable Cash Yield" sortKeyProp="monthlySpendableCashYield" icon={Banknote} className={`${COLUMN_CONFIG.monthlySpendableCashYield.width} text-start`} />
+                <SortableHeader
+                  label="Take-Home Cash Return"
+                  sortKeyProp="takeHomeCashReturn1Y"
+                  icon={Banknote}
+                  wrapHeader
+                  className={`${COLUMN_CONFIG.takeHomeCashReturn.width} text-start`}
+                />
+                <SortableHeader
+                  label="Monthly Spendable Cash Yield"
+                  sortKeyProp="monthlySpendableCashYield"
+                  icon={Banknote}
+                  wrapHeader
+                  className={`${COLUMN_CONFIG.monthlySpendableCashYield.width} text-start`}
+                />
                 <SortableHeader label="Price" sortKeyProp="latestAdjClose" className={COLUMN_CONFIG.price.width} />
                 <SortableHeader label="Headline Yield" sortKeyProp="headlineYieldTTM" className={COLUMN_CONFIG.headlineYield.width} />
                 <SortableHeader label="Advertised Yield" sortKeyProp="advertisedYield" icon={Percent} className={COLUMN_CONFIG.advertisedYield.width} />
@@ -547,22 +635,32 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedETFs.map((etf, index) => {
+              {sortedETFs.map((etf) => {
                 const unlocked = isUnlocked(etf.ticker);
                 return (
-                  <TableRow key={etf.id} className="hover:bg-muted/50 transition-colors">
-                    <TableCell>
+                  <TableRow
+                    key={etf.id}
+                    className="group hover:bg-muted/50 transition-colors [&_td]:align-middle"
+                  >
+                    <TableCell className={`${STICKY_STAR_TD} px-0`}>
                       <button
+                        type="button"
                         onClick={() => toggleWatchlist(etf.ticker)}
                         className="p-1 hover:bg-secondary rounded transition-colors"
                       >
                         <Star className={`h-4 w-4 ${isInWatchlist(etf.ticker) ? 'fill-foreground text-foreground' : 'text-muted-foreground'}`} />
                       </button>
                     </TableCell>
-                    <TableCell className={`${COLUMN_CONFIG.ticker.width} ${COLUMN_CONFIG.ticker.className} p-0 text-foreground text-sm`}>
+                    <TableCell
+                      className={`${COLUMN_CONFIG.ticker.width} ${COLUMN_CONFIG.ticker.className} ${STICKY_TICKER_TD} p-0 text-foreground text-sm`}
+                    >
                       <EtfTickerChip ticker={etf.ticker} baseEtf={etf} className="mx-auto" />
                     </TableCell>
-                    <TableCell className={`${COLUMN_CONFIG.name.width} ${COLUMN_CONFIG.name.className} text-muted-foreground p-1 text-sm`}>{etf.name}</TableCell>
+                    <TableCell
+                      className={`${COLUMN_CONFIG.name.width} ${COLUMN_CONFIG.name.className} ${STICKY_NAME_TD} text-muted-foreground px-1 py-2 text-sm`}
+                    >
+                      {etf.name}
+                    </TableCell>
                     <TableCell className={`${COLUMN_CONFIG.canaryStatus.width} p-0`}><CanaryStatusBadge status={etf.canaryStatus} /></TableCell>
                     <TableCell className={`${COLUMN_CONFIG.deathClock.width} text-sm`}><BlurredCell value={etf.deathClock} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className={`${COLUMN_CONFIG.trueIncomeYield.width} text-sm p-0`}><BlurredCell value={formatPercent(etf.trueIncomeYield)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
@@ -647,7 +745,9 @@ export function ETFTable({ etfs, plan, isPaid, onUpgrade }: ETFTableProps) {
                     <EtfTickerChip ticker={etf.ticker} baseEtf={etf} />
                     <CanaryStatusBadge status={etf.canaryStatus} />
                   </div>
-                  <p className="text-[11px] text-muted-foreground truncate mt-0.5">{etf.name}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 whitespace-normal break-words [word-break:break-word] leading-snug">
+                    {etf.name}
+                  </p>
                 </div>
                 <button
                   onClick={() => toggleWatchlist(etf.ticker)}

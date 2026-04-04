@@ -16,23 +16,27 @@ export function KillerStats({ etfs }: KillerStatsProps) {
       label: 'Total ETFs',
       value: totalCount,
       icon: LayoutGrid,
+      iconClassName: 'text-primary',
     },
     {
       label: 'Healthy ETFs',
       value: healthyCount,
       icon: Heart,
+      iconClassName: 'text-emerald-500',
     },
     {
       label: 'Dying ETFs',
       value: dyingCount,
       icon: AlertTriangle,
+      iconClassName: 'text-amber-500',
     },
     {
       label: 'Dead ETFs',
       value: deadCount,
       icon: Skull,
+      iconClassName: 'text-red-500',
     },
-  ];
+  ] as const;
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
@@ -44,14 +48,16 @@ export function KillerStats({ etfs }: KillerStatsProps) {
         >
           <div className="flex items-start justify-between gap-1 sm:gap-2">
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider truncate">
+              <p className="text-xs md:text-sm text-muted-foreground font-medium uppercase tracking-wider truncate">
                 {stat.label}
               </p>
-              <p className="text-lg sm:text-2xl lg:text-3xl font-bold font-mono mt-0.5 text-foreground">
+              <p className="text-lg sm:text-2xl lg:text-2xl font-bold font-mono mt-0.5 text-foreground">
                 {stat.value}
               </p>
             </div>
-            <stat.icon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
+            <stat.icon
+              className={`h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0 ${stat.iconClassName}`}
+            />
           </div>
         </div>
       ))}

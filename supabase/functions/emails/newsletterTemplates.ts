@@ -9,7 +9,7 @@ export const newsletterEmailTemplates: TransactionalEmailTemplate[] = [
     id: 'newsletter_subscribed',
     title: 'Newsletter subscription confirmed',
     subject: 'You are subscribed to the YieldCanary Newsletter',
-    previewText: 'Your weekly Monday newsletter is now active.',
+    previewText: 'Your weekly YieldCanary newsletter is now active.',
     body: `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,7 +31,7 @@ export const newsletterEmailTemplates: TransactionalEmailTemplate[] = [
             <td style="padding:28px 24px;">
               <p style="margin:0 0 16px 0;font-size:16px;line-height:1.7;">Hi {{first_name|there}},</p>
               <p style="margin:0 0 16px 0;font-size:15px;line-height:1.7;">
-                You are now subscribed to the YieldCanary Newsletter. You will receive your weekly email every Monday with key insights, movers, and buy-zone ideas.
+                You are now subscribed to the YieldCanary Newsletter. You will receive your weekly email with key insights, movers, and buy-zone ideas.
               </p>
               <p style="margin:0;font-size:15px;line-height:1.7;">
                 You can manage or cancel this subscription any time from your account settings.

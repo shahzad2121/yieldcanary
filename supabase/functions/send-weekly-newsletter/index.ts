@@ -1,62 +1,31 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-
-// ---------------------------------------------------------------------------
-// Types (match get-newsletter-insights response)
-// ---------------------------------------------------------------------------
-
-type InsightsPayload = {
-  success: boolean;
-  generatedAt?: string;
-  buyZone: Array<{
-    ticker: string;
-    name: string;
-    trueIncomeYield: number | null;
-    discountPct: number | null;
-  }>;
-  topMonthlyPayers: Array<{
-    ticker: string;
-    name: string;
-    trueIncomeYield: number | null;
-    monthlySpendableCashYield: number | null;
-  }>;
-  topWeeklyPayers: Array<{
-    ticker: string;
-    name: string;
-    trueIncomeYield: number | null;
-    monthlySpendableCashYield: number | null;
-  }>;
-  weeklyMovers: {
-    status: string;
-    currentWeek?: string;
-    previousWeek?: string;
-    gainers: Array<{
-      ticker: string;
-      rocChange: number;
-      trueIncomeChange: number;
-      score: number;
-      canaryHealth: string | null;
-    }>;
-    losers: Array<{
-      ticker: string;
-      rocChange: number;
-      trueIncomeChange: number;
-      score: number;
-      canaryHealth: string | null;
-    }>;
-  };
-};
-
-const MAX_ITEMS_PER_SECTION = 5;
-const SUPPORT_EMAIL = "support@yieldcanary.com";
+import {
+  buildNewsletterHtml,
+  type InsightsPayload,
+  isValidInsightsPayload,
+  sendWeeklyNewsletterEmail,
+  SUPPORT_EMAIL,
+} from "../_shared/weeklyNewsletterHtml.ts";
 
 /**
- * TEMP — set to "" to send to all subscribers again.
- * When non-empty: cron / normal run sends only if this email matches a user that is
- * Basic or Advanced with subscription_status active or trialing (same rules as batch).
- * If not eligible, no emails are sent (check logs).
+ * When not "false", bulk sends only enqueue DB rows; process-newsletter-jobs sends via Resend.
+ * Preview, temp single-recipient, and explicit sync=true always send immediately.
+ */
+function useNewsletterQueue(): boolean {
+  return Deno.env.get("NEWSLETTER_USE_QUEUE") !== "false";
+}
+
+/**
+ * Set to "" for normal production sends to all recipients.
+ * When non-empty: only that email receives the send if eligible.
  */
 const TEMP_CRON_SEND_ONLY_EMAIL = "";
+
+type NewsletterRecipient = {
+  email: string;
+  name: string | null;
+};
 
 function corsHeaders(): Record<string, string> {
   return {
@@ -74,7 +43,7 @@ function getSupabaseClient() {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!supabaseUrl || !serviceRoleKey) {
     throw new Error(
-      "SUPABASE_URL and SERVICE_ROLE_KEY (or SUPABASE_SERVICE_ROLE_KEY) must be set"
+      "SUPABASE_URL and SERVICE_ROLE_KEY (or SUPABASE_SERVICE_ROLE_KEY) must be set",
     );
   }
   return createClient(supabaseUrl, serviceRoleKey, {
@@ -82,119 +51,10 @@ function getSupabaseClient() {
   });
 }
 
-function fmtPct(value: number | null | undefined): string {
-  if (value == null) return "—";
-  return `${value.toFixed(2)}%`;
-}
-
-/** Build newsletter HTML matching transactional templates: same header, footer, colors, responsive. */
-function buildNewsletterHtml(data: InsightsPayload, appUrl: string): string {
-  const dateStr = data.generatedAt
-    ? new Date(data.generatedAt).toLocaleDateString("en-US", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : new Date().toLocaleDateString("en-US", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-
-  const buyZoneRows = (data.buyZone ?? []).slice(0, MAX_ITEMS_PER_SECTION);
-  const monthlyRows = (data.topMonthlyPayers ?? []).slice(0, MAX_ITEMS_PER_SECTION);
-  const weeklyRows = (data.topWeeklyPayers ?? []).slice(0, MAX_ITEMS_PER_SECTION);
-  const gainers = (data.weeklyMovers?.gainers ?? []).slice(0, MAX_ITEMS_PER_SECTION);
-  const losers = (data.weeklyMovers?.losers ?? []).slice(0, MAX_ITEMS_PER_SECTION);
-  const moversWeek = data.weeklyMovers?.currentWeek ?? "";
-  const moversPrevWeek = data.weeklyMovers?.previousWeek ?? "";
-  const moversHeader =
-    data.weeklyMovers?.status === "ok" && (moversWeek || moversPrevWeek)
-      ? `Week of ${moversWeek} vs ${moversPrevWeek}`
-      : "Weekly movers";
-
-  const rowItem = (ticker: string, value: string, sub?: string) =>
-    `<div class="r">${sub != null ? `<span class="rs">${sub}</span> ` : ""}<b class="rt">${ticker}</b> — <span class="rv">${value}</span></div>`;
-
-  const buyZoneRowsHtml = buyZoneRows.length
-    ? buyZoneRows
-        .map((e) =>
-          rowItem(
-            e.ticker,
-            `${fmtPct(e.trueIncomeYield)} True Yield${e.discountPct != null ? ` (${e.discountPct.toFixed(1)}% below 90d avg)` : ""}`,
-            undefined
-          )
-        )
-        .join("")
-    : "<div class=\"e\">No picks this week.</div>";
-
-  const monthlyRowsHtml = monthlyRows.length
-    ? monthlyRows
-        .map((e) => rowItem(e.ticker, `${fmtPct(e.monthlySpendableCashYield)} monthly yield`))
-        .join("")
-    : "<div class=\"e\">No monthly payers this week.</div>";
-
-  const weeklyRowsHtml = weeklyRows.length
-    ? weeklyRows
-        .map((e) => rowItem(e.ticker, `${fmtPct(e.monthlySpendableCashYield)} monthly yield`))
-        .join("")
-    : "<div class=\"e\">No weekly payers this week.</div>";
-
-  const gainersHtml =
-    gainers.length && data.weeklyMovers?.status === "ok"
-      ? gainers
-          .map((g) =>
-            rowItem(
-              g.ticker,
-              `True Yield ${g.trueIncomeChange >= 0 ? "+" : ""}${g.trueIncomeChange.toFixed(2)}%`,
-              "↑"
-            )
-          )
-          .join("")
-      : "<div class=\"e\">No data this week.</div>";
-
-  const losersHtml =
-    losers.length && data.weeklyMovers?.status === "ok"
-      ? losers
-          .map((g) =>
-            rowItem(
-              g.ticker,
-              `True Yield ${g.trueIncomeChange >= 0 ? "+" : ""}${g.trueIncomeChange.toFixed(2)}%`,
-              "↓"
-            )
-          )
-          .join("")
-      : "<div class=\"e\">No data this week.</div>";
-
-  // Minimal HTML to stay under Gmail ~102KB clip limit. Short class names, no external font, solid colors.
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>YieldCanary Weekly</title><style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.5;color:#1a2938;background:#f1f5f9;padding:16px}
-.c{max-width:600px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08);border:1px solid #e2e8f0;overflow:hidden}
-.h{background:#0da472;color:#fff;padding:32px 24px;text-align:center}
-.h h1{font-size:24px;font-weight:700;margin-bottom:8px}
-.h p{font-size:14px;opacity:.95}
-.x{padding:24px;background:#fff}
-.s{background:#f0fdf4;border:1px solid #bbf7d0;border-left:4px solid #0da472;padding:20px;margin:16px 0;border-radius:8px}
-.s h3{color:#1a2938;font-size:16px;margin-bottom:12px;font-weight:600}
-.r{color:#334155;padding:6px 0;font-size:14px}
-.rt{color:#0da472}
-.rv{color:#1a2938;font-weight:500}
-.rs{color:#64748b;font-size:12px;margin-right:4px}
-.e{color:#64748b;font-size:13px;padding:6px 0}
-.a{display:inline-block;background:#0da472;color:#fff!important;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;margin-top:10px}
-.ms{font-size:12px;color:#64748b;font-weight:600;margin-bottom:6px}
-.f{background:#f8fafc;padding:24px;text-align:center;border-top:1px solid #e2e8f0}
-.ft{font-size:13px;color:#64748b;margin-bottom:8px}
-.f a{color:#0da472;text-decoration:none;font-weight:500}
-.fc{font-size:11px;color:#64748b;margin-top:16px}
-@media(max-width:600px){body{padding:8px}.h,.x{padding:20px 16px}.h h1{font-size:20px}.s{padding:16px;margin:12px 0}.r{font-size:13px}.a{padding:8px 16px;font-size:12px}.f{padding:20px 16px}}
-</style></head><body><div class="c"><div class="h"><h1>🐦 YieldCanary</h1><p>YieldCanary Weekly — ${dateStr}</p></div><div class="x"><div class="s"><h3>📊 Buy Zone Picks</h3><div>${buyZoneRowsHtml}</div><a href="${appUrl}/insights" class="a">See all Buy Zone picks →</a></div><div class="s"><h3>📅 Top Monthly Payers</h3><div>${monthlyRowsHtml}</div><a href="${appUrl}/insights" class="a">See all monthly payers →</a></div><div class="s"><h3>📅 Top Weekly Payers</h3><div>${weeklyRowsHtml}</div><a href="${appUrl}/insights" class="a">See all weekly payers →</a></div><div class="s"><h3>📈 ${moversHeader}</h3><p class="ms">Biggest improvements</p><div>${gainersHtml}</div><p class="ms" style="margin-top:12px">Biggest deteriorations</p><div>${losersHtml}</div><a href="${appUrl}/insights" class="a">See movers in Insights →</a></div></div><div class="f"><p class="ft">You're receiving this because you have an active YieldCanary plan or newsletter subscription.</p><p class="ft"><a href="${appUrl}">Open YieldCanary</a> · Manage your subscription in your account.</p><p class="fc">© 2026 YieldCanary. All rights reserved.</p></div></div></body></html>`;
-}
-
-async function fetchInsights(supabaseUrl: string, serviceRoleKey: string): Promise<InsightsPayload> {
+async function fetchInsights(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+): Promise<InsightsPayload> {
   const res = await fetch(`${supabaseUrl}/functions/v1/get-newsletter-insights`, {
     method: "GET",
     headers: {
@@ -206,112 +66,164 @@ async function fetchInsights(supabaseUrl: string, serviceRoleKey: string): Promi
     const text = await res.text();
     throw new Error(`get-newsletter-insights failed: ${res.status} ${text}`);
   }
-  const json = await res.json();
-  if (!json.success || !json.buyZone) {
+  const json = (await res.json()) as Record<string, unknown>;
+  if (!isValidInsightsPayload(json)) {
     throw new Error("Invalid response from get-newsletter-insights");
   }
-  return json as InsightsPayload;
+  return json as unknown as InsightsPayload;
 }
 
-/**
- * Weekly newsletter recipients = union of:
- * A) Basic/Advanced app subscribers (active or trialing) — newsletter bundled with plan
- * B) Standalone newsletter subscribers (newsletter_tier monthly or yearly)
- * Results are email-deduped so paying app users who also hold a newsletter sub receive only one copy.
- */
-async function getSubscriberEmails(supabase: ReturnType<typeof createClient>): Promise<string[]> {
+function mergeDisplayName(
+  existing: string | null | undefined,
+  incoming: string | null | undefined,
+): string | null {
+  const pick = (n: string | null | undefined) => {
+    if (n == null || typeof n !== "string") return null;
+    const t = n.trim();
+    return t.length > 0 ? t : null;
+  };
+  return pick(existing) ?? pick(incoming) ?? null;
+}
+
+async function getNewsletterRecipients(
+  supabase: ReturnType<typeof createClient>,
+): Promise<NewsletterRecipient[]> {
   const [appResult, nlResult] = await Promise.all([
     supabase
       .from("users")
-      .select("email")
+      .select("email, name")
       .in("subscription_tier", ["basic", "advanced"])
       .in("subscription_status", ["active", "trialing"]),
     supabase
       .from("users")
-      .select("email")
+      .select("email, name")
       .in("newsletter_tier", ["monthly", "yearly"]),
   ]);
 
   if (appResult.error) {
-    throw new Error(`Failed to fetch app subscribers: ${appResult.error.message}`);
+    throw new Error(
+      `Failed to fetch app subscribers: ${appResult.error.message}`,
+    );
   }
   if (nlResult.error) {
-    throw new Error(`Failed to fetch newsletter subscribers: ${nlResult.error.message}`);
+    throw new Error(
+      `Failed to fetch newsletter subscribers: ${nlResult.error.message}`,
+    );
   }
 
-  const toEmail = (r: { email?: string }): string | null =>
-    typeof r.email === "string" && r.email.length > 0 ? r.email : null;
+  const byEmail = new Map<string, string | null>();
+  for (const r of [...(appResult.data ?? []), ...(nlResult.data ?? [])]) {
+    if (typeof r.email !== "string" || r.email.length === 0) continue;
+    const prev = byEmail.get(r.email);
+    const merged = mergeDisplayName(prev, r.name ?? null);
+    byEmail.set(r.email, merged);
+  }
 
-  const appEmails = (appResult.data ?? []).map(toEmail).filter((e): e is string => e !== null);
-  const nlEmails = (nlResult.data ?? []).map(toEmail).filter((e): e is string => e !== null);
-
-  return [...new Set([...appEmails, ...nlEmails])];
+  return [...byEmail.entries()].map(([email, name]) => ({ email, name }));
 }
 
-/** Single temp recipient: eligible if they qualify under either recipient rule (app plan OR newsletter sub). */
+async function lookupUserNameByEmail(
+  supabase: ReturnType<typeof createClient>,
+  email: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("users")
+    .select("name")
+    .ilike("email", email.trim())
+    .maybeSingle();
+  if (error || !data) return null;
+  return data.name ?? null;
+}
+
 async function getTempCronRecipientIfEligible(
   supabase: ReturnType<typeof createClient>,
-  rawEmail: string
-): Promise<string[]> {
+  rawEmail: string,
+): Promise<NewsletterRecipient[]> {
   const trimmed = rawEmail.trim();
   if (!trimmed) return [];
 
   const [appResult, nlResult] = await Promise.all([
     supabase
       .from("users")
-      .select("email")
+      .select("email, name")
       .ilike("email", trimmed)
       .in("subscription_tier", ["basic", "advanced"])
       .in("subscription_status", ["active", "trialing"])
       .maybeSingle(),
     supabase
       .from("users")
-      .select("email")
+      .select("email, name")
       .ilike("email", trimmed)
       .in("newsletter_tier", ["monthly", "yearly"])
       .maybeSingle(),
   ]);
 
-  if (appResult.error) throw new Error(`Temp recipient app lookup failed: ${appResult.error.message}`);
-  if (nlResult.error) throw new Error(`Temp recipient newsletter lookup failed: ${nlResult.error.message}`);
+  if (appResult.error) {
+    throw new Error(`Temp recipient app lookup failed: ${appResult.error.message}`);
+  }
+  if (nlResult.error) {
+    throw new Error(
+      `Temp recipient newsletter lookup failed: ${nlResult.error.message}`,
+    );
+  }
 
-  const email = (appResult.data?.email ?? nlResult.data?.email) as string | undefined;
+  const email = (appResult.data?.email ?? nlResult.data?.email) as
+    | string
+    | undefined;
   if (!email) {
     console.warn(
       "[send-weekly-newsletter] TEMP_CRON_SEND_ONLY_EMAIL not eligible (need basic/advanced active/trialing OR newsletter monthly/yearly):",
-      trimmed
+      trimmed,
     );
     return [];
   }
-  return [email];
+  const name = mergeDisplayName(appResult.data?.name, nlResult.data?.name);
+  return [{ email, name }];
 }
 
-async function sendViaResend(
-  to: string,
+const INSERT_CHUNK = 300;
+
+async function enqueueNewsletterJobs(
+  supabase: ReturnType<typeof createClient>,
+  data: InsightsPayload,
   subject: string,
-  html: string,
-  resendApiKey: string,
-  resendFromEmail: string
-): Promise<boolean> {
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: resendFromEmail,
-      to,
+  appUrl: string,
+  recipients: NewsletterRecipient[],
+): Promise<string> {
+  const { data: runRow, error: runErr } = await supabase
+    .from("newsletter_runs")
+    .insert({
       subject,
-      html,
-    }),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    console.error(`[send-weekly-newsletter] Resend error for ${to}:`, text);
-    return false;
+      app_url: appUrl,
+      payload: data as unknown as Record<string, unknown>,
+      status: "enqueued",
+    })
+    .select("id")
+    .single();
+
+  if (runErr) {
+    throw new Error(`Failed to create newsletter run: ${runErr.message}`);
   }
-  return true;
+
+  const runId = runRow.id as string;
+  const rows = recipients.map((r) => ({
+    run_id: runId,
+    email: r.email,
+    recipient_name: r.name,
+    status: "pending",
+  }));
+
+  for (let i = 0; i < rows.length; i += INSERT_CHUNK) {
+    const slice = rows.slice(i, i + INSERT_CHUNK);
+    const { error: jobErr } = await supabase.from("email_jobs").insert(slice);
+    if (jobErr) {
+      throw new Error(
+        `Failed to insert email_jobs: ${jobErr.message}`,
+      );
+    }
+  }
+
+  return runId;
 }
 
 Deno.serve(async (req) => {
@@ -322,7 +234,7 @@ Deno.serve(async (req) => {
   if (req.method !== "GET" && req.method !== "POST") {
     return new Response(
       JSON.stringify({ success: false, error: "Method not allowed" }),
-      { status: 405, headers: corsHeaders() }
+      { status: 405, headers: corsHeaders() },
     );
   }
 
@@ -340,15 +252,16 @@ Deno.serve(async (req) => {
     if (!resendApiKey) {
       return new Response(
         JSON.stringify({ success: false, error: "RESEND_API_KEY not set" }),
-        { status: 500, headers: corsHeaders() }
+        { status: 500, headers: corsHeaders() },
       );
     }
 
-    // Preview mode: ?preview=true or body { preview: true } → send only to support@
     let preview = false;
+    let forceSync = false;
     try {
       const url = new URL(req.url);
       preview = url.searchParams.get("preview") === "true";
+      forceSync = url.searchParams.get("sync") === "true";
     } catch {
       // ignore
     }
@@ -356,6 +269,7 @@ Deno.serve(async (req) => {
       try {
         const body = await req.json().catch(() => ({}));
         preview = body.preview === true;
+        forceSync = forceSync || body.sync === true;
       } catch {
         // ignore
       }
@@ -363,21 +277,30 @@ Deno.serve(async (req) => {
 
     const supabase = getSupabaseClient();
     const data = await fetchInsights(supabaseUrl, serviceRoleKey);
-    const html = buildNewsletterHtml(data, appUrl);
 
-    const dateStr = new Date().toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    const subjectDate = data.generatedAt
+      ? new Date(data.generatedAt).toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })
+      : new Date().toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
     const subject = preview
-      ? `[Preview] YieldCanary Weekly — ${dateStr}`
-      : `YieldCanary Weekly — ${dateStr}`;
+      ? `[Preview] YieldCanary Weekly — ${subjectDate}`
+      : `YieldCanary Weekly — ${subjectDate}`;
 
-    let recipients: string[];
+    let recipients: NewsletterRecipient[];
     if (preview) {
-      recipients = [SUPPORT_EMAIL];
-      console.log("[send-weekly-newsletter] Preview mode: sending only to", SUPPORT_EMAIL);
+      const previewName = await lookupUserNameByEmail(supabase, SUPPORT_EMAIL);
+      recipients = [{ email: SUPPORT_EMAIL, name: previewName }];
+      console.log(
+        "[send-weekly-newsletter] Preview mode: sending only to",
+        SUPPORT_EMAIL,
+      );
     } else {
       const tempOnly = TEMP_CRON_SEND_ONLY_EMAIL.trim();
       if (tempOnly) {
@@ -385,43 +308,87 @@ Deno.serve(async (req) => {
         console.log(
           "[send-weekly-newsletter] TEMP_CRON_SEND_ONLY_EMAIL mode: eligible recipients =",
           recipients.length,
-          recipients.length ? recipients[0] : "(none)"
+          recipients.length ? recipients[0].email : "(none)",
         );
       } else {
-        recipients = await getSubscriberEmails(supabase);
-        console.log("[send-weekly-newsletter] Sending to", recipients.length, "subscribers");
+        recipients = await getNewsletterRecipients(supabase);
+        console.log(
+          "[send-weekly-newsletter] Recipients:",
+          recipients.length,
+        );
       }
     }
 
+    const queueOk = useNewsletterQueue() && !preview && !forceSync &&
+      TEMP_CRON_SEND_ONLY_EMAIL.trim().length === 0;
+
+    if (queueOk && recipients.length > 0) {
+      const runId = await enqueueNewsletterJobs(
+        supabase,
+        data,
+        subject,
+        appUrl,
+        recipients,
+      );
+      console.log(
+        "[send-weekly-newsletter] Enqueued run",
+        runId,
+        "jobs:",
+        recipients.length,
+      );
+      return new Response(
+        JSON.stringify({
+          success: true,
+          mode: "queued",
+          run_id: runId,
+          enqueued: recipients.length,
+          preview: false,
+          temp_send_only: false,
+          message:
+            "Jobs enqueued. Ensure cron calls process-newsletter-jobs until the queue is empty.",
+        }),
+        { status: 200, headers: corsHeaders() },
+      );
+    }
+
     let sent = 0;
-    for (const email of recipients) {
-      const ok = await sendViaResend(
-        email,
+    for (const rec of recipients) {
+      const html = buildNewsletterHtml(data, appUrl, rec.name);
+      const result = await sendWeeklyNewsletterEmail(
+        rec.email,
         subject,
         html,
         resendApiKey,
-        resendFromEmail
+        resendFromEmail,
       );
-      if (ok) sent++;
+      if (result.ok) sent++;
+      else {
+        console.error(
+          `[send-weekly-newsletter] Resend ${rec.email}:`,
+          result.status,
+          result.body,
+        );
+      }
     }
 
     return new Response(
       JSON.stringify({
         success: true,
+        mode: "sync",
         sent,
         total: recipients.length,
         preview,
         temp_send_only:
           !preview && TEMP_CRON_SEND_ONLY_EMAIL.trim().length > 0,
       }),
-      { status: 200, headers: corsHeaders() }
+      { status: 200, headers: corsHeaders() },
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("[send-weekly-newsletter]", message);
     return new Response(
       JSON.stringify({ success: false, error: message }),
-      { status: 500, headers: corsHeaders() }
+      { status: 500, headers: corsHeaders() },
     );
   }
 });

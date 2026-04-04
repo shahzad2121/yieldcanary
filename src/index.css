@@ -273,6 +273,17 @@
     border-top-right-radius: 0.75rem; /* match rounded-xl */
   }
 
+  /* Horizontal sticky columns: corner headers sit above other sticky thead cells (z-10) */
+  .etf-desktop-table-scroll thead .etf-desktop-sticky-star {
+    z-index: 36;
+  }
+  .etf-desktop-table-scroll thead .etf-desktop-sticky-ticker {
+    z-index: 35;
+  }
+  .etf-desktop-table-scroll thead .etf-desktop-sticky-name {
+    z-index: 34;
+  }
+
   /* Custom scrollbar styling */
   .custom-scrollbar {
     scrollbar-width: thin;

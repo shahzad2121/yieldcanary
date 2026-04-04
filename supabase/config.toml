@@ -28,3 +28,13 @@ entrypoint = "./functions/tolt-webhook/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/market-snapshot/index.ts"
+[functions.send-weekly-newsletter]
+enabled = true
+verify_jwt = false
+import_map = "./functions/send-weekly-newsletter/deno.json"
+entrypoint = "./functions/send-weekly-newsletter/index.ts"
+[functions.process-newsletter-jobs]
+enabled = true
+verify_jwt = false
+import_map = "./functions/process-newsletter-jobs/deno.json"
+entrypoint = "./functions/process-newsletter-jobs/index.ts"

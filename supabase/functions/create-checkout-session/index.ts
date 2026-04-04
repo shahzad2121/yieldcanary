@@ -48,8 +48,9 @@ Deno.serve(async (req) => {
         "Authorization": `Bearer ${stripeSecret}`,
       },
     });
-
+    console.log("priceRes", priceRes);
     if (!priceRes.ok) {
+      console.error("Stripe price fetch error:", priceRes.status, priceRes.statusText);
       const error = await priceRes.text();
       console.error("Stripe price fetch error:", error);
       throw new Error(`Failed to fetch price details: ${error}`);
