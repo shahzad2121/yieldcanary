@@ -1,7 +1,13 @@
 import { useCallback, useState } from "react";
 import type { RefObject } from "react";
 import type { EChartsType } from "echarts";
-import ReactECharts from "echarts-for-react";
+/**
+ * Import ReactECharts as a TYPE only — it is used solely for the ref shape
+ * (InstanceType<typeof ReactECharts>). Using `import type` prevents bundlers
+ * from including the full echarts-for-react runtime in this module's chunk;
+ * the actual runtime import lives in the lazy-loaded tab components.
+ */
+import type ReactECharts from "echarts-for-react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
