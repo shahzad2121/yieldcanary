@@ -142,14 +142,10 @@ const STICKY_STAR_TH =
   'etf-desktop-sticky-star sticky left-0 z-[36] bg-muted';
 const STICKY_TICKER_TH =
   'etf-desktop-sticky-ticker sticky left-10 z-[35] bg-muted';
-const STICKY_NAME_TH =
-  'etf-desktop-sticky-name sticky left-[7.5rem] z-[34] bg-muted';
 const STICKY_STAR_TD =
-  'sticky left-0 z-[5] bg-background group-hover:bg-muted';
+  'sticky left-0 z-[5] bg-background group-hover:bg-[#DAE0E6] dark:group-hover:bg-[#202A34]';
 const STICKY_TICKER_TD =
-  'sticky left-10 z-[6] bg-background group-hover:bg-muted';
-const STICKY_NAME_TD =
-  'sticky left-[7.5rem] z-[7] bg-background group-hover:bg-muted';
+  'sticky left-10 z-[6] bg-background group-hover:bg-[#DAE0E6] dark:group-hover:bg-[#202A34]';
 
 export function ETFTable({
   etfs,
@@ -595,7 +591,7 @@ export function ETFTable({
               <TableHeader>
               <TableRow className="bg-muted hover:bg-muted/90">
                 <TableHead
-                  className={`${COLUMN_CONFIG.star.width} etf-desktop-header-cell etf-desktop-header-cell-first ${STICKY_STAR_TH} px-0`}
+                  className={`${COLUMN_CONFIG.star.width} etf-desktop-header-cell etf-desktop-header-cell-first ${STICKY_STAR_TH} pl-2 pr-0`}
                 />
                 <SortableHeader
                   label="Ticker"
@@ -605,7 +601,7 @@ export function ETFTable({
                 <SortableHeader
                   label="Name"
                   sortKeyProp="name"
-                  className={`${COLUMN_CONFIG.name.width} ${STICKY_NAME_TH}`}
+                  className={`${COLUMN_CONFIG.name.width}`}
                 />
                 <SortableHeader label="Canary Status" sortKeyProp="canaryStatus" className={COLUMN_CONFIG.canaryStatus.width} isKiller />
                 <SortableHeader label="Death Clock" sortKeyProp="deathClock" icon={Clock} className={COLUMN_CONFIG.deathClock.width} isKiller />
@@ -640,9 +636,9 @@ export function ETFTable({
                 return (
                   <TableRow
                     key={etf.id}
-                    className="group hover:bg-muted/50 transition-colors [&_td]:align-middle"
+                    className="group hover:bg-[#DAE0E6] dark:hover:bg-[#202A34] transition-colors [&_td]:align-middle"
                   >
-                    <TableCell className={`${STICKY_STAR_TD} px-0`}>
+                    <TableCell className={`${STICKY_STAR_TD} pl-2 pr-0`}>
                       <button
                         type="button"
                         onClick={() => toggleWatchlist(etf.ticker)}
@@ -657,7 +653,7 @@ export function ETFTable({
                       <EtfTickerChip ticker={etf.ticker} baseEtf={etf} className="mx-auto" />
                     </TableCell>
                     <TableCell
-                      className={`${COLUMN_CONFIG.name.width} ${COLUMN_CONFIG.name.className} ${STICKY_NAME_TD} text-muted-foreground px-1 py-2 text-sm`}
+                      className={`${COLUMN_CONFIG.name.width} ${COLUMN_CONFIG.name.className} text-muted-foreground px-1 py-2 text-sm`}
                     >
                       {etf.name}
                     </TableCell>
