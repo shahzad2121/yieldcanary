@@ -95,12 +95,12 @@ const MOBILE_SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'trueIncomeYield', label: 'True Income Yield' },
   { key: 'totalReturn1Y', label: 'Total Return 1Y' },
   { key: 'takeHomeCashReturn1Y', label: 'Take-Home Cash Return' },
-  { key: 'monthlySpendableCashYield', label: 'Monthly Spendable Cash Yield' },
-  { key: 'latestAdjClose', label: 'Price' },
+  { key: 'rocPercent', label: 'ROC %' },
   { key: 'headlineYieldTTM', label: 'Headline Yield' },
   { key: 'advertisedYield', label: 'Advertised Yield' },
+  { key: 'latestAdjClose', label: 'Price' },
   { key: 'payoutFrequency', label: 'Payout Frequency' },
-  { key: 'rocPercent', label: 'ROC %' },
+  { key: 'monthlySpendableCashYield', label: 'Monthly Spendable Cash Yield' },
   { key: 'aum', label: 'AUM' },
   { key: 'expenseRatio', label: 'Expense' },
 ];
@@ -120,10 +120,10 @@ const COLUMN_CONFIG = {
   },
   canaryStatus: { width: 'w-32', className: '' },
   deathClock: { width: 'w-28', className: '' },
-  trueIncomeYield: { width: 'w-32', className: '' },
-  totalReturn1Y: { width: 'w-32', className: '' },
+  trueIncomeYield: { width: 'w-28', className: '' },
+  totalReturn1Y: { width: 'w-28', className: '' },
   /** Fixed width like other metric cols — long headers wrap (see SortableHeader). Avoid min-w-* so cols don’t eat horizontal space. */
-  takeHomeCashReturn: { width: 'w-32 max-w-[8rem]', className: '' },
+  takeHomeCashReturn: { width: 'w-28 max-w-[7rem]', className: '' },
   monthlySpendableCashYield: { width: 'w-32 max-w-[8rem]', className: '' },
   price: { width: 'w-24', className: 'font-mono' },
   headlineYield: { width: 'w-28', className: 'font-mono' },
@@ -423,12 +423,12 @@ export function ETFTable({
       'True Income Yield',
       'Total Return 1Y',
       'Take-Home Cash 1Y',
-      'Monthly Spendable Cash Yield',
-      'Latest Price',
+      'ROC %',
       'Headline Yield',
       'Advertised Yield',
+      'Latest Price',
       'Payout Frequency',
-      'ROC %',
+      'Monthly Spendable Cash Yield',
       'AUM',
       'Expense Ratio',
     ];
@@ -441,12 +441,12 @@ export function ETFTable({
       etf.trueIncomeYield ?? '',
       etf.totalReturn1Y ?? '',
       etf.takeHomeCashReturn1Y ?? '',
-      etf.monthlySpendableCashYield !== null ? `${etf.monthlySpendableCashYield.toFixed(2)}%` : 'N/A',
-      etf.latestAdjClose ?? '',
+      etf.rocPercent ?? '',
       etf.headlineYieldTTM ?? '',
       etf.advertisedYield != null ? `${etf.advertisedYield.toFixed(2)}%` : '',
+      etf.latestAdjClose ?? '',
       etf.payoutFrequency ?? '',
-      etf.rocPercent ?? '',
+      etf.monthlySpendableCashYield !== null ? `${etf.monthlySpendableCashYield.toFixed(2)}%` : 'N/A',
       etf.aum ?? '',
       etf.expenseRatio ?? '',
     ]);
@@ -614,6 +614,11 @@ export function ETFTable({
                   wrapHeader
                   className={`${COLUMN_CONFIG.takeHomeCashReturn.width} text-start`}
                 />
+                <SortableHeader label="ROC %" sortKeyProp="rocPercent" className={COLUMN_CONFIG.rocPercent.width} />
+                <SortableHeader label="Headline Yield" sortKeyProp="headlineYieldTTM" className={COLUMN_CONFIG.headlineYield.width} />
+                <SortableHeader label="Advertised Yield" sortKeyProp="advertisedYield" icon={Percent} className={COLUMN_CONFIG.advertisedYield.width} />
+                <SortableHeader label="Price" sortKeyProp="latestAdjClose" className={COLUMN_CONFIG.price.width} />
+                <SortableHeader label="Payout Frequency" sortKeyProp="payoutFrequency" className={COLUMN_CONFIG.payoutFrequency.width} />
                 <SortableHeader
                   label="Monthly Spendable Cash Yield"
                   sortKeyProp="monthlySpendableCashYield"
@@ -621,11 +626,6 @@ export function ETFTable({
                   wrapHeader
                   className={`${COLUMN_CONFIG.monthlySpendableCashYield.width} text-start`}
                 />
-                <SortableHeader label="Price" sortKeyProp="latestAdjClose" className={COLUMN_CONFIG.price.width} />
-                <SortableHeader label="Headline Yield" sortKeyProp="headlineYieldTTM" className={COLUMN_CONFIG.headlineYield.width} />
-                <SortableHeader label="Advertised Yield" sortKeyProp="advertisedYield" icon={Percent} className={COLUMN_CONFIG.advertisedYield.width} />
-                <SortableHeader label="Payout Frequency" sortKeyProp="payoutFrequency" className={COLUMN_CONFIG.payoutFrequency.width} />
-                <SortableHeader label="ROC %" sortKeyProp="rocPercent" className={COLUMN_CONFIG.rocPercent.width} />
                 <SortableHeader label="AUM" sortKeyProp="aum" className={COLUMN_CONFIG.aum.width} />
                 <SortableHeader label="Expense" sortKeyProp="expenseRatio" className={`${COLUMN_CONFIG.expenseRatio.width} etf-desktop-header-cell-last`} />
               </TableRow>
@@ -662,12 +662,12 @@ export function ETFTable({
                     <TableCell className={`${COLUMN_CONFIG.trueIncomeYield.width} text-sm p-0`}><BlurredCell value={formatPercent(etf.trueIncomeYield)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className={`${COLUMN_CONFIG.totalReturn1Y.width} text-sm`}><BlurredCell value={formatReturn1Y(etf, etf.totalReturn1Y, etf.totalReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className={`${COLUMN_CONFIG.takeHomeCashReturn.width} ${COLUMN_CONFIG.takeHomeCashReturn.className} text-sm`}><BlurredCell value={formatReturn1Y(etf, etf.takeHomeCashReturn1Y, etf.takeHomeCashReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
-                    <TableCell className={`${COLUMN_CONFIG.monthlySpendableCashYield.width} ${COLUMN_CONFIG.monthlySpendableCashYield.className} text-sm`}><BlurredCell value={etf.monthlySpendableCashYield !== null ? `${etf.monthlySpendableCashYield.toFixed(2)}%` : 'N/A'} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
-                    <TableCell className={`${COLUMN_CONFIG.price.width} ${COLUMN_CONFIG.price.className} text-muted-foreground text-sm`}>${etf.latestAdjClose ? etf.latestAdjClose.toFixed(2) : '0.00'}</TableCell>
+                    <TableCell className={`${COLUMN_CONFIG.rocPercent.width} text-sm`}><BlurredCell value={`${etf.rocPercent}%`} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className={`${COLUMN_CONFIG.headlineYield.width} ${COLUMN_CONFIG.headlineYield.className} text-muted-foreground text-sm`}>{formatPercent(etf.headlineYieldTTM)}</TableCell>
                     <TableCell className={`${COLUMN_CONFIG.advertisedYield.width} ${COLUMN_CONFIG.advertisedYield.className} text-muted-foreground text-sm`}>{etf.advertisedYield != null ? `${etf.advertisedYield.toFixed(2)}%` : 'N/A'}</TableCell>
+                    <TableCell className={`${COLUMN_CONFIG.price.width} ${COLUMN_CONFIG.price.className} text-muted-foreground text-sm`}>${etf.latestAdjClose ? etf.latestAdjClose.toFixed(2) : '0.00'}</TableCell>
                     <TableCell className={`${COLUMN_CONFIG.payoutFrequency.width} text-sm text-muted-foreground`}>{etf.payoutFrequency || 'N/A'}</TableCell>
-                    <TableCell className={`${COLUMN_CONFIG.rocPercent.width} text-sm`}><BlurredCell value={`${etf.rocPercent}%`} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
+                    <TableCell className={`${COLUMN_CONFIG.monthlySpendableCashYield.width} ${COLUMN_CONFIG.monthlySpendableCashYield.className} text-sm`}><BlurredCell value={etf.monthlySpendableCashYield !== null ? `${etf.monthlySpendableCashYield.toFixed(2)}%` : 'N/A'} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className={`${COLUMN_CONFIG.aum.width} ${COLUMN_CONFIG.aum.className} text-muted-foreground text-sm`}>{formatCurrency(etf.aum)}</TableCell>
                     <TableCell className={`${COLUMN_CONFIG.expenseRatio.width} ${COLUMN_CONFIG.expenseRatio.className} text-muted-foreground text-sm`}>{etf.expenseRatio ? etf.expenseRatio.toFixed(2) : '0.00'}%</TableCell>
                   </TableRow>
