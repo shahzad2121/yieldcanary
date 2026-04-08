@@ -406,15 +406,15 @@ const Landing = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               <PricingCard 
                 name="Free"
-                description="For anyone to get started."
+                description="Test drive YieldCanary."
                 price="$0"
                 period="/ month"
                 features={[
-                  "Explore 200+ high-yield ETFs for free",
-                  "Instant Canary Status on every fund",
-                  "4 high-profile ETFs completely unblurred",
-                  "Search, filter, and sort the full list",
-                  "Get a taste of true income after ROC",
+                  "Access to the full list of 200+ high-yield ETFs",
+                  "Canary Status (Healthy / Dying / Dead) on every ETF",
+                  "4 completely unlocked ETFs with full Deep Dive data",
+                  "True Income Yield, ROC %, Death Clock and Take-Home Cash Return on those 4 ETFs",
+                  "Limited Insights tab (market snapshot only)",
                 ]}
                 buttonText="Get Started"
                 buttonVariant="outline"
@@ -423,18 +423,23 @@ const Landing = () => {
               />
               <PricingCard 
                 name="Basic"
-                description="Unlock the full dashboard & real income insights."
+                description="Unlimited research/tracking + weekly high-yield ETF newsletter."
                 price={isYearly ? "$89" : "$9"}
                 period={isYearly ? "/ year" : "/ month"}
                 features={[
                   "7-day free trial — cancel anytime",
-                  "True Income Yield revealed (real sustainable income after ROC)",
-                  "ROC % + ROC Health",
-                  "Alive / Dying / Dead Canary status",
-                  "Death Clock (projected years to ~50% NAV erosion)",
-                  "Create a custom Watchlist to track your favorite ETFs",
-                  "Export CSV data for any filtered view",
-                  "Monthly updates included",
+                  "Unlimited access to the full dashboard with sorting & filtering",
+                  "Complete ETF Deep Dive on every ticker (200+ ETFs)",
+                  "Full Insights tab with all curated lists",
+                  "Weekly newsletter every Monday morning",
+                  "True Income Yield (after stripping out ROC)",
+                  "ROC % trends + Take-Home Cash Return",
+                  "Canary Status (Healthy / Dying / Dead)",
+                  "Death Clock — years until ~50% NAV erosion",
+                  "Custom Watchlist to track your favorite ETFs",
+                  "Export CSV of any filtered view",
+                  "Manual portfolio linking (coming soon)",
+                  "Access to our Skool community",
                 ]}
                 buttonText="Start 7-Day Free Trial"
                 featured
@@ -443,20 +448,23 @@ const Landing = () => {
               />
               <PricingCard 
                 name="Advanced"
-                description="Unlock weekly alerts, exclusive insights, and priority support."
+                description="Full platform + automatic portfolio syncing and alerts."
                 price={isYearly ? "$189" : "$19"}
                 period={isYearly ? "/ year" : "/ month"}
                 teaserText={!isYearly ? "Lock in $19/month now – going to $49/month when released" : undefined}
                 features={[
                   "7-day free trial — cancel anytime",
                   "Everything in Basic +",
-                  'Weekly update emails (high-risk funds & big movers)',
-                  "Monthly newsletter (top picks, market insights, updates)",
-                  "Priority access to the YieldCanary founder",
-                  "Portfolio linking (coming soon)",
-                  "Custom notifications & buy alerts (coming soon)",
-                  "Visual charts & scenario calculator (coming soon)",
-                  "'Ask Canary' custom AI bot to ask any questions about high-yield funds (coming soon)",
+                  "Priority support from the founder",
+                  "EVERYTHING BELOW IS COMING SOON!",
+                  "Automatic portfolio syncing",
+                  "Weighted Portfolio Death Clock & overall Canary Status",
+                  "Portfolio-wide ROC exposure & True Income Yield",
+                  "Weekly alerts on high-risk funds and big movers",
+                  "Custom notifications & Canary alerts",
+                  "Advanced filters, historical charts & data exports",
+                  "Visual scenario calculator",
+                  "'Ask Canary' AI assistant",
                 ]}
                 buttonText="Start 7-Day Free Trial"
                 buttonVariant="outline"
