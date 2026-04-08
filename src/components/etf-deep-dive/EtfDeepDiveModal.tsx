@@ -13,6 +13,7 @@ import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
 import { useNavigate } from "react-router-dom";
 import { formatMMDDYYYY } from "@/lib/formatDeepDiveDate";
+import { FREE_UNLOCKED_TICKERS } from "@/types/etf";
 
 const SummaryTab = lazy(() => import("./tabs/SummaryTab"));
 const DividendsTab = lazy(() => import("./tabs/DividendsTab"));
@@ -50,7 +51,9 @@ export function EtfDeepDiveModal() {
         ? "basic"
         : "free";
   const isPaid = plan !== "free";
-  const shouldBlur = userLoading ? true : !isPaid;
+  const isFreeDeepDiveUnlockedTicker = ticker ? FREE_UNLOCKED_TICKERS.includes(ticker) : false;
+  const isDeepDiveUnlocked = isPaid || isFreeDeepDiveUnlockedTicker;
+  const shouldBlur = userLoading ? true : !isDeepDiveUnlocked;
 
   const dailyChangePct = useMemo<number | null>(() => {
     if (!priceSeries || priceSeries.length < 2) return null;

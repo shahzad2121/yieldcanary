@@ -10,6 +10,7 @@ import { KillerStatsSkeleton } from '@/components/dashboard/KillerStatsSkeleton'
 import { WatchlistSummary } from '@/components/dashboard/WatchlistSummary';
 import { WatchlistSummarySkeleton } from '@/components/dashboard/WatchlistSummarySkeleton';
 import { ETFTableSkeleton } from '@/components/dashboard/ETFTableSkeleton';
+import { UpgradeModal } from '@/components/dashboard/UpgradeModal';
 import { Footer } from '@/components/Footer';
 import { useETFs } from '@/hooks/useETFs';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -33,6 +34,7 @@ const WatchlistPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<CanaryStatus | 'all'>('all');
   const [userEmail, setUserEmail] = useState<string>('');
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   // Plan derivation: distinguish between 'free', 'basic', and 'advanced'
   type Plan = 'free' | 'basic' | 'advanced';
@@ -109,7 +111,7 @@ const WatchlistPage = () => {
           userEmail={userEmail}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          onUpgrade={() => {}}
+          onUpgrade={() => setIsUpgradeModalOpen(true)}
           onSubscriptionCancelled={refetchSubscription}
         />
 
@@ -158,7 +160,7 @@ const WatchlistPage = () => {
               etfs={filteredWatchlistETFs}
               plan={plan}
               isPaid={isPaid}
-              onUpgrade={() => {}}
+              onUpgrade={() => setIsUpgradeModalOpen(true)}
               filterSlot={filterBar}
               belowToolbarSlot={<WatchlistSummary etfs={filteredWatchlistETFs} />}
             />
@@ -169,6 +171,11 @@ const WatchlistPage = () => {
         </main>
       </div>
       </DashboardLayout>
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        onUpgrade={() => setIsUpgradeModalOpen(false)}
+      />
     </>
   );
 };
