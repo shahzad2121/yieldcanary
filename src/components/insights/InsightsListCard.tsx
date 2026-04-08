@@ -75,8 +75,7 @@ export function InsightsListCard({
     );
   }, [initialRowsShown, list.length]);
 
-  const visibleCount =
-    plan === 'advanced' ? list.length : plan === 'basic' ? VISIBLE_ROWS_BASIC : 0;
+  const visibleCount = plan === 'free' ? 0 : list.length;
   const canExpand = initialRowsShown > 0 && rowsToShow < list.length;
   const displayedList = list.slice(0, rowsToShow);
 
@@ -338,14 +337,11 @@ export function InsightsListCard({
           </div>
         )}
 
-        {(plan === 'free' ||
-          (plan === 'basic' && list.length > VISIBLE_ROWS_BASIC)) && (
+        {plan === 'free' && (
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2 border-t border-border pt-3">
             <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             <p className="text-sm text-muted-foreground">
-              {plan === 'free'
-                ? 'Upgrade to Basic to see the top 3 in this list, or Advanced for the full list.'
-                : `Upgrade to Advanced to see all ${list.length} funds.`}
+              Upgrade to see this list.
             </p>
             <Button size="sm" variant="outline" onClick={onUpgrade}>
               Upgrade
