@@ -15,6 +15,10 @@ export default defineConfig({
     },
   },
   build: {
+    // ECharts is intentionally isolated into its own vendor chunk and can exceed
+    // Vite's default 500 kB warning threshold. Raise warning limit to reduce
+    // noise while keeping current code-splitting behavior unchanged.
+    chunkSizeWarningLimit: 1200,
     rollupOptions: {
       output: {
         /**

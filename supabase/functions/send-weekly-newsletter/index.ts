@@ -7,6 +7,13 @@ import {
   sendWeeklyNewsletterEmail,
   SUPPORT_EMAIL,
 } from "../_shared/weeklyNewsletterHtml.ts";
+import {
+  clampTaxRate,
+  DEFAULT_TAX_RATE,
+  buildBestAfterTax,
+  buildTopMonthlyPayers,
+  buildTopWeeklyPayers,
+} from "../_shared/newsletterTaxCalculations.ts";
 
 /**
  * When not "false", bulk sends only enqueue DB rows; process-newsletter-jobs sends via Resend.
@@ -20,12 +27,27 @@ function useNewsletterQueue(): boolean {
  * Set to "" for normal production sends to all recipients.
  * When non-empty: only that email receives the send if eligible.
  */
+// TESTING SAFETY: while validating per-user tax rate in emails, restrict sends to a single inbox.
+// Set back to "" after verification.
 const TEMP_CRON_SEND_ONLY_EMAIL = "";
 
 type NewsletterRecipient = {
   email: string;
   name: string | null;
 };
+
+async function getUserTaxRateByEmail(
+  supabase: ReturnType<typeof createClient>,
+  email: string,
+): Promise<number> {
+  // Business requirement: match dashboard behavior (users.tax_rate, default 20).
+  const { data } = await supabase
+    .from("users")
+    .select("tax_rate")
+    .ilike("email", email.trim())
+    .maybeSingle();
+  return clampTaxRate(data?.tax_rate ?? DEFAULT_TAX_RATE);
+}
 
 function corsHeaders(): Record<string, string> {
   return {
@@ -353,7 +375,26 @@ Deno.serve(async (req) => {
 
     let sent = 0;
     for (const rec of recipients) {
-      const html = buildNewsletterHtml(data, appUrl, rec.name);
+      const taxRate = await getUserTaxRateByEmail(supabase, rec.email);
+      const taxRows = (data.etfsForTax ?? []) as unknown as Parameters<
+        typeof buildBestAfterTax
+      >[0];
+      const personalized: InsightsPayload = {
+        ...data,
+        // Per-recipient tax rate (dashboard setting)
+        taxRateDefault: taxRate,
+        // Recompute ONLY the tax-aware lists; everything else is shared.
+        bestAfterTax: buildBestAfterTax(taxRows, taxRate),
+        bestWeeklyPayers: buildTopWeeklyPayers(taxRows, taxRate),
+        bestMonthlyPayers: buildTopMonthlyPayers(taxRows, taxRate),
+      };
+
+      // Temporary production verification log (remove after confirming).
+      console.log(
+        `[send-weekly-newsletter] tax_rate_applied email=${rec.email} tax_rate=${taxRate}`,
+      );
+
+      const html = buildNewsletterHtml(personalized, appUrl, rec.name);
       const result = await sendWeeklyNewsletterEmail(
         rec.email,
         subject,

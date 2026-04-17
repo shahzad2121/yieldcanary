@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ETF } from "@/types/etf";
 import { formatMMDDYYYY } from "@/lib/formatDeepDiveDate";
@@ -80,8 +80,86 @@ interface UseEtfDeepDiveDataResult {
   sectors: SectorWeight[];
 }
 
+// Same DB -> ETF mapping shape used in list screens; keeps Deep Dive consistent across entry points.
+function transformRowToETF(row: any): ETF {
+  return {
+    id: row.id,
+    ticker: row.ticker,
+    name: row.name,
+    issuer: row.issuer,
+    inceptionDate: row.inception_date,
+    latestAdjClose: row.latest_adj_close,
+    latestDate: row.latest_date,
+    priceAvg90d: row.price_avg_90d ?? null,
+    headlineYieldTTM: row.headline_yield_ttm,
+    advertisedYield: row.advertised_yield ?? null,
+    rocPercent: row.roc_latest,
+    rocDate: row.roc_date,
+    trueIncomeYield: row.true_income_yield,
+    deathClock: row.death_clock_years ? `${row.death_clock_years.toFixed(1)} years` : "N/A",
+    canaryStatus: row.canary_health as "Healthy" | "Dying" | "Dead",
+    aum: row.aum,
+    expenseRatio: row.expense_ratio,
+    beta: row.beta ?? null,
+    description: row.description ?? null,
+    website: row.website ?? null,
+    payoutFrequency: row.payout_frequency as "Weekly" | "Monthly" | "Quarterly" | null,
+    price1YAgo: row.price_1y_ago,
+    dividendsLast12Mo: row.dividends_last_12mo,
+    priceYTDStart: row.price_ytd_start,
+    dividendsYTD: row.dividends_ytd,
+    priceAtInception: row.price_at_inception,
+    dividendsSinceInception: row.dividends_since_inception,
+    totalReturn1Y: row.total_return_1y,
+    totalReturnYTD: row.total_return_ytd,
+    totalReturnSinceInception: row.total_return_inception,
+    spentDividendsReturn1Y: row.spent_dividends_return_1y,
+    spentDividendsReturnYTD: row.spent_dividends_return_ytd,
+    spentDividendsReturnSinceInception: row.spent_dividends_return_inception,
+    takeHomeReturn1Y: row.take_home_return_1y,
+    takeHomeReturnYTD: row.take_home_return_ytd,
+    takeHomeReturnSinceInception: row.take_home_return_inception,
+    takeHomeCashReturn1Y: row.take_home_cash_return_1y,
+    takeHomeCashReturnYTD: row.take_home_cash_return_ytd,
+    takeHomeCashReturnSinceInception: row.take_home_cash_return_inception,
+    lastMonthDistribution: row.last_month_distribution,
+  };
+}
+
 export function useEtfDeepDiveData(ticker: string | null, baseEtf: ETF | null): UseEtfDeepDiveDataResult {
   const [timeframe, setTimeframe] = useState<Timeframe>("6M");
+  const queryClient = useQueryClient();
+
+  const {
+    data: fetchedBaseEtf,
+    error: baseEtfError,
+  } = useQuery<ETF | null>({
+    queryKey: ["etf-base-by-ticker", ticker],
+    enabled: !!ticker && !baseEtf,
+    queryFn: async () => {
+      if (!ticker) return null;
+
+      // Reuse cached ETF list first for instant parity with Dashboard-open path.
+      const cachedEtfs = queryClient.getQueryData<ETF[]>(["etfs"]);
+      const fromCache =
+        cachedEtfs?.find((e) => e.ticker.toUpperCase() === ticker.toUpperCase()) ?? null;
+      if (fromCache) return fromCache;
+
+      const { data, error } = await supabase
+        .from("etfs")
+        .select("*")
+        .ilike("ticker", ticker.trim())
+        .maybeSingle();
+
+      if (error) throw new Error(error.message);
+      if (!data) return null;
+
+      return transformRowToETF(data);
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const effectiveBaseEtf = baseEtf ?? fetchedBaseEtf ?? null;
 
   const {
     data,
@@ -156,9 +234,9 @@ export function useEtfDeepDiveData(ticker: string | null, baseEtf: ETF | null): 
 
   const dividendBuckets = useMemo<AggregatedDividendBucket[]>(() => {
     if (dividendEvents.length === 0) return [];
-    if (!baseEtf) return [];
+    if (!effectiveBaseEtf) return [];
 
-    const rocPercent = baseEtf.rocPercent ?? 0;
+    const rocPercent = effectiveBaseEtf.rocPercent ?? 0;
 
     const byBucket: Record<string, AggregatedDividendBucket> = {};
 
@@ -169,7 +247,7 @@ export function useEtfDeepDiveData(ticker: string | null, baseEtf: ETF | null): 
       const year = date.getFullYear();
       const month = date.getMonth();
 
-      const isWeekly = baseEtf.payoutFrequency === "Weekly";
+      const isWeekly = effectiveBaseEtf.payoutFrequency === "Weekly";
       let bucketKey: string;
       let label: string;
 
@@ -202,7 +280,7 @@ export function useEtfDeepDiveData(ticker: string | null, baseEtf: ETF | null): 
     const buckets = Object.values(byBucket).sort((a, b) => a.startDate.localeCompare(b.startDate));
 
     let cumulativeDividends = 0;
-    const latestPrice = baseEtf.latestAdjClose || null;
+    const latestPrice = effectiveBaseEtf.latestAdjClose || null;
 
     for (const bucket of buckets) {
       const rocPortion = bucket.totalAmount * (rocPercent / 100);
@@ -219,7 +297,7 @@ export function useEtfDeepDiveData(ticker: string | null, baseEtf: ETF | null): 
     }
 
     return buckets;
-  }, [dividendEvents, baseEtf]);
+  }, [dividendEvents, effectiveBaseEtf]);
 
   const dividendAnalytics = useMemo<DividendAnalytics>(() => {
     if (dividendBuckets.length === 0) {
@@ -257,12 +335,12 @@ export function useEtfDeepDiveData(ticker: string | null, baseEtf: ETF | null): 
 
   /** SEC-style 30-day yield: 2 * [ ((a - b) / d) + 1 ]^6 - 1 (per-share; a=divs in 30d, b=expense per share, d=price) */
   const secYield30d = useMemo<number | null>(() => {
-    if (!baseEtf || priceSeries.length === 0 || dividendEvents.length === 0) return null;
+    if (!effectiveBaseEtf || priceSeries.length === 0 || dividendEvents.length === 0) return null;
     const lastPoint = priceSeries[priceSeries.length - 1];
     const endDate = new Date(lastPoint.date);
     const startDate = new Date(endDate);
     startDate.setDate(startDate.getDate() - SEC_YIELD_DAYS);
-    const d = lastPoint.close ?? baseEtf.latestAdjClose;
+    const d = lastPoint.close ?? effectiveBaseEtf.latestAdjClose;
     if (d == null || d <= 0) return null;
 
     const a = dividendEvents
@@ -274,13 +352,13 @@ export function useEtfDeepDiveData(ticker: string | null, baseEtf: ETF | null): 
       })
       .reduce((sum, ev) => sum + ev.amount, 0);
 
-    const expenseRatioPct = baseEtf.expenseRatio ?? 0;
+    const expenseRatioPct = effectiveBaseEtf.expenseRatio ?? 0;
     const b = (expenseRatioPct / 100) * d * (SEC_YIELD_DAYS / 365);
     const ratio = (a - b) / d + 1;
     if (ratio <= 0) return null;
     const yieldDecimal = 2 * Math.pow(ratio, 6) - 1;
     return yieldDecimal;
-  }, [priceSeries, dividendEvents, baseEtf]);
+  }, [priceSeries, dividendEvents, effectiveBaseEtf]);
 
   /** 1-year annualized volatility: std(daily returns) * sqrt(252) */
   const volatility1y = useMemo<number | null>(() => {
@@ -319,7 +397,11 @@ export function useEtfDeepDiveData(ticker: string | null, baseEtf: ETF | null): 
     timeframe,
     setTimeframe,
     loading: isLoading,
-    error: error ? (error instanceof Error ? error.message : String(error)) : (data && !data.success && data.error ? data.error : null),
+    error: error
+      ? (error instanceof Error ? error.message : String(error))
+      : baseEtfError
+        ? (baseEtfError instanceof Error ? baseEtfError.message : String(baseEtfError))
+        : (data && !data.success && data.error ? data.error : null),
     priceSeries,
     priceSeriesFiltered,
     avgDailyVolume,

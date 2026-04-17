@@ -53,6 +53,15 @@ export interface InsightsListCardProps {
   initialRowsShown?: number;
 }
 
+/**
+ * Some Insights rows (e.g. weekly movers) are lightweight projections that only
+ * contain ticker + delta fields. Passing those as `baseEtf` into Deep Dive can
+ * crash modal rendering because required numeric fields are missing.
+ */
+function hasDeepDiveBaseEtf(etf: ETF): boolean {
+  return typeof etf.latestAdjClose === 'number' && Number.isFinite(etf.latestAdjClose);
+}
+
 export function InsightsListCard({
   title,
   subtitle,
@@ -192,7 +201,10 @@ export function InsightsListCard({
                           }
                         >
                           {col.id === 'ticker' || colIndex === 0 ? (
-                            <EtfTickerChip ticker={col.format(etf)} baseEtf={etf} />
+                            <EtfTickerChip
+                              ticker={col.format(etf)}
+                              baseEtf={hasDeepDiveBaseEtf(etf) ? etf : undefined}
+                            />
                           ) : col.type === 'status' ? (
                             isUnlocked ? (
                               <CanaryStatusBadge status={etf.canaryStatus} />
@@ -254,7 +266,10 @@ export function InsightsListCard({
               >
                 <div className="flex items-center justify-between gap-2">
                   {tickerColumn && (
-                    <EtfTickerChip ticker={tickerColumn.format(etf)} baseEtf={etf} />
+                    <EtfTickerChip
+                      ticker={tickerColumn.format(etf)}
+                      baseEtf={hasDeepDiveBaseEtf(etf) ? etf : undefined}
+                    />
                   )}
                   {statusColumn && (
                     <div className="flex-shrink-0">
