@@ -5,6 +5,13 @@ import {
   type InsightsPayload,
   sendWeeklyNewsletterEmail,
 } from "../_shared/weeklyNewsletterHtml.ts";
+import {
+  clampTaxRate,
+  DEFAULT_TAX_RATE,
+  buildBestAfterTax,
+  buildTopMonthlyPayers,
+  buildTopWeeklyPayers,
+} from "../_shared/newsletterTaxCalculations.ts";
 
 type EmailJobRow = {
   id: string;
@@ -14,6 +21,11 @@ type EmailJobRow = {
   status: string;
   attempts: number;
 };
+
+// TESTING SAFETY: only this address is actually sent via Resend.
+// All other claimed jobs are marked sent without emailing.
+// Set back to null after verification.
+const SEND_ONLY_TO_EMAIL = "kenjaku416@gmail.com";
 
 function corsHeaders(): Record<string, string> {
   return {
@@ -41,6 +53,18 @@ function getSupabaseClient() {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+async function getUserTaxRateByEmail(
+  supabase: ReturnType<typeof createClient>,
+  email: string,
+): Promise<number> {
+  const { data } = await supabase
+    .from("users")
+    .select("tax_rate")
+    .ilike("email", email.trim())
+    .maybeSingle();
+  return clampTaxRate(data?.tax_rate ?? DEFAULT_TAX_RATE);
 }
 
 const MAX_ATTEMPTS_BEFORE_FAIL = 12;
@@ -116,9 +140,9 @@ Deno.serve(async (req) => {
     }
 
     const jobs = (claimed ?? []) as EmailJobRow[];
-    /** When set, only this address is sent via Resend; other jobs are marked sent without emailing (queue + batching still run). Unset in production. */
-    /** Test: only this inbox gets Resend; others are marked sent without email. Remove or gate for production. */
-    const sendOnlyTo = null;
+    const sendOnlyTo = SEND_ONLY_TO_EMAIL
+      ? SEND_ONLY_TO_EMAIL.trim().toLowerCase()
+      : null;
 
     let sent = 0;
     let failed = 0;
@@ -146,8 +170,24 @@ Deno.serve(async (req) => {
       }
 
       const payload = run.payload as unknown as InsightsPayload;
+      const taxRate = await getUserTaxRateByEmail(supabase, job.email);
+      const taxRows = (payload.etfsForTax ?? []) as unknown as Parameters<
+        typeof buildBestAfterTax
+      >[0];
+      const personalized: InsightsPayload = {
+        ...payload,
+        taxRateDefault: taxRate,
+        bestAfterTax: buildBestAfterTax(taxRows, taxRate),
+        bestWeeklyPayers: buildTopWeeklyPayers(taxRows, taxRate),
+        bestMonthlyPayers: buildTopMonthlyPayers(taxRows, taxRate),
+      };
+
+      // Temporary production verification log (remove after confirming).
+      console.log(
+        `[process-newsletter-jobs] tax_rate_applied email=${job.email} tax_rate=${taxRate}`,
+      );
       const html = buildNewsletterHtml(
-        payload,
+        personalized,
         run.app_url as string,
         job.recipient_name,
       );

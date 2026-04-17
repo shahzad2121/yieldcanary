@@ -3,7 +3,29 @@
 export type InsightsPayload = {
   success: boolean;
   generatedAt?: string;
+  /**
+   * Tax rate applied for tax-aware newsletter lists.
+   * This is set per-recipient at send time from `users.tax_rate` (dashboard setting).
+   */
   taxRateDefault?: number;
+  /**
+   * Internal-only: minimal ETF fields needed to recompute tax-aware lists per recipient.
+   * (Not rendered directly; used by send/worker functions.)
+   */
+  etfsForTax?: Array<{
+    ticker: string | null;
+    name: string | null;
+    canary_health: string | null;
+    payout_frequency: string | null;
+    last_month_distribution: number | null;
+    roc_latest: number | null;
+    latest_adj_close: number | null;
+    price_1y_ago: number | null;
+    dividends_last_12mo: number | null;
+    inception_date: string | null;
+    price_ytd_start: number | null;
+    dividends_ytd: number | null;
+  }>;
   marketSnapshot: {
     status: string;
     weekEndingLabel: string;
@@ -197,7 +219,7 @@ export function buildNewsletterHtml(
 
   const taxNote =
     data.taxRateDefault != null
-      ? `${data.taxRateDefault}% tax rate applied for spendable-yield and after-tax lists (newsletter default).`
+      ? `${data.taxRateDefault}% tax rate applied for spendable-yield and after-tax lists (your dashboard setting).`
       : "";
 
   const marketTitle =

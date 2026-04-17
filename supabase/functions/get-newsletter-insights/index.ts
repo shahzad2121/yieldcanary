@@ -7,9 +7,16 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const TOP_N = 5;
 const TRUE_YIELD_MIN = 10;
-const DEFAULT_TAX_RATE = 20;
 const ROC_MIN = 0;
 const ROC_MAX = 5;
+
+import type { NewsletterEtfTaxRow } from "../_shared/newsletterTaxCalculations.ts";
+import {
+  DEFAULT_TAX_RATE,
+  buildBestAfterTax as buildBestAfterTaxTaxRows,
+  buildTopMonthlyPayers as buildTopMonthlyPayersTaxRows,
+  buildTopWeeklyPayers as buildTopWeeklyPayersTaxRows,
+} from "../_shared/newsletterTaxCalculations.ts";
 
 type EtfRow = {
   id: string;
@@ -372,100 +379,18 @@ function buildHighestAdvertised(rows: EtfRow[]) {
 }
 
 function buildBestAfterTax(rows: EtfRow[], taxRate: number) {
-  const enriched = rows.map((e) => {
-    const takeHomeCashReturn1Y = calcTakeHomeCashReturn1Y(
-      e.latest_adj_close,
-      e.price_1y_ago,
-      e.dividends_last_12mo,
-      taxRate,
-    );
-    const takeHomeCashReturnYTD = calcTakeHomeCashReturnYTD(
-      e.latest_adj_close,
-      e.price_ytd_start,
-      e.dividends_ytd,
-      taxRate,
-    );
-    return { e, takeHomeCashReturn1Y, takeHomeCashReturnYTD };
-  });
-  const filtered = enriched.filter((x) => x.e.canary_health === "Healthy");
-  const sorted = [...filtered].sort((a, b) => {
-    const aVal = getSortValueTakeHome(
-      a.e,
-      a.takeHomeCashReturn1Y,
-      a.takeHomeCashReturnYTD,
-    );
-    const bVal = getSortValueTakeHome(
-      b.e,
-      b.takeHomeCashReturn1Y,
-      b.takeHomeCashReturnYTD,
-    );
-    if (bVal !== aVal) return bVal - aVal;
-    return (a.e.ticker ?? "").localeCompare(b.e.ticker ?? "");
-  });
-  return sorted.slice(0, TOP_N).map(({ e, takeHomeCashReturn1Y, takeHomeCashReturnYTD }) => ({
-    ticker: e.ticker ?? "",
-    name: e.name ?? "",
-    canaryStatus: e.canary_health ?? "",
-    takeHomeCashReturnDisplay: formatTakeHomeReturnLabel(
-      e,
-      takeHomeCashReturn1Y,
-      takeHomeCashReturnYTD,
-    ),
-  }));
+  // Replaced by shared pure helper in `_shared/newsletterTaxCalculations.ts`
+  return buildBestAfterTaxTaxRows(rows as unknown as NewsletterEtfTaxRow[], taxRate);
 }
 
 function buildTopMonthlyPayers(rows: EtfRow[], taxRate: number) {
-  const enriched = rows.map((e) => ({
-    ...e,
-    monthlySpendableCashYield: calcMonthlySpendableCashYield(
-      e.last_month_distribution,
-      e.latest_adj_close,
-      taxRate,
-    ),
-  }));
-  const filtered = enriched.filter(
-    (e) => e.canary_health === "Healthy" && e.payout_frequency === "Monthly",
-  );
-  const sorted = [...filtered].sort((a, b) => {
-    const av = a.monthlySpendableCashYield ?? -Infinity;
-    const bv = b.monthlySpendableCashYield ?? -Infinity;
-    if (bv !== av) return bv - av;
-    return (a.ticker ?? "").localeCompare(b.ticker ?? "");
-  });
-  return sorted.slice(0, TOP_N).map((e) => ({
-    ticker: e.ticker ?? "",
-    name: e.name ?? "",
-    trueIncomeYield: e.true_income_yield,
-    rocPercent: e.roc_latest,
-    monthlySpendableCashYield: e.monthlySpendableCashYield ?? null,
-  }));
+  // Replaced by shared pure helper in `_shared/newsletterTaxCalculations.ts`
+  return buildTopMonthlyPayersTaxRows(rows as unknown as NewsletterEtfTaxRow[], taxRate);
 }
 
 function buildTopWeeklyPayers(rows: EtfRow[], taxRate: number) {
-  const enriched = rows.map((e) => ({
-    ...e,
-    monthlySpendableCashYield: calcMonthlySpendableCashYield(
-      e.last_month_distribution,
-      e.latest_adj_close,
-      taxRate,
-    ),
-  }));
-  const filtered = enriched.filter(
-    (e) => e.canary_health === "Healthy" && e.payout_frequency === "Weekly",
-  );
-  const sorted = [...filtered].sort((a, b) => {
-    const av = a.monthlySpendableCashYield ?? -Infinity;
-    const bv = b.monthlySpendableCashYield ?? -Infinity;
-    if (bv !== av) return bv - av;
-    return (a.ticker ?? "").localeCompare(b.ticker ?? "");
-  });
-  return sorted.slice(0, TOP_N).map((e) => ({
-    ticker: e.ticker ?? "",
-    name: e.name ?? "",
-    trueIncomeYield: e.true_income_yield,
-    rocPercent: e.roc_latest,
-    monthlySpendableCashYield: e.monthlySpendableCashYield ?? null,
-  }));
+  // Replaced by shared pure helper in `_shared/newsletterTaxCalculations.ts`
+  return buildTopWeeklyPayersTaxRows(rows as unknown as NewsletterEtfTaxRow[], taxRate);
 }
 
 function buildLargestHealthyAum(rows: EtfRow[]) {
@@ -578,6 +503,21 @@ Deno.serve(async (req) => {
     const weekEndingLabel = weekEndingNumericUs(weekEnding);
 
     const taxRate = DEFAULT_TAX_RATE;
+    // Provide minimal rows so the send/worker can recompute tax-aware lists per recipient.
+    const etfsForTax: NewsletterEtfTaxRow[] = rows.map((r) => ({
+      ticker: r.ticker,
+      name: r.name,
+      canary_health: r.canary_health,
+      payout_frequency: r.payout_frequency,
+      last_month_distribution: r.last_month_distribution,
+      roc_latest: r.roc_latest,
+      latest_adj_close: r.latest_adj_close,
+      price_1y_ago: r.price_1y_ago,
+      dividends_last_12mo: r.dividends_last_12mo,
+      inception_date: r.inception_date,
+      price_ytd_start: r.price_ytd_start,
+      dividends_ytd: r.dividends_ytd,
+    }));
 
     const [
       marketSnapshot,
@@ -609,6 +549,7 @@ Deno.serve(async (req) => {
       success: true,
       generatedAt: generatedAt.toISOString(),
       taxRateDefault: taxRate,
+      etfsForTax,
       marketSnapshot: {
         status: marketSnapshot.status,
         weekEndingLabel,
