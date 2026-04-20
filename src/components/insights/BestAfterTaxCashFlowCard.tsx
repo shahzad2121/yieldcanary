@@ -45,11 +45,11 @@ function formatReturn1Y(
   const hasNo1YData =
     value1Y === null || value1Y === undefined || value1Y === 0;
   if (isNew) {
-    if (valueYTD === null || valueYTD === undefined) return '0.00% (YTD)';
+    if (valueYTD === null || valueYTD === undefined) return '—';
     return `${valueYTD.toFixed(2)}% (YTD)`;
   }
   if (hasNo1YData) {
-    if (valueYTD === null || valueYTD === undefined) return '0.00%';
+    if (valueYTD === null || valueYTD === undefined) return '—';
     return `${valueYTD.toFixed(2)}% (YTD)`;
   }
   return `${(value1Y ?? 0).toFixed(2)}%`;
