@@ -88,7 +88,7 @@ DEFAULT_TICKERS = [
     "GPIX", "GPIQ",
 
     # TappAlpha ETFs (daily covered call income)
-    "TDAQ", "TSPY", "TSYX",
+    "TDAQ", "TSPY", "TSYX", "TSYX", "TDAX",
 
     # Tuttle Capital ETFs
     "MAGO", "MSTK", "BITK",
@@ -112,6 +112,9 @@ DEFAULT_TICKERS = [
 
     # PIMCO High-Yield Income ETFs
     "PDI", "PTY", "PDO",
+
+    # Quality Funds ETFs
+    "ISBG", "ISSB",
 
     # Nicholas Wealth XFunds
     "FIAX", "GIAX", "BLOX",
