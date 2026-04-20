@@ -307,15 +307,15 @@ def estimate_roc_from_nav_erosion(
     latest_price: Optional[float],
     total_dividends: float,
     years_since_inception: float,
-    min_months: int = 3
+    min_months: int = 2
 ) -> Optional[float]:
     """
     Estimate ROC percentage based on NAV erosion.
 
-    Now uses 3-month minimum (down from 6) to capture more ETFs.
+    Now uses 2-month minimum (down from 6) to capture more ETFs.
 
     Returns:
-        - 0.0% if too new (< 3 months) - assume healthy until proven otherwise
+        - 0.0% if too new (< 2 months) - assume healthy until proven otherwise
         - 0.0% if no NAV erosion (price increased and fully funded)
         - 0.0% if no dividends (no distributions = no ROC)
         - Calculated % if NAV erosion detected
@@ -578,11 +578,31 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
     
     price_1y_ago = find_price_on_date(prices, one_year_ago, lookback_days=7)
     
+    # YTD anchor: three-step fallback chain matching industry practice (Fidelity / iShares LOF approach).
+    # Step 1: prior-year Dec 31 (true calendar YTD start for established funds).
+    # Step 2: early Jan 2 of current year (handles New Year holiday gap).
+    # Step 3: first trading day on or after Jan 1 of current year — catches funds that listed
+    #         after early January; produces a "since first trade" YTD rather than a missing value.
     ytd_start_date = datetime(today.year - 1, 12, 31)
     price_ytd_start = find_price_on_date(prices, ytd_start_date, lookback_days=7)
+    ytd_anchor_date = ytd_start  # default dividend window start = Jan 1 of current year
     if not price_ytd_start:
         price_ytd_start = find_price_on_date(prices, datetime(today.year, 1, 2), lookback_days=7)
-    
+    if not price_ytd_start and prices:
+        # Step 3: walk the price list (sorted newest-first) and pick the oldest row
+        # whose date falls on or after Jan 1 of this year.
+        jan1_str = datetime(today.year, 1, 1).strftime('%Y-%m-%d')
+        for row in reversed(prices):
+            row_date = row.get('date', '')
+            if row_date >= jan1_str:
+                price_ytd_start = row.get('close')
+                # Align dividend window to the actual anchor date used
+                try:
+                    ytd_anchor_date = datetime.strptime(row_date, '%Y-%m-%d')
+                except Exception:
+                    pass
+                break
+
     # Price at inception - try inception date first, then earliest available
     price_at_inception = None
     effective_inception_date = inception_date
@@ -603,7 +623,9 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
     
     # Calculate dividends
     dividends_last_12mo = calculate_dividends_in_range(dividends, one_year_ago, today)
-    dividends_ytd = calculate_dividends_in_range(dividends, ytd_start, today)
+    # Use ytd_anchor_date (which equals ytd_start for established funds, or the first-trade
+    # date for newly listed funds that triggered step 3 of the YTD anchor fallback chain).
+    dividends_ytd = calculate_dividends_in_range(dividends, ytd_anchor_date, today)
     dividends_since_inception = 0.0
     if effective_inception_date:
         dividends_since_inception = calculate_dividends_in_range(dividends, effective_inception_date, today)
@@ -623,7 +645,7 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
             latest_price,
             dividends_since_inception,
             years_since_inception,
-            min_months=3  # 3 month minimum
+            min_months=2  # 2 month minimum
         )
         if roc_latest is not None:
             roc_date = today.strftime('%Y-%m-%d')

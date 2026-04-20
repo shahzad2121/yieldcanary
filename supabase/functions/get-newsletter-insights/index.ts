@@ -144,11 +144,11 @@ function formatTakeHomeReturnLabel(
   const hasNo1YData =
     takeHome1Y === null || takeHome1Y === undefined || takeHome1Y === 0;
   if (isNew) {
-    if (takeHomeYTD === null || takeHomeYTD === undefined) return "0.00% (YTD)";
+    if (takeHomeYTD === null || takeHomeYTD === undefined) return "—";
     return `${takeHomeYTD.toFixed(2)}% (YTD)`;
   }
   if (hasNo1YData) {
-    if (takeHomeYTD === null || takeHomeYTD === undefined) return "0.00%";
+    if (takeHomeYTD === null || takeHomeYTD === undefined) return "—";
     return `${takeHomeYTD.toFixed(2)}% (YTD)`;
   }
   return `${(takeHome1Y ?? 0).toFixed(2)}%`;

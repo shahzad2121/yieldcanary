@@ -372,15 +372,15 @@ export function ETFTable({
     const isNew = isLessThanOneYear(etf.inceptionDate);
     const hasNo1YData = value1Y === null || value1Y === undefined || value1Y === 0;
     
-    // Rule 1: If ETF is less than 1 year old, ALWAYS show YTD (even if 1Y has a value)
+    // Rule 1: If ETF is less than 1 year old, ALWAYS show YTD / since-first-trade (even if 1Y has a value)
     if (isNew) {
-      if (valueYTD === null || valueYTD === undefined) return '0.00% (YTD)';
+      if (valueYTD === null || valueYTD === undefined) return 'N/A';
       return `${valueYTD.toFixed(2)}% (YTD)`;
     }
     
     // Rule 2: If ETF is older but has no 1Y data, show YTD as fallback
     if (hasNo1YData) {
-      if (valueYTD === null || valueYTD === undefined) return '0.00%';
+      if (valueYTD === null || valueYTD === undefined) return 'N/A';
       return `${valueYTD.toFixed(2)}% (YTD)`;
     }
     
