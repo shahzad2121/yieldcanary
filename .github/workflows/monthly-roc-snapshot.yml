@@ -1,19 +1,19 @@
-name: Weekly ETF Data Update
+name: Monthly ETF ROC snapshot
 
 on:
   schedule:
-    # Run every Monday at 6:00 AM UTC (1:00 AM EST, after markets close)
-    - cron: '0 6 * * 1'
+    # First day of each month, 07:30 UTC — after prior month is complete; adjust if needed
+    - cron: '30 7 1 * *'
   workflow_dispatch:
 
 jobs:
-  update-etf-data:
+  monthly-roc:
     runs-on: ubuntu-latest
-    
+
     defaults:
       run:
         working-directory: ./data ingestion
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,16 +28,17 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run ETF data bootstrap
+      - name: Snapshot previous month ROC (FMP → etf_monthly_roc)
         env:
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
-        run: python bootstrap_database.py
+        run: python snapshot_monthly_roc.py
 
       - name: Summary
         if: always()
         run: |
-          echo "## ETF Data Bootstrap" >> $GITHUB_STEP_SUMMARY
+          echo "## Monthly ROC snapshot" >> $GITHUB_STEP_SUMMARY
           echo "- **Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
           echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Script:** snapshot_monthly_roc.py (default = previous complete month)" >> $GITHUB_STEP_SUMMARY

@@ -47,23 +47,33 @@ export function FilterBar({
         </button>
         <button
           className={`h-6 xs:h-7 px-2 xs:px-3 text-xs xs:text-sm rounded-md font-medium transition-colors focus:outline-none ${
-            statusFilter === 'Dying'
-              ? 'bg-green-500 text-white'
+            statusFilter === 'Watch'
+              ? 'bg-amber-500 text-white'
               : 'text-muted-foreground hover:text-foreground'
           }`}
-          onClick={() => onStatusFilterChange('Dying')}
+          onClick={() => onStatusFilterChange('Watch')}
         >
-          Dying
+          Watch
         </button>
         <button
           className={`h-6 xs:h-7 px-2 xs:px-3 text-xs xs:text-sm rounded-md font-medium transition-colors focus:outline-none ${
-            statusFilter === 'Dead'
-              ? 'bg-green-500 text-white'
+            statusFilter === 'High Risk'
+              ? 'bg-orange-500 text-white'
               : 'text-muted-foreground hover:text-foreground'
           }`}
-          onClick={() => onStatusFilterChange('Dead')}
+          onClick={() => onStatusFilterChange('High Risk')}
         >
-          Dead
+          High Risk
+        </button>
+        <button
+          className={`h-6 xs:h-7 px-2 xs:px-3 text-xs xs:text-sm rounded-md font-medium transition-colors focus:outline-none ${
+            statusFilter === 'Severe Risk'
+              ? 'bg-red-500 text-white'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+          onClick={() => onStatusFilterChange('Severe Risk')}
+        >
+          Severe Risk
         </button>
       </div>
       {/* Clear Filters — driven by parent so search + compare URL params also surface Clear */}

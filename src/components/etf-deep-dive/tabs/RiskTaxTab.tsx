@@ -53,14 +53,14 @@ export default function RiskTaxTab() {
   const rocPercent = baseEtf?.rocPercent ?? null;
   const canaryStatus = baseEtf?.canaryStatus;
   const riskWarning =
-    rocPercent != null && rocPercent >= 20
-      ? `High ROC (${rocPercent.toFixed(0)}%): a significant portion of payouts may be eroding NAV.`
-      : canaryStatus === "Healthy"
-        ? "Healthy Canary: low erosion risk; payouts appear mostly sustainable."
-        : canaryStatus === "Dying"
-          ? "Moderate erosion risk; part of the yield may be return of capital."
-          : canaryStatus === "Dead"
-            ? "High erosion risk; much of the yield is likely returning principal."
+    canaryStatus === "Healthy"
+      ? "Healthy Canary: low erosion risk. Payouts appear mostly sustainable income."
+      : canaryStatus === "Watch"
+        ? "Watch: moderate erosion signal. Part of the yield may be return of capital — monitor NAV trend."
+        : canaryStatus === "High Risk"
+          ? `High Risk — ROC ${rocPercent != null ? `(${rocPercent.toFixed(0)}%)` : ""}: a significant share of payouts may be eroding NAV. Proceed with caution.`
+          : canaryStatus === "Severe Risk"
+            ? `Severe Risk — ROC ${rocPercent != null ? `(${rocPercent.toFixed(0)}%)` : ""}: much of the yield is likely returning principal or the fund is in steep price decline.`
             : null;
 
   return (

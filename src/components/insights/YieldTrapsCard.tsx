@@ -76,7 +76,10 @@ export function YieldTrapsCard({
 }: YieldTrapsCardProps) {
   const list = useMemo(() => {
     const filtered = etfs.filter(
-      (e) => e.canaryStatus === 'Dying' || e.canaryStatus === 'Dead'
+      (e) =>
+        e.canaryStatus === 'Watch' ||
+        e.canaryStatus === 'High Risk' ||
+        e.canaryStatus === 'Severe Risk'
     );
 
     const sorted = [...filtered].sort((a, b) => {
