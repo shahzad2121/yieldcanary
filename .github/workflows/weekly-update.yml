@@ -1,19 +1,22 @@
 name: Weekly ETF Data Update
 
+# Runs every Monday at 06:00 UTC — after US weekend, before EU open.
+# Scope: bootstrap ETF data, then refresh weekly snapshots.
+# etf_monthly_roc is NOT touched here; it is owned by the monthly-roc-snapshot workflow.
+
 on:
   schedule:
-    # Run every Monday at 6:00 AM UTC (1:00 AM EST, after markets close)
     - cron: '0 6 * * 1'
   workflow_dispatch:
 
 jobs:
   update-etf-data:
     runs-on: ubuntu-latest
-    
+
     defaults:
       run:
         working-directory: ./data ingestion
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,19 +31,24 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run ETF data bootstrap
+      # Step 1: Full bootstrap — refreshes etfs, weekly_data, notices.
+      # export_monthly_roc / restore_monthly_roc inside bootstrap preserve
+      # etf_monthly_roc history across the clear-and-repopulate cycle.
+      - name: Bootstrap ETF data
         env:
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
         run: python bootstrap_database.py
 
-      - name: Backfill weekly snapshots (last week + this week)
+      # Step 2: Update etf_weekly_snapshots for last week and this week.
+      # Uses weekly_data (Supabase) + FMP fallback for any gaps.
+      - name: Update weekly snapshots
         env:
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
-        run: python backfill_weekly_snapshots_real.py
+        run: python update_weekly_snapshots.py
 
       - name: Summary
         if: always()
@@ -48,4 +56,4 @@ jobs:
           echo "## Weekly ETF Data Update" >> $GITHUB_STEP_SUMMARY
           echo "- **Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
           echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Steps:** Bootstrap + Weekly snapshots (last week + this week) for Biggest Movers" >> $GITHUB_STEP_SUMMARY
+          echo "- **Steps:** Bootstrap (FMP monthly ROC for new tickers) → Update weekly snapshots" >> $GITHUB_STEP_SUMMARY

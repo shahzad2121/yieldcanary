@@ -7,12 +7,21 @@ interface WatchlistSummaryProps {
   etfs: ETF[];
 }
 
-/** Score per ETF: Healthy=3, Dying=2, Dead=1. Average to 0–100% for display. */
+/**
+ * Score per ETF based on 4-tier Canary Status.
+ * Healthy=4, Watch=3, High Risk=2, Severe Risk=1. Scaled to 0–100%.
+ */
 function getWatchlistHealthPercent(etfs: ETF[]): number | null {
   if (etfs.length === 0) return null;
-  const points = etfs.map((e) => (e.canaryStatus === 'Healthy' ? 3 : e.canaryStatus === 'Dying' ? 2 : 1));
+  const score = (status: ETF['canaryStatus']) => {
+    if (status === 'Healthy') return 4;
+    if (status === 'Watch') return 3;
+    if (status === 'High Risk') return 2;
+    return 1; // Severe Risk
+  };
+  const points = etfs.map((e) => score(e.canaryStatus));
   const avg = points.reduce((a, b) => a + b, 0) / points.length;
-  return Math.round((avg / 3) * 100);
+  return Math.round((avg / 4) * 100);
 }
 
 function getHealthBarColor(percent: number): string {

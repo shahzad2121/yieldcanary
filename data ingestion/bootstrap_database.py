@@ -274,23 +274,200 @@ def calculate_dividends_in_range(dividends: list, start_date: datetime, end_date
     return total
 
 
-def determine_canary_health(roc_percent: Optional[float]) -> str:
-    """Determine canary health status based on ROC percentage"""
-    if roc_percent is None:
+def determine_canary_health(
+    effective_roc: Optional[float],
+    total_return_1y: Optional[float] = None,
+) -> str:
+    """
+    Canary status using client-specified 4-tier thresholds on Effective ROC.
+
+    Tiers (Effective ROC):
+      Healthy     < 25%
+      Watch       25% – 49.99%
+      High Risk   50% – 74.99%
+      Severe Risk >= 75%
+
+    Hard override → Severe Risk when 1Y price return < -15%, regardless of ROC.
+    This catches funds in steep price decline even before ROC spikes.
+
+    Edge cases:
+      - effective_roc is None (new fund, no data) → "Unknown"
+      - total_return_1y is None (price data gap) → skip override, use ROC tiers only
+    """
+    # Hard override: severe price decline always escalates to worst tier
+    if total_return_1y is not None and total_return_1y < -15.0:
+        return "Severe Risk"
+
+    if effective_roc is None:
         return "Unknown"
-    if roc_percent >= 40:
-        return "Dead"
-    elif roc_percent >= 20:
-        return "Dying"
-    else:
-        return "Healthy"
+
+    if effective_roc >= 75:
+        return "Severe Risk"
+    if effective_roc >= 50:
+        return "High Risk"
+    if effective_roc >= 25:
+        return "Watch"
+    return "Healthy"
 
 
-def calculate_death_clock(roc_percent: Optional[float]) -> Optional[float]:
-    """Calculate years until half investment is gone from ROC"""
+def calculate_death_clock(
+    effective_roc: Optional[float],
+    total_return_1y: Optional[float] = None,
+) -> Optional[float]:
+    """
+    Death Clock = 50 / Effective_ROC
+
+    Floor rule (client spec):
+      When 1Y price return >= 0% (stable/positive NAV trend), Death Clock must
+      be at least 2.0 years.  Prevents absurdly low values for funds that use
+      high ROC for tax purposes but whose price has not declined.
+
+    Edge cases:
+      - effective_roc is None or <= 0  → None (can't compute)
+      - total_return_1y is None        → no floor applied (conservative)
+      - effective_roc already floored  → floor at 5% in calculate_effective_roc,
+                                         so max death clock from that path = 10 yrs;
+                                         the 2.0 floor only raises, never lowers.
+    """
+    if effective_roc is None or effective_roc <= 0:
+        return None
+
+    raw = round(50 / effective_roc, 2)
+
+    # Apply 2-year floor for non-negative 1Y return (stable/rising NAV)
+    if total_return_1y is not None and total_return_1y >= 0:
+        raw = max(raw, 2.0)
+
+    return raw
+
+
+def calculate_nav_trend_factor(total_return_1y: Optional[float]) -> float:
+    """
+    NAV Trend Factor from 1Y price return.
+
+    Client rule:
+    - If Price_Return_1Y >= 0%: factor = 0.5
+    - If Price_Return_1Y < 0%:  factor = 1.0
+
+    If 1Y return is missing, default to 1.0 (conservative).
+    """
+    if total_return_1y is None:
+        return 1.0
+    return 0.5 if total_return_1y >= 0 else 1.0
+
+
+def calculate_effective_roc(
+    roc_percent: Optional[float],
+    nav_trend_factor: float,
+    floor_pct: float = 5.0,
+    cap_pct: float = 100.0,
+) -> Optional[float]:
+    """
+    Effective ROC = ROC * NAV_Trend_Factor with guardrails.
+
+    Special cases:
+      - roc_percent is None      → None  (no data, handled upstream)
+      - roc_percent <= 0         → None  (zero/negative means no erosion;
+                                          no Death Clock needed; Canary = Healthy)
+      - roc_percent in (0, 5)    → floored to 5% after multiplication, so the
+                                   Death Clock divisor is never absurdly small
+      - roc_percent > 0          → multiply by factor, clamp [5, 100]
+
+    Why return None for 0% ROC instead of flooring to 5%?
+      If actual ROC is 0% the fund has no NAV erosion, so assigning it an
+      artificial 5% effective ROC would produce a "10 years" Death Clock and
+      imply some residual risk that doesn't exist.  Returning None lets callers
+      (calculate_death_clock, determine_canary_health) treat it cleanly:
+      → Death Clock = None (infinity / not applicable)
+      → Canary Status = Healthy (via the existing None-guard that falls through
+        to the ROC-tier checks, which only fire for non-None values)
+    """
     if roc_percent is None or roc_percent <= 0:
         return None
-    return round(50 / roc_percent, 2)
+    raw = roc_percent * nav_trend_factor
+    return round(max(floor_pct, min(cap_pct, raw)), 2)
+
+
+def calculate_weighted_avg_roc_12m(
+    ticker: str,
+    min_months: int = 3,
+) -> Optional[float]:
+    """
+    Calculate weighted-average ROC from etf_monthly_roc (up to 12 months).
+
+    Full weight schedule (most-recent first):
+      m1 = 0.40 | m2 = 0.25 | m3 = 0.15 | m4..m12 share 0.20 equally
+
+    Partial-history handling:
+      When fewer than 12 months are available we still calculate a weighted
+      average using however many months we have, then RE-NORMALISE the weights
+      so they sum to 1.0.  This means the result is on the same scale as the
+      full formula, avoiding any artificial deflation for newer ETFs.
+
+      Example with 4 months available:
+        raw_weights = [0.40, 0.25, 0.15, 0.0222]  (first four from schedule)
+        weight_sum  = 0.8222
+        normalised  = each weight / 0.8222
+        weighted    = sum(roc_i * normalised_i)
+
+    Returns None when:
+      - fewer than `min_months` (default 3) rows exist  → fall back to roc_latest
+      - any roc_percent value in the window is NULL      → data gap, fall back
+      - any DB / network error occurs                    → logged + fall back
+    """
+    # Full 12-month weight schedule (index 0 = most recent month)
+    FULL_WEIGHTS: list[float] = [0.4, 0.25, 0.15] + [0.2 / 9] * 9  # sums to 1.0
+
+    try:
+        etf_row = (
+            supabase.table('etfs')
+            .select('id')
+            .eq('ticker', ticker)
+            .limit(1)
+            .execute()
+        )
+        if not etf_row.data:
+            return None
+
+        ticker_id = etf_row.data[0].get('id')
+        if not ticker_id:
+            return None
+
+        monthly_rows = (
+            supabase.table('etf_monthly_roc')
+            .select('roc_percent,month_start_date')
+            .eq('ticker_id', ticker_id)
+            .order('month_start_date', desc=True)  # most recent first
+            .limit(12)
+            .execute()
+        )
+        rows = monthly_rows.data or []
+
+        n = len(rows)
+        if n < min_months:
+            # Not enough history yet — caller falls back to roc_latest
+            return None
+
+        roc_values: list[float] = []
+        for row in rows:
+            roc = row.get('roc_percent')
+            if roc is None:
+                # NULL in the window → data gap, can't weight reliably
+                return None
+            roc_values.append(float(roc))
+
+        used_weights = FULL_WEIGHTS[:n]
+        weight_sum = sum(used_weights)
+        # Normalise so weights sum to 1 (handles partial window correctly)
+        normalised = [w / weight_sum for w in used_weights]
+
+        weighted = sum(v * w for v, w in zip(roc_values, normalised))
+        return round(weighted, 2)
+
+    except Exception as exc:
+        # Log but don't crash — caller will fall back to roc_latest
+        print(f"  ⚠ WeightedROC DB error for {ticker}: {exc}")
+        return None
 
 
 def clamp_numeric(value: Optional[float], max_val: float = 9999.9999, min_val: float = -9999.9999) -> Optional[float]:
@@ -370,38 +547,84 @@ def estimate_roc_from_nav_erosion(
     return 0.0
 
 
-def clear_database():
-    """Clear all data from tables in correct order (respecting foreign keys)"""
+def clear_derived_tables() -> None:
+    """
+    Wipe only the tables that bootstrap fully rebuilds from scratch.
+
+    - weekly_data      → repopulated by populate_weekly_data()
+    - notices_19a1     → repopulated by populate_notices_19a1()
+
+    Tables we deliberately do NOT touch here:
+    - etfs             → rows are upserted in place; UUIDs stay stable forever
+    - etf_monthly_roc  → owned by monthly cron (snapshot_monthly_roc.py)
+    - etf_weekly_snapshots → owned by update_weekly_snapshots.py
+
+    Keeping etfs rows intact means all FK-linked tables keep pointing at the
+    same UUID regardless of how many times bootstrap runs.  This eliminates
+    the need for any export/restore dance around etf_monthly_roc.
+    """
     print("\n" + "="*60)
-    print("STEP 1: Clearing database...")
+    print("STEP 1: Clearing derived tables (weekly_data, notices_19a1)...")
     print("="*60)
-    
-    # Clear in correct order due to foreign key constraints
-    # weekly_data and notices_19a1 reference etfs
-    
-    # Clear weekly_data (uses ticker_id FK)
+
+    for table, sentinel_col, sentinel_val in [
+        ('weekly_data',   'id',     '00000000-0000-0000-0000-000000000000'),
+        ('notices_19a1',  'id',     '00000000-0000-0000-0000-000000000000'),
+    ]:
+        try:
+            result = (
+                supabase.table(table)
+                .delete()
+                .neq(sentinel_col, sentinel_val)
+                .execute()
+            )
+            count = len(result.data) if result.data else 0
+            print(f"  ✓ Cleared {table}: {count} rows deleted")
+        except Exception as exc:
+            print(f"  ✗ Error clearing {table}: {exc}")
+
+
+def remove_orphan_etfs(canonical_tickers: list) -> None:
+    """
+    Delete any ETF rows whose ticker is no longer in the canonical list.
+
+    Run this AFTER clear_derived_tables() so there are no FK-child rows
+    pointing at the orphan etfs rows (weekly_data and notices_19a1 were just
+    wiped).
+
+    etf_monthly_roc and etf_weekly_snapshots CASCADE away on delete.  If the same
+    symbol is added back later, bootstrap runs seed_monthly_roc_history logic
+    (see ensure_monthly_roc_history_via_fmp) to refill ~18 months from FMP.
+    """
+    print("\n" + "="*60)
+    print("STEP 1b: Removing orphan ETFs (tickers no longer in canonical list)...")
+    print("="*60)
+
     try:
-        result = supabase.table('weekly_data').delete().neq('id', '00000000-0000-0000-0000-000000000000').execute()
-        count = len(result.data) if result.data else 0
-        print(f"  ✓ Cleared weekly_data: {count} rows deleted")
-    except Exception as e:
-        print(f"  ✗ Error clearing weekly_data: {e}")
-    
-    # Clear notices_19a1 (uses ticker_id FK)
-    try:
-        result = supabase.table('notices_19a1').delete().neq('id', '00000000-0000-0000-0000-000000000000').execute()
-        count = len(result.data) if result.data else 0
-        print(f"  ✓ Cleared notices_19a1: {count} rows deleted")
-    except Exception as e:
-        print(f"  ✗ Error clearing notices_19a1: {e}")
-    
-    # Clear etfs (main table)
-    try:
-        result = supabase.table('etfs').delete().neq('ticker', '').execute()
-        count = len(result.data) if result.data else 0
-        print(f"  ✓ Cleared etfs: {count} rows deleted")
-    except Exception as e:
-        print(f"  ✗ Error clearing etfs: {e}")
+        existing = supabase.table('etfs').select('id, ticker').execute()
+        rows = existing.data or []
+        existing_tickers = {r['ticker'] for r in rows}
+    except Exception as exc:
+        print(f"  ✗ Could not fetch existing tickers: {exc}")
+        return
+
+    canonical_upper = {t.upper().strip() for t in canonical_tickers}
+    orphans = existing_tickers - canonical_upper
+
+    if not orphans:
+        print(f"  ✓ No orphans found ({len(existing_tickers)} tickers in DB all still active)")
+        return
+
+    print(f"  ○ {len(orphans)} orphan(s) to remove: {sorted(orphans)}")
+    removed = 0
+    for ticker in sorted(orphans):
+        try:
+            supabase.table('etfs').delete().eq('ticker', ticker).execute()
+            removed += 1
+        except Exception as exc:
+            print(f"  ✗ Failed to remove {ticker}: {exc}")
+
+    print(f"  ✓ Removed {removed} orphan ETF(s)")
 
 
 def validate_etf_data(ticker: str, profile: Optional[dict], etf_info: Optional[dict], prices: list) -> tuple:
@@ -658,13 +881,26 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
     if headline_yield_ttm is not None and roc_latest is not None:
         true_income_yield = round(headline_yield_ttm * (1 - roc_latest / 100), 2)
     
-    death_clock_years = calculate_death_clock(roc_latest)
-    canary_health = determine_canary_health(roc_latest)
-    
     # Calculate returns (multiply by 100 to store as percentage)
     total_return_1y = None
     if latest_price and price_1y_ago and price_1y_ago > 0:
         total_return_1y = round(((latest_price / price_1y_ago) - 1) * 100, 2)
+
+    # New model metrics
+    weighted_avg_roc_12m = calculate_weighted_avg_roc_12m(ticker)
+    roc_for_risk = weighted_avg_roc_12m if weighted_avg_roc_12m is not None else roc_latest
+    roc_source = "weighted" if weighted_avg_roc_12m is not None else "roc_latest_fallback"
+    nav_trend_factor = calculate_nav_trend_factor(total_return_1y)
+    effective_roc = calculate_effective_roc(roc_for_risk, nav_trend_factor)
+
+    # Phase 3: Death Clock floor + 4-tier Canary labels
+    death_clock_years = calculate_death_clock(effective_roc, total_return_1y)
+    # If roc_for_risk is 0 (no erosion), effective_roc is None but fund is Healthy.
+    # If roc_for_risk is also None (no data at all), status is Unknown.
+    if effective_roc is None and roc_for_risk is not None and roc_for_risk <= 0:
+        canary_health = "Healthy"
+    else:
+        canary_health = determine_canary_health(effective_roc, total_return_1y)
     
     total_return_ytd = None
     if latest_price and price_ytd_start and price_ytd_start > 0:
@@ -760,7 +996,11 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
         'take_home_cash_return_1y': take_home_cash_return_1y,
         'take_home_cash_return_ytd': take_home_cash_return_ytd,
         'take_home_cash_return_inception': take_home_cash_return_inception,
-        'updated_at': datetime.now().isoformat()
+        'updated_at': datetime.now().isoformat(),
+        # Diagnostic keys (underscore prefix = not a DB column; stripped before upsert)
+        '_weighted_avg_roc_12m': weighted_avg_roc_12m,
+        '_effective_roc': effective_roc,
+        '_roc_source': roc_source,
     }
 
 
@@ -773,7 +1013,9 @@ def populate_etf_data(tickers: list, fmp: FMPClient):
     success = 0
     failed = 0
     skipped_tickers = []
-    health_counts = {'Healthy': 0, 'Dying': 0, 'Dead': 0, 'Unknown': 0}
+    health_counts: dict[str, int] = {
+        'Healthy': 0, 'Watch': 0, 'High Risk': 0, 'Severe Risk': 0, 'Unknown': 0
+    }
 
     for i, ticker in enumerate(tickers, 1):
         print(f"\n[{i}/{len(tickers)}] Processing {ticker}...")
@@ -787,17 +1029,37 @@ def populate_etf_data(tickers: list, fmp: FMPClient):
                 failed += 1
                 continue
 
-            # Upsert to database
-            supabase.table('etfs').upsert(etf_data, on_conflict='ticker').execute()
+            # Strip internal diagnostic keys (underscore-prefixed) before DB upsert
+            db_data = {k: v for k, v in etf_data.items() if not k.startswith('_')}
+            supabase.table('etfs').upsert(db_data, on_conflict='ticker').execute()
 
             health = etf_data.get('canary_health', 'Unknown')
             health_counts[health] = health_counts.get(health, 0) + 1
 
+            # All values are already computed inside process_etf — read from etf_data
+            # to avoid a redundant round-trip to DB per ticker.
             roc = etf_data.get('roc_latest')
+            death_clock = etf_data.get('death_clock_years')
+            total_ret_1y = etf_data.get('total_return_1y')
+            # weighted_avg_roc_12m and effective_roc are not persisted to DB but
+            # we can reconstruct them cheaply (no extra DB call needed for log display).
+            _weighted = etf_data.get('_weighted_avg_roc_12m')  # injected by process_etf
+            _effective_roc = etf_data.get('_effective_roc')    # injected by process_etf
+            _roc_source = etf_data.get('_roc_source', 'roc_latest_fallback')
+            nav_factor = calculate_nav_trend_factor(total_ret_1y)
+            price_flag = f"1Y={total_ret_1y}%" if total_ret_1y is not None else "1Y=N/A"
+
             if roc is not None:
-                print(f"    ✓ {ticker}: ROC={roc}%, Health={health}")
+                print(
+                    f"    ✓ {ticker}: ROC={roc}%, WeightedROC={_weighted} [{_roc_source}], "
+                    f"NAV_Factor={nav_factor} ({price_flag}), Effective_ROC={_effective_roc}%, "
+                    f"DeathClock={death_clock}yrs, Health={health}"
+                )
             else:
-                print(f"    ○ {ticker}: No ROC data, Health={health}")
+                print(
+                    f"    ○ {ticker}: No ROC data, NAV_Factor={nav_factor} ({price_flag}), "
+                    f"Effective_ROC={_effective_roc}, DeathClock={death_clock}, Health={health}"
+                )
 
             success += 1
 
@@ -824,6 +1086,71 @@ def get_etf_id_map() -> dict:
     """Get mapping of ticker -> id from etfs table"""
     result = supabase.table('etfs').select('id, ticker').execute()
     return {row['ticker']: row['id'] for row in result.data} if result.data else {}
+
+
+# Months of FMP history to pull when a ticker has zero etf_monthly_roc rows
+# (brand-new listing, or re-added after removal).  Matches seed_monthly_roc_history default.
+DEFAULT_MONTHLY_ROC_LOOKBACK_BOOTSTRAP = 18
+
+
+def tickers_without_monthly_roc_history(canonical_tickers: list) -> list[str]:
+    """Symbols with no rows in etf_monthly_roc yet (new or re-added after delete)."""
+    id_map = get_etf_id_map()
+    missing: list[str] = []
+    for raw in canonical_tickers:
+        t = raw.upper().strip()
+        tid = id_map.get(t)
+        if not tid:
+            continue
+        r = (
+            supabase.table("etf_monthly_roc")
+            .select("month_start_date")
+            .eq("ticker_id", tid)
+            .limit(1)
+            .execute()
+        )
+        if not r.data:
+            missing.append(t)
+    return missing
+
+
+def ensure_monthly_roc_history_via_fmp(
+    canonical_tickers: list,
+    lookback_months: int = DEFAULT_MONTHLY_ROC_LOOKBACK_BOOTSTRAP,
+) -> None:
+    """
+    For any canonical ticker with no etf_monthly_roc rows, pull the last N
+    complete months from FMP (same NAV-erosion ROC as seed_monthly_roc_history.py).
+
+    Runs after insert_tickers so ticker_id exists, before populate_etf_data so
+    weighted 12m ROC has history on the first pass.
+    """
+    need = tickers_without_monthly_roc_history(canonical_tickers)
+    if not need:
+        print("\n" + "="*60)
+        print("STEP 2b: Monthly ROC — all tickers already have history (skip FMP seed)")
+        print("="*60)
+        return
+
+    print("\n" + "="*60)
+    print(
+        f"STEP 2b: Monthly ROC from FMP ({lookback_months} mo) for "
+        f"{len(need)} ticker(s) with no history..."
+    )
+    print("="*60)
+    print(f"  → {', '.join(sorted(need))}")
+
+    try:
+        from seed_monthly_roc_history import seed_monthly_roc
+    except ImportError as exc:
+        print(f"  ✗ Cannot import seed_monthly_roc_history: {exc}")
+        raise
+
+    seed_monthly_roc(
+        lookback_months=max(1, lookback_months),
+        dry_run=False,
+        tickers_filter=need,
+    )
 
 
 def populate_notices_19a1(tickers: list):
@@ -1309,12 +1636,26 @@ def main():
     # Wrap ALL bootstrap steps in try/finally to guarantee flag is cleared
     # This ensures cron jobs always resume, even if bootstrap fails
     try:
-        # Step 1: Clear database
-        clear_database()
-        
-        # Step 2: Insert tickers
+        # Step 1: Wipe tables that bootstrap rebuilds from scratch (weekly_data,
+        # notices_19a1).  etfs rows are NEVER deleted here — they are upserted in
+        # place so UUIDs remain stable.  etf_monthly_roc and etf_weekly_snapshots
+        # are untouched; they have separate owners (monthly cron / weekly job).
+        clear_derived_tables()
+
+        # Step 1b: Remove any ETFs that are no longer in the canonical ticker list.
+        # This is the only code path that ever deletes an etfs row.
+        # ON DELETE CASCADE cleans up etf_monthly_roc / etf_weekly_snapshots for
+        # the removed tickers automatically.
+        remove_orphan_etfs(tickers)
+
+        # Step 2: Upsert tickers — creates new rows for additions, updates name
+        # placeholder for existing rows (UUID is preserved on conflict).
         insert_tickers(tickers)
-        
+
+        # Step 2b: New or re-added tickers have no etf_monthly_roc rows — pull the
+        # last N months from FMP immediately (same pipeline as seed_monthly_roc_history).
+        ensure_monthly_roc_history_via_fmp(tickers)
+
         # Step 3: Populate ETF data (with ROC estimation)
         success, failed, health_counts = populate_etf_data(tickers, fmp)
         

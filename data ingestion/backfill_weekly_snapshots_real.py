@@ -36,20 +36,73 @@ from supabase import create_client, Client
 
 # ---- Copy of helper functions from bootstrap_database.py (keeps script self-contained) ----
 
-def _determine_canary_health(roc_percent: Optional[float]) -> str:
-    if roc_percent is None:
+def _calculate_nav_trend_factor(total_return_1y: Optional[float]) -> float:
+    """NAV Trend Factor: 0.5 if 1Y return >= 0, else 1.0 (conservative default)."""
+    if total_return_1y is None:
+        return 1.0
+    return 0.5 if total_return_1y >= 0 else 1.0
+
+
+def _calculate_effective_roc(
+    roc_percent: Optional[float],
+    nav_trend_factor: float,
+    floor_pct: float = 5.0,
+    cap_pct: float = 100.0,
+) -> Optional[float]:
+    """Effective ROC = ROC * NAV_Trend_Factor, floored at 5%, capped at 100%.
+    Returns None for zero/negative ROC (no erosion — no Death Clock needed)."""
+    if roc_percent is None or roc_percent <= 0:
+        return None
+    raw = roc_percent * nav_trend_factor
+    return round(max(floor_pct, min(cap_pct, raw)), 2)
+
+
+def _determine_canary_health(
+    effective_roc: Optional[float],
+    total_return_1y: Optional[float] = None,
+) -> str:
+    """
+    4-tier canary status using Effective ROC thresholds.
+
+    Tiers:
+      Healthy     < 25%
+      Watch       25–49.99%
+      High Risk   50–74.99%
+      Severe Risk >= 75%
+
+    Hard override: Severe Risk when 1Y return < -15% (regardless of ROC).
+    Backfill note: total_return_1y is computed from historical price data so
+    the override applies correctly even for historical snapshots.
+    """
+    if total_return_1y is not None and total_return_1y < -15.0:
+        return "Severe Risk"
+    if effective_roc is None:
         return "Unknown"
-    if roc_percent >= 40:
-        return "Dead"
-    if roc_percent >= 20:
-        return "Dying"
+    if effective_roc >= 75:
+        return "Severe Risk"
+    if effective_roc >= 50:
+        return "High Risk"
+    if effective_roc >= 25:
+        return "Watch"
     return "Healthy"
 
 
-def _calculate_death_clock(roc_percent: Optional[float]) -> Optional[float]:
-    if roc_percent is None or roc_percent <= 0:
+def _calculate_death_clock(
+    effective_roc: Optional[float],
+    total_return_1y: Optional[float] = None,
+) -> Optional[float]:
+    """
+    Death Clock = 50 / Effective_ROC with a 2.0-year floor when 1Y return >= 0.
+
+    Backfill note: pass total_return_1y from historical price data so the
+    floor is applied consistently with the live pipeline.
+    """
+    if effective_roc is None or effective_roc <= 0:
         return None
-    return round(50 / roc_percent, 2)
+    raw = round(50 / effective_roc, 2)
+    if total_return_1y is not None and total_return_1y >= 0:
+        raw = max(raw, 2.0)
+    return raw
 
 
 def _clamp_numeric(
@@ -249,8 +302,22 @@ def _compute_last_week_from_fmp(
     if roc is None:
         return None
 
-    death_clock = _calculate_death_clock(roc)
-    canary_health = _determine_canary_health(roc)
+    # Compute 1Y price return from already-fetched historical prices.
+    # Used for NAV Trend Factor, Death Clock floor, and Severe Risk override.
+    price_1y_ago = _find_price_on_date(prices, one_year_before, lookback_days=14)
+    total_return_1y: float | None = None
+    if price_1y_ago and price_1y_ago > 0:
+        total_return_1y = round(((latest_price / price_1y_ago) - 1) * 100, 2)
+
+    nav_trend_factor = _calculate_nav_trend_factor(total_return_1y)
+    effective_roc = _calculate_effective_roc(roc, nav_trend_factor)
+
+    death_clock = _calculate_death_clock(effective_roc, total_return_1y)
+    # 0% ROC (no erosion) → effective_roc is None → classify as Healthy directly
+    if effective_roc is None and roc is not None and roc <= 0:
+        canary_health = "Healthy"
+    else:
+        canary_health = _determine_canary_health(effective_roc, total_return_1y)
     headline_yield = (dividends_last_12mo / latest_price) * 100 if latest_price > 0 else None
     true_income = (
         round(headline_yield * (1 - roc / 100), 6)

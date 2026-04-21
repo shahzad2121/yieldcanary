@@ -1,4 +1,4 @@
-export type CanaryStatus = 'Healthy' | 'Dying' | 'Dead';
+export type CanaryStatus = 'Healthy' | 'Watch' | 'High Risk' | 'Severe Risk';
 export type PayoutFrequency = 'Weekly' | 'Monthly' | 'Quarterly';
 
 export interface ETF {

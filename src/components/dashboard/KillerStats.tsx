@@ -8,8 +8,11 @@ interface KillerStatsProps {
 export function KillerStats({ etfs }: KillerStatsProps) {
   const totalCount = etfs.length;
   const healthyCount = etfs.filter((e) => e.canaryStatus === 'Healthy').length;
-  const dyingCount = etfs.filter((e) => e.canaryStatus === 'Dying').length;
-  const deadCount = etfs.filter((e) => e.canaryStatus === 'Dead').length;
+  // Watch + High Risk combined — funds showing some erosion signal worth monitoring
+  const atRiskCount = etfs.filter(
+    (e) => e.canaryStatus === 'Watch' || e.canaryStatus === 'High Risk'
+  ).length;
+  const severeRiskCount = etfs.filter((e) => e.canaryStatus === 'Severe Risk').length;
 
   const stats = [
     {
@@ -25,14 +28,14 @@ export function KillerStats({ etfs }: KillerStatsProps) {
       iconClassName: 'text-emerald-500',
     },
     {
-      label: 'Dying ETFs',
-      value: dyingCount,
+      label: 'At Risk ETFs',
+      value: atRiskCount,
       icon: AlertTriangle,
-      iconClassName: 'text-amber-500',
+      iconClassName: 'text-orange-500',
     },
     {
-      label: 'Dead ETFs',
-      value: deadCount,
+      label: 'Severe Risk ETFs',
+      value: severeRiskCount,
       icon: Skull,
       iconClassName: 'text-red-500',
     },

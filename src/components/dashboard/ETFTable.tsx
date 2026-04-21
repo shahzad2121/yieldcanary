@@ -71,7 +71,7 @@ const DEFAULT_SORT_DIRECTION: SortDirection = 'desc';
 const COLUMN_TOOLTIPS: Record<string, string> = {
   ticker: "The ETF's stock symbol.",
   name: "Full name of the ETF.",
-  canaryStatus: "Overall health rating based on destructive Return of Capital (ROC) trends since inception: Healthy (<20% NAV erosion: low risk), Dying (21%-39% NAV erosion: moderate risk), Dead (>40% NAV erosion: severe risk).",
+  canaryStatus: "Overall health rating based on Effective ROC (weighted 12-month ROC × NAV Trend Factor): Healthy (<25%), Watch (25–50%), High Risk (50–75%), Severe Risk (>75% or 1Y price decline >−15%).",
   deathClock: "Estimated years to ~50% NAV erosion at today's destructive ROC rate (N/A for low-risk funds). Recalculated weekly.",
   trueIncomeYield: "Real sustainable yield after subtracting destructive Return of Capital (ROC) from Headline Yield.",
   totalReturn1Y: "Price change over the last 12 months (capital appreciation only).",
