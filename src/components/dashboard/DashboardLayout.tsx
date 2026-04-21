@@ -11,7 +11,7 @@ import {
   SidebarProvider,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import { Bird, LayoutDashboard, Star, HelpCircle, BarChart2 } from 'lucide-react';
+import { Bird, LayoutDashboard, Star, HelpCircle, BarChart2, Briefcase } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { HelpModal } from '@/components/modals/HelpModal';
 import { WelcomeBanner } from '@/components/dashboard/WelcomeBanner';
@@ -32,6 +32,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isDashboard = path === '/dashboard';
   const isWatchlist = path === '/watchlist';
   const isInsights = path === '/insights';
+  const isPortfolio = path === '/portfolio';
 
   // Get user email from session
   useEffect(() => {
@@ -84,6 +85,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               >
                 <BarChart2 className="h-4 w-4" />
                 <span>Insights</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={isPortfolio}
+                onClick={() => navigate('/portfolio')}
+              >
+                <Briefcase className="h-4 w-4" />
+                <span>Portfolio</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

@@ -30,12 +30,18 @@ export default function Newsletter() {
             Weekly insights
           </p>
           <h2 className="text-2xl xs:text-3xl sm:text-4xl font-bold text-foreground mb-2 sm:mb-4">
-            YieldCanary Weekly Newsletter
+            YieldCanary Weekly
           </h2>
-          <p className="text-sm xs:text-base sm:text-lg text-muted-foreground max-w-xl mx-auto px-2">
-            Curated insights in your inbox each week. Top ETF income opportunities,
-            biggest movers, and buy-zone picks delivered to your inbox.
-            Included free with Basic and Advanced plans or subscribe standalone.
+          <p className="text-xs xs:text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto px-2 leading-relaxed">
+            YieldCanary Weekly sends our proprietary data and curated insights every Monday morning.
+            It&apos;s a fast, no-fluff briefing based on the same analytics you see inside the app.
+          </p>
+          <p className="mt-3 text-[11px] xs:text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto px-2 leading-relaxed">
+            Includes market pulse, sustainable high-yield ETFs, after-tax cash flow opportunities,
+            Buy Zone picks, biggest movers, and Yield Traps to avoid.
+          </p>
+          <p className="text-[11px] xs:text-xs sm:text-sm text-muted-foreground mt-3">
+            Included free with all Basic and Advanced plans. Standalone subscription available for $5/month.
           </p>
 
           <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
@@ -63,7 +69,7 @@ export default function Newsletter() {
                       className="text-sm sm:text-base px-6 sm:px-8 w-auto"
                       onClick={() => startNewsletterCheckout('newsletter_monthly')}
                     >
-                      Subscribe – Monthly ($5)
+                      Subscribe – $5 / month
                     </Button>
                     <Button
                       size="lg"
@@ -89,7 +95,7 @@ export default function Newsletter() {
           <p className="text-xs xs:text-sm text-muted-foreground mt-4 sm:mt-6">
             {hasNewsletterAccess && !loading
               ? 'Thank you for being a subscriber.'
-              : 'Cancel anytime. Delivered every Monday morning.'}
+              : 'No commitment. Cancel anytime. Delivered every Monday morning.'}
           </p>
         </div>
       </div>

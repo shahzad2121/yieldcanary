@@ -31,6 +31,7 @@ const RefundPolicy = lazy(() => import("./pages/legal/RefundPolicy"));
 const CookiePolicy = lazy(() => import("./pages/legal/CookiePolicy"));
 const DoNotSellMyInfo = lazy(() => import("./pages/legal/DoNotSellMyInfo"));
 const Affiliates = lazy(() => import("./pages/Affiliates"));
+const PortfolioPage = lazy(() => import("./pages/PortfolioPage"));
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => {
                     <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/watchlist" element={<WatchlistPage />} />
                     <Route path="/insights" element={<InsightsPage />} />
+                    <Route path="/portfolio" element={<PortfolioPage />} />
                     {/* Legal Pages */}
                     <Route path="/legal/terms" element={<TermsOfService />} />
                     <Route path="/legal/privacy" element={<PrivacyPolicy />} />
