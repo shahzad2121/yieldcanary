@@ -97,7 +97,7 @@ function transformRowToETF(row: any): ETF {
     rocDate: row.roc_date,
     trueIncomeYield: row.true_income_yield,
     deathClock: row.death_clock_years ? `${row.death_clock_years.toFixed(1)} years` : "N/A",
-    canaryStatus: row.canary_health as "Healthy" | "Dying" | "Dead",
+    canaryStatus: row.canary_health as "Healthy" | "Watch" | "High Risk" | "Severe Risk",
     aum: row.aum,
     expenseRatio: row.expense_ratio,
     beta: row.beta ?? null,

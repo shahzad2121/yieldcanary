@@ -431,18 +431,18 @@ export default function SummaryTab() {
               <>
                 This fund is currently{" "}
                 <span className="font-medium text-primary">Healthy</span> with a
-                relatively low destructive ROC profile. True Income Yield of{" "}
+                low erosion profile. True Income Yield of{" "}
                 <span className="font-mono">
                   {formatPercentShort(baseEtf.trueIncomeYield)}
                 </span>{" "}
-                suggests most payouts look like sustainable income.
+                suggests most payouts are sustainable income.
               </>
             )}
-            {baseEtf?.canaryStatus === "Dying" && (
+            {baseEtf?.canaryStatus === "Watch" && (
               <>
-                This fund is in{" "}
-                <span className="font-medium text-yellow-500">Dying</span>{" "}
-                territory. With ROC at{" "}
+                This fund is on{" "}
+                <span className="font-medium text-amber-500">Watch</span>. With
+                ROC at{" "}
                 <span className="font-mono">
                   {formatPercentShort(baseEtf.rocPercent)}
                 </span>{" "}
@@ -450,19 +450,32 @@ export default function SummaryTab() {
                 <span className="font-mono">
                   {formatPercentShort(baseEtf.trueIncomeYield)}
                 </span>
-                , part of the headline yield is likely eroding NAV.
+                , part of the headline yield may be eroding NAV. Monitor the
+                NAV trend closely.
               </>
             )}
-            {baseEtf?.canaryStatus === "Dead" && (
+            {baseEtf?.canaryStatus === "High Risk" && (
               <>
-                This fund is flagged as{" "}
-                <span className="font-medium text-destructive">Dead</span>. High
+                This fund is flagged{" "}
+                <span className="font-medium text-orange-500">High Risk</span>.
                 ROC of{" "}
                 <span className="font-mono">
                   {formatPercentShort(baseEtf.rocPercent)}
                 </span>{" "}
-                means a large share of payouts may be returning principal rather
-                than real income.
+                suggests a significant share of payouts may be returning
+                principal rather than real income. Proceed with caution.
+              </>
+            )}
+            {baseEtf?.canaryStatus === "Severe Risk" && (
+              <>
+                This fund is flagged{" "}
+                <span className="font-medium text-destructive">Severe Risk</span>.
+                High ROC of{" "}
+                <span className="font-mono">
+                  {formatPercentShort(baseEtf.rocPercent)}
+                </span>{" "}
+                and/or steep 1-year price decline indicate much of the payout
+                may be returning principal. Consider this a yield trap.
               </>
             )}
             {!baseEtf && "Canary health insights will appear here when data is available."}
