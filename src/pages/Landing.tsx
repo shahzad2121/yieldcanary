@@ -10,9 +10,12 @@ import { sendTransactionalEmail } from '@/lib/sendTransactionalEmail';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Footer } from '@/components/Footer';
 import { MarketingStats } from '@/components/MarketingStats';
-import { DashboardScreenshot } from '@/components/DashboardScreenshot';
 import { useToast } from '@/hooks/use-toast';
 import Newsletter from '@/components/landing/Newsletter';
+import { LandingDashboardSection } from '@/components/landing/LandingDashboardSection';
+import { LandingInsightsSection } from '@/components/landing/LandingInsightsSection';
+import { LandingDeepDiveSection } from '@/components/landing/LandingDeepDiveSection';
+import { LandingPortfolioSection } from '@/components/landing/LandingPortfolioSection';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -278,13 +281,13 @@ const Landing = () => {
           </div>
         </section>
 
-        {/* Dashboard Screenshot with 3D Pop-out */}
-        <DashboardScreenshot
-          alt="YieldCanary Dashboard - See which ETFs are healthy vs dying"
-          enableParticles={true}
-          enableFloating={true}
-          enableScanLine={true}
-        />
+        <LandingDashboardSection />
+
+        <LandingInsightsSection />
+
+        <LandingDeepDiveSection />
+
+        <LandingPortfolioSection />
 
         {/* Value Proposition */}
         <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-muted/30">
