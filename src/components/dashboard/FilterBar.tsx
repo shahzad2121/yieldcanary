@@ -48,7 +48,7 @@ export function FilterBar({
         <button
           className={`h-6 xs:h-7 px-2 xs:px-3 text-xs xs:text-sm rounded-md font-medium transition-colors focus:outline-none ${
             statusFilter === 'Watch'
-              ? 'bg-amber-500 text-white'
+              ? 'bg-yellow-500 text-white'
               : 'text-muted-foreground hover:text-foreground'
           }`}
           onClick={() => onStatusFilterChange('Watch')}
