@@ -61,7 +61,7 @@ DEFAULT_TICKERS = [
     "AAPW", "AMDW", "ARMW", "AMZW", "AVGW", "BABW", "BRKW",
     "COIW", "COSW", "GDXW", "GLDW", "GOOW", "HOOW", "METW",
     "MSFW", "MSTW", "NFLW", "NVDW", "PLTW", "TSLW", "TSYW",
-    "UBEW", "UNHW", "WPAY",
+    "UBEW", "UNHW", "TOPW",
     
     # REX Shares ETFs
     "FEPI", "AIPI", "CEPI", "COII", "MSII", "NVII", "TSII",
