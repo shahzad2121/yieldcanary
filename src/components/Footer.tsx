@@ -36,42 +36,42 @@ export function Footer({ showDataDisclaimer = false }: FooterProps) {
         <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 gap-y-2 mb-6 sm:mb-8">
           <Link
             to="/legal/terms"
-            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-xs sm:text-sm text-foreground/75 hover:text-primary transition-colors"
           >
             Terms of Service
           </Link>
           <span className="text-muted-foreground text-xs">•</span>
           <Link
             to="/legal/privacy"
-            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-xs sm:text-sm text-foreground/75 hover:text-primary transition-colors"
           >
             Privacy Policy
           </Link>
           <span className="text-muted-foreground text-xs">•</span>
           <Link
             to="/legal/refund"
-            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-xs sm:text-sm text-foreground/75 hover:text-primary transition-colors"
           >
             Refund Policy
           </Link>
           <span className="text-muted-foreground text-xs">•</span>
           <Link
             to="/legal/cookies"
-            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-xs sm:text-sm text-foreground/75 hover:text-primary transition-colors"
           >
             Cookie Policy
           </Link>
           <span className="text-muted-foreground text-xs">•</span>
           <Link
             to="/legal/do-not-sell"
-            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-xs sm:text-sm text-foreground/75 hover:text-primary transition-colors"
           >
             Do Not Sell My Info
           </Link>
           <span className="text-muted-foreground text-xs">•</span>
           <Link
             to="/affiliates"
-            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-xs sm:text-sm text-foreground/75 hover:text-primary transition-colors"
           >
             Affiliates
           </Link>
@@ -84,7 +84,7 @@ export function Footer({ showDataDisclaimer = false }: FooterProps) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Follow us on X (Twitter)"
-            className="text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-110 group"
+            className="text-foreground/65 hover:text-primary transition-all duration-200 hover:scale-110 group"
           >
             <XIcon className="h-5 w-5 sm:h-6 sm:w-6 group-hover:social-icon-glow" />
           </a>
@@ -93,7 +93,7 @@ export function Footer({ showDataDisclaimer = false }: FooterProps) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Subscribe to our YouTube channel"
-            className="text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-110 group"
+            className="text-foreground/65 hover:text-primary transition-all duration-200 hover:scale-110 group"
           >
             <Youtube className="h-5 w-5 sm:h-6 sm:w-6 group-hover:social-icon-glow" />
           </a>
@@ -102,7 +102,7 @@ export function Footer({ showDataDisclaimer = false }: FooterProps) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Follow us on TikTok"
-            className="text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-110 group"
+            className="text-foreground/65 hover:text-primary transition-all duration-200 hover:scale-110 group"
           >
             <TikTokIcon className="h-5 w-5 sm:h-6 sm:w-6 group-hover:social-icon-glow" />
           </a>
@@ -111,7 +111,7 @@ export function Footer({ showDataDisclaimer = false }: FooterProps) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Follow us on Instagram"
-            className="text-muted-foreground hover:text-primary transition-all duration-200 hover:scale-110 group"
+            className="text-foreground/65 hover:text-primary transition-all duration-200 hover:scale-110 group"
           >
             <Instagram className="h-5 w-5 sm:h-6 sm:w-6 group-hover:social-icon-glow" />
           </a>
@@ -126,10 +126,17 @@ export function Footer({ showDataDisclaimer = false }: FooterProps) {
           </div>
 
           {/* Right: Copyright */}
-          <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-right">
+          <p className="text-xs sm:text-sm text-foreground/70 text-center sm:text-right">
             © 2026 YieldCanary. All rights reserved.
           </p>
         </div>
+
+        {/* Global educational disclaimer */}
+        <p className="mt-4 text-sm sm:text-sm italic leading-relaxed text-primary/90 dark:text-primary/80 text-center">
+          YieldCanary provides educational and analytical tools only. All metrics and projections are
+          estimates for informational purposes and do not constitute investment, financial, or tax advice.
+          Consult a qualified advisor before making any investment decisions.
+        </p>
       </div>
     </footer>
   );

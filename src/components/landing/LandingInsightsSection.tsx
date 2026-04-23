@@ -228,11 +228,11 @@ export function LandingInsightsSection() {
           {/* ── RIGHT: sticky text (desktop only) ── */}
           <div className="relative hidden lg:block">
             {/*
-              sticky top-28 pins the text panel 112 px from the top of the
-              viewport. It scrolls within its grid column, which stretches to
-              match the full height of the image column on the left.
+              Keep the text panel sticky, but lower it for better visual balance
+              against the screenshot it is describing (less "stuck to top").
+              On larger screens we push it down a bit further.
             */}
-            <div className="sticky top-28">
+            <div className="sticky top-36 xl:top-60">
 
               {/* Ambient glow behind text */}
               <div
