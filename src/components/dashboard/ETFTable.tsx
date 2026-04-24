@@ -54,7 +54,7 @@ interface ETFTableProps {
   plan: 'free' | 'basic' | 'advanced';
   isPaid: boolean;
   onUpgrade: () => void;
-  /** Renders left side of the top toolbar (e.g. FilterBar) so filters + Export stay on one row. */
+  /** Renders top toolbar (e.g. FilterBar); on small screens Export stacks below so filter pills keep full width. */
   filterSlot?: ReactNode;
   /** Renders between the toolbar and the table (e.g. compare chip, watchlist summary). */
   belowToolbarSlot?: ReactNode;
@@ -537,7 +537,7 @@ export function ETFTable({
     <Button
       variant="outline"
       size="sm"
-      className="gap-2 text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4 shrink-0"
+      className="gap-2 text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-4 shrink-0 border-primary"
       onClick={handleExportCSV}
       disabled={!sortedETFs.length}
     >
@@ -563,9 +563,9 @@ export function ETFTable({
     <div className="">
       {/* Table controls: filters + Default view / Export (gating unchanged: Export only when isPaid) */}
       {filterSlot ? (
-        <div className="flex flex-wrap items-center justify-between py-4 gap-x-3 gap-y-2">
-          <div className="min-w-0 flex-1">{filterSlot}</div>
-          <div className="flex shrink-0 items-center gap-2">
+        <div className="flex flex-col gap-y-2 pt-2 md:py-2 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-3 md:gap-y-2">
+          <div className="min-w-0 w-full md:flex-1">{filterSlot}</div>
+          <div className="flex w-full shrink-0 items-center justify-end gap-2 md:w-auto">
             {defaultViewButton}
             {exportButton}
           </div>
