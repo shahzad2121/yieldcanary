@@ -48,6 +48,7 @@ import {
   calcMonthlySpendableCashYield,
 } from '@/lib/utils';
 import { EtfTickerChip } from '@/components/etf-deep-dive/EtfTickerChip';
+import { TaxEfficientRocBadge } from '@/components/TaxEfficientRocBadge';
 
 interface ETFTableProps {
   etfs: ETF[];
@@ -72,7 +73,7 @@ const COLUMN_TOOLTIPS: Record<string, string> = {
   ticker: "The ETF's stock symbol.",
   name: "Full name of the ETF.",
   canaryStatus: "Overall health rating based on Effective ROC (weighted 12-month ROC × NAV Trend Factor): Healthy (<25%), Watch (25–50%), High Risk (50–75%), Severe Risk (>75% or 1Y price decline >−15%).",
-  deathClock: "Estimated years to ~50% NAV erosion at today's destructive ROC rate (N/A for low-risk funds). Recalculated weekly.",
+  deathClock: "Estimated years to ~50% NAV erosion at today's destructive ROC rate (N/A for low-risk funds and Tax-Efficient ROC funds). Recalculated weekly.",
   trueIncomeYield: "Real sustainable yield after subtracting destructive Return of Capital (ROC) from Headline Yield.",
   totalReturn1Y: "Price change over the last 12 months (capital appreciation only).",
   takeHomeCashReturn1Y: "Estimated total return over the last year after taxes on distributions. Includes price change + after-tax payouts (using your personal tax rate from settings, default 20%). Shows what you actually keep in your pocket.",
@@ -657,8 +658,15 @@ export function ETFTable({
                     >
                       {etf.name}
                     </TableCell>
-                    <TableCell className={`${COLUMN_CONFIG.canaryStatus.width} p-0`}><CanaryStatusBadge status={etf.canaryStatus} /></TableCell>
-                    <TableCell className={`${COLUMN_CONFIG.deathClock.width} text-sm`}><BlurredCell value={etf.deathClock} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
+                    <TableCell className={`${COLUMN_CONFIG.canaryStatus.width} p-0`}>
+                      <div className="flex flex-col items-start gap-1">
+                        <CanaryStatusBadge status={etf.canaryStatus} />
+                        {etf.isTaxEfficientRoc && <TaxEfficientRocBadge />}
+                      </div>
+                    </TableCell>
+                    <TableCell className={`${COLUMN_CONFIG.deathClock.width} text-sm`}>
+                      <BlurredCell value={etf.isTaxEfficientRoc ? 'N/A' : etf.deathClock} isUnlocked={unlocked} onUpgradeClick={onUpgrade} />
+                    </TableCell>
                     <TableCell className={`${COLUMN_CONFIG.trueIncomeYield.width} text-sm p-0`}><BlurredCell value={formatPercent(etf.trueIncomeYield)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className={`${COLUMN_CONFIG.totalReturn1Y.width} text-sm`}><BlurredCell value={formatReturn1Y(etf, etf.totalReturn1Y, etf.totalReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
                     <TableCell className={`${COLUMN_CONFIG.takeHomeCashReturn.width} ${COLUMN_CONFIG.takeHomeCashReturn.className} text-sm`}><BlurredCell value={formatReturn1Y(etf, etf.takeHomeCashReturn1Y, etf.takeHomeCashReturnYTD)} isUnlocked={unlocked} onUpgradeClick={onUpgrade} /></TableCell>
@@ -741,6 +749,7 @@ export function ETFTable({
                     <EtfTickerChip ticker={etf.ticker} baseEtf={etf} />
                     <CanaryStatusBadge status={etf.canaryStatus} />
                   </div>
+                  {etf.isTaxEfficientRoc && <div className="mt-1"><TaxEfficientRocBadge /></div>}
                   <p className="text-[11px] text-muted-foreground mt-0.5 whitespace-normal break-words [word-break:break-word] leading-snug">
                     {etf.name}
                   </p>
@@ -757,7 +766,7 @@ export function ETFTable({
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-2">
                 <div>
                   <p className="text-[10px] text-muted-foreground">Death Clock</p>
-                  <BlurredCell value={etf.deathClock} isUnlocked={unlocked} onUpgradeClick={onUpgrade} />
+                  <BlurredCell value={etf.isTaxEfficientRoc ? 'N/A' : etf.deathClock} isUnlocked={unlocked} onUpgradeClick={onUpgrade} />
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">Price</p>

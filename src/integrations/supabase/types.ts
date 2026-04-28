@@ -17,6 +17,8 @@ export type Database = {
       etfs: {
         Row: {
           aum: number | null
+          avg_distribution_12m: number | null
+          avg_distribution_6m: number | null
           canary_health: string | null
           created_at: string | null
           death_clock_years: number | null
@@ -24,10 +26,12 @@ export type Database = {
           dividends_since_inception: number | null
           dividends_ytd: number | null
           expense_ratio: number | null
+          effective_roc: number | null
           headline_yield_ttm: number | null
           advertised_yield: number | null
           price_avg_90d: number | null
           id: string
+          is_tax_efficient_roc: boolean
           inception_date: string | null
           latest_adj_close: number | null
           latest_date: string | null
@@ -55,6 +59,8 @@ export type Database = {
         }
         Insert: {
           aum?: number | null
+          avg_distribution_12m?: number | null
+          avg_distribution_6m?: number | null
           canary_health?: string | null
           created_at?: string | null
           death_clock_years?: number | null
@@ -62,10 +68,12 @@ export type Database = {
           dividends_since_inception?: number | null
           dividends_ytd?: number | null
           expense_ratio?: number | null
+          effective_roc?: number | null
           headline_yield_ttm?: number | null
           advertised_yield?: number | null
           price_avg_90d?: number | null
           id?: string
+          is_tax_efficient_roc?: boolean
           inception_date?: string | null
           latest_adj_close?: number | null
           latest_date?: string | null
@@ -93,6 +101,8 @@ export type Database = {
         }
         Update: {
           aum?: number | null
+          avg_distribution_12m?: number | null
+          avg_distribution_6m?: number | null
           canary_health?: string | null
           created_at?: string | null
           death_clock_years?: number | null
@@ -100,10 +110,12 @@ export type Database = {
           dividends_since_inception?: number | null
           dividends_ytd?: number | null
           expense_ratio?: number | null
+          effective_roc?: number | null
           headline_yield_ttm?: number | null
           advertised_yield?: number | null
           price_avg_90d?: number | null
           id?: string
+          is_tax_efficient_roc?: boolean
           inception_date?: string | null
           latest_adj_close?: number | null
           latest_date?: string | null

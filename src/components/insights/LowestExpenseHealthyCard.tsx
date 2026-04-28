@@ -5,6 +5,7 @@ import {
   type InsightsListColumn,
 } from '@/components/insights/InsightsListCard';
 import { formatCurrencyInBillions } from '@/lib/utils';
+import { isHealthyForInsights } from '@/lib/insightsHealth';
 
 // Fetch a bit more so "See more" can reveal additional items
 const TOP_N = 15;
@@ -31,7 +32,7 @@ export function LowestExpenseHealthyCard({
   const list = useMemo(() => {
     const filtered = etfs.filter(
       (e) =>
-        e.canaryStatus === 'Healthy' &&
+        isHealthyForInsights(e) &&
         typeof e.expenseRatio === 'number' &&
         e.expenseRatio !== null
     );

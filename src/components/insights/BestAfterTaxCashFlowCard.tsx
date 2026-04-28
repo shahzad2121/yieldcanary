@@ -9,6 +9,7 @@ import {
   calcTakeHomeCashReturn1Y,
   calcTakeHomeCashReturnYTD,
 } from '@/lib/utils';
+import { isHealthyForInsights } from '@/lib/insightsHealth';
 
 // Fetch a bit more so "See more" can reveal additional items
 const TOP_N = 15;
@@ -92,7 +93,7 @@ export function BestAfterTaxCashFlowCard({
       };
     });
 
-    const filtered = enriched.filter((e) => e.canaryStatus === 'Healthy');
+    const filtered = enriched.filter((e) => isHealthyForInsights(e));
     const sorted = [...filtered].sort((a, b) => {
       const aVal = getSortValue1Y(
         a,

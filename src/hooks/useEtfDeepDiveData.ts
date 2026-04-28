@@ -94,10 +94,16 @@ function transformRowToETF(row: any): ETF {
     headlineYieldTTM: row.headline_yield_ttm,
     advertisedYield: row.advertised_yield ?? null,
     rocPercent: row.roc_latest,
+    effectiveRoc: row.effective_roc ?? null,
     rocDate: row.roc_date,
     trueIncomeYield: row.true_income_yield,
-    deathClock: row.death_clock_years ? `${row.death_clock_years.toFixed(1)} years` : "N/A",
+    deathClock: row.is_tax_efficient_roc
+      ? "N/A"
+      : (row.death_clock_years ? `${row.death_clock_years.toFixed(1)} years` : "N/A"),
     canaryStatus: row.canary_health as "Healthy" | "Watch" | "High Risk" | "Severe Risk",
+    isTaxEfficientRoc: row.is_tax_efficient_roc ?? false,
+    avgDistribution6m: row.avg_distribution_6m ?? null,
+    avgDistribution12m: row.avg_distribution_12m ?? null,
     aum: row.aum,
     expenseRatio: row.expense_ratio,
     beta: row.beta ?? null,

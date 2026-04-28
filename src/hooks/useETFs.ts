@@ -17,10 +17,16 @@ function transformRowToETF(row: any): ETF {
     headlineYieldTTM: row.headline_yield_ttm,
     advertisedYield: row.advertised_yield ?? null,
     rocPercent: row.roc_latest,
+    effectiveRoc: row.effective_roc ?? null,
     rocDate: row.roc_date,
     trueIncomeYield: row.true_income_yield,
-    deathClock: row.death_clock_years ? `${row.death_clock_years.toFixed(1)} years` : 'N/A',
+    deathClock: row.is_tax_efficient_roc
+      ? 'N/A'
+      : (row.death_clock_years ? `${row.death_clock_years.toFixed(1)} years` : 'N/A'),
     canaryStatus: row.canary_health as 'Healthy' | 'Watch' | 'High Risk' | 'Severe Risk',
+    isTaxEfficientRoc: row.is_tax_efficient_roc ?? false,
+    avgDistribution6m: row.avg_distribution_6m ?? null,
+    avgDistribution12m: row.avg_distribution_12m ?? null,
     aum: row.aum,
     expenseRatio: row.expense_ratio,
     beta: row.beta ?? null,
@@ -111,6 +117,15 @@ export function useETFs() {
                   latestDate: payload.new.latest_date ?? etf.latestDate,
                   payoutFrequency: payload.new.payout_frequency ?? etf.payoutFrequency,
                   advertisedYield: payload.new.advertised_yield ?? etf.advertisedYield,
+                  effectiveRoc: payload.new.effective_roc ?? etf.effectiveRoc ?? null,
+                  isTaxEfficientRoc: payload.new.is_tax_efficient_roc ?? etf.isTaxEfficientRoc ?? false,
+                  avgDistribution6m: payload.new.avg_distribution_6m ?? etf.avgDistribution6m ?? null,
+                  avgDistribution12m: payload.new.avg_distribution_12m ?? etf.avgDistribution12m ?? null,
+                  deathClock: payload.new.is_tax_efficient_roc
+                    ? 'N/A'
+                    : (payload.new.death_clock_years
+                      ? `${payload.new.death_clock_years.toFixed(1)} years`
+                      : etf.deathClock),
                   // Optionally update updated_at if you want to track when it was updated
                 };
               }

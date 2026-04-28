@@ -6,6 +6,7 @@ import {
 } from '@/components/insights/InsightsListCard';
 import { useUserTaxRate } from '@/hooks/useUserTaxRate';
 import { calcMonthlySpendableCashYield } from '@/lib/utils';
+import { isHealthyForInsights } from '@/lib/insightsHealth';
 
 // Fetch a bit more so "See more" can reveal additional items
 const TOP_N = 15;
@@ -42,7 +43,7 @@ export function BestWeeklyPayersCard({
 
     const filtered = enriched.filter(
       (e) =>
-        e.canaryStatus === 'Healthy' && e.payoutFrequency === 'Weekly'
+        isHealthyForInsights(e) && e.payoutFrequency === 'Weekly'
     );
     const sorted = [...filtered].sort((a, b) => {
       const aVal = a.monthlySpendableCashYield ?? -Infinity;
