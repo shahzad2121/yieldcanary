@@ -274,6 +274,34 @@ def calculate_dividends_in_range(dividends: list, start_date: datetime, end_date
     return total
 
 
+def calculate_tax_efficient_roc_badge(
+    effective_roc: Optional[float],
+    total_return_1y: Optional[float],
+    avg_distribution_6m: Optional[float],
+    avg_distribution_12m: Optional[float],
+) -> bool:
+    """
+    Tax-Efficient ROC badge rule (all conditions required):
+      1) Effective ROC >= 55
+      2) 1Y price return >= -5
+      3) 6m average distribution stays within +/-25% of 12m average
+         => abs(avg6 - avg12) / avg12 <= 0.25, with avg12 > 0
+    """
+    if effective_roc is None or total_return_1y is None:
+        return False
+    if avg_distribution_6m is None or avg_distribution_12m is None:
+        return False
+    if avg_distribution_12m <= 0:
+        return False
+
+    distribution_stability = abs(avg_distribution_6m - avg_distribution_12m) / avg_distribution_12m
+    return (
+        effective_roc >= 55
+        and total_return_1y >= -5
+        and distribution_stability <= 0.25
+    )
+
+
 def determine_canary_health(
     effective_roc: Optional[float],
     total_return_1y: Optional[float] = None,
@@ -849,6 +877,8 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
     
     # Calculate dividends
     dividends_last_12mo = calculate_dividends_in_range(dividends, one_year_ago, today)
+    six_months_ago = today - timedelta(days=182)
+    dividends_last_6mo = calculate_dividends_in_range(dividends, six_months_ago, today)
     # Use ytd_anchor_date (which equals ytd_start for established funds, or the first-trade
     # date for newly listed funds that triggered step 3 of the YTD anchor fallback chain).
     dividends_ytd = calculate_dividends_in_range(dividends, ytd_anchor_date, today)
@@ -892,9 +922,17 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
     roc_source = "weighted" if weighted_avg_roc_12m is not None else "roc_latest_fallback"
     nav_trend_factor = calculate_nav_trend_factor(total_return_1y)
     effective_roc = calculate_effective_roc(roc_for_risk, nav_trend_factor)
+    avg_distribution_6m = round(dividends_last_6mo / 6, 6)
+    avg_distribution_12m = round(dividends_last_12mo / 12, 6)
+    is_tax_efficient_roc = calculate_tax_efficient_roc_badge(
+        effective_roc=effective_roc,
+        total_return_1y=total_return_1y,
+        avg_distribution_6m=avg_distribution_6m,
+        avg_distribution_12m=avg_distribution_12m,
+    )
 
     # Phase 3: Death Clock floor + 4-tier Canary labels
-    death_clock_years = calculate_death_clock(effective_roc, total_return_1y)
+    death_clock_years = None if is_tax_efficient_roc else calculate_death_clock(effective_roc, total_return_1y)
     # If roc_for_risk is 0 (no erosion), effective_roc is None but fund is Healthy.
     # If roc_for_risk is also None (no data at all), status is Unknown.
     if effective_roc is None and roc_for_risk is not None and roc_for_risk <= 0:
@@ -958,6 +996,7 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
     spent_dividends_return_1y = clamp_numeric(spent_dividends_return_1y)
     spent_dividends_return_ytd = clamp_numeric(spent_dividends_return_ytd)
     spent_dividends_return_inception = clamp_numeric(spent_dividends_return_inception)
+    effective_roc = clamp_numeric(effective_roc)
     
     return {
         'ticker': ticker,
@@ -970,6 +1009,7 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
         'aum': aum,
         'expense_ratio': expense_ratio,
         'roc_latest': roc_latest,
+        'effective_roc': effective_roc,
         'roc_date': roc_date,
         'canary_health': canary_health,
         'death_clock_years': death_clock_years,
@@ -981,8 +1021,11 @@ def process_etf(ticker: str, fmp: FMPClient) -> dict:
         'price_ytd_start': price_ytd_start,
         'price_at_inception': price_at_inception,
         'dividends_last_12mo': dividends_last_12mo,
+        'avg_distribution_6m': avg_distribution_6m,
+        'avg_distribution_12m': avg_distribution_12m,
         'dividends_ytd': dividends_ytd,
         'dividends_since_inception': dividends_since_inception,
+        'is_tax_efficient_roc': is_tax_efficient_roc,
         'total_return_1y': total_return_1y,
         'total_return_ytd': total_return_ytd,
         'total_return_inception': total_return_inception,

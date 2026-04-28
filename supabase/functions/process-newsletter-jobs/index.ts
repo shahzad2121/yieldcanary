@@ -25,7 +25,7 @@ type EmailJobRow = {
 // TESTING SAFETY: only this address is actually sent via Resend.
 // All other claimed jobs are marked sent without emailing.
 // Set back to null after verification.
-const SEND_ONLY_TO_EMAIL = "kenjaku416@gmail.com";
+const SEND_ONLY_TO_EMAIL = "";
 
 function corsHeaders(): Record<string, string> {
   return {

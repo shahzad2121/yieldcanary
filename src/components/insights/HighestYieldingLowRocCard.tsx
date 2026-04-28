@@ -4,6 +4,7 @@ import {
   InsightsListCard,
   type InsightsListColumn,
 } from '@/components/insights/InsightsListCard';
+import { isHealthyForInsights } from '@/lib/insightsHealth';
 
 const ROC_MIN = 0;
 const ROC_MAX = 5;
@@ -102,7 +103,7 @@ export function HighestYieldingLowRocCard({
     const filtered = etfs.filter((e) => {
       const effectiveReturn = getEffectiveReturn1Y(e);
       return (
-        e.canaryStatus === 'Healthy' &&
+        isHealthyForInsights(e) &&
         typeof e.rocPercent === 'number' &&
         e.rocPercent >= ROC_MIN &&
         e.rocPercent <= ROC_MAX &&

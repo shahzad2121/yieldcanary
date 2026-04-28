@@ -22,10 +22,14 @@ export interface ETF {
   /** Advertised yield: (last payout × annualization) / price × 100. NULL when insufficient data. */
   advertisedYield: number | null;
   rocPercent: number;
+  effectiveRoc?: number | null;
   rocDate: string;
   trueIncomeYield: number;
   deathClock: string;
   canaryStatus: CanaryStatus;
+  isTaxEfficientRoc?: boolean;
+  avgDistribution6m?: number | null;
+  avgDistribution12m?: number | null;
   aum: number;
   expenseRatio: number;
   /** Beta vs benchmark from FMP profile. */

@@ -14,6 +14,7 @@ import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
 import { useNavigate } from "react-router-dom";
 import { formatMMDDYYYY } from "@/lib/formatDeepDiveDate";
 import { FREE_UNLOCKED_TICKERS } from "@/types/etf";
+import { TaxEfficientRocBadge } from "@/components/TaxEfficientRocBadge";
 
 const SummaryTab = lazy(() => import("./tabs/SummaryTab"));
 const DividendsTab = lazy(() => import("./tabs/DividendsTab"));
@@ -102,6 +103,7 @@ export function EtfDeepDiveModal() {
                   <CanaryStatusBadge status={baseEtf.canaryStatus} />
                 )}
               </div>
+              {baseEtf?.isTaxEfficientRoc && <TaxEfficientRocBadge />}
               <div className="flex flex-wrap items-baseline gap-2 text-xs sm:text-sm">
                 <span className="font-mono text-lg font-semibold sm:text-xl">
                   {baseEtf ? `$${baseEtf.latestAdjClose.toFixed(2)}` : "—"}
@@ -174,7 +176,7 @@ export function EtfDeepDiveModal() {
             <QuickStat label="TTM Yield" value={formatPercent(baseEtf?.headlineYieldTTM)} />
             <QuickStat label="True Income Yield" value={formatPercent(baseEtf?.trueIncomeYield)} />
             <QuickStat label="Canary Status" value={baseEtf?.canaryStatus ?? "—"} />
-            <QuickStat label="Death Clock" value={baseEtf?.deathClock ?? "—"} />
+            <QuickStat label="Death Clock" value={baseEtf?.isTaxEfficientRoc ? "N/A" : (baseEtf?.deathClock ?? "—")} />
             <QuickStat label="ROC %" value={formatPercent(baseEtf?.rocPercent)} />
             <QuickStat label="Payout Freq." value={baseEtf?.payoutFrequency ?? "—"} />
             <QuickStat label="AUM" value={formatCurrency(baseEtf?.aum)} />

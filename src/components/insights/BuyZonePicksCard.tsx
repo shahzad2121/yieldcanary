@@ -4,6 +4,7 @@ import {
   InsightsListCard,
   type InsightsListColumn,
 } from '@/components/insights/InsightsListCard';
+import { isHealthyForInsights } from '@/lib/insightsHealth';
 
 const TRUE_YIELD_MIN = 10;
 // Fetch a bit more so "See more" can reveal additional items
@@ -103,7 +104,7 @@ export function BuyZonePicksCard({
 }: BuyZonePicksCardProps) {
   const list = useMemo(() => {
     const filtered = etfs.filter((e) => {
-      if (e.canaryStatus !== 'Healthy') return false;
+      if (!isHealthyForInsights(e)) return false;
       const trueYield = e.trueIncomeYield;
       if (trueYield == null || trueYield <= TRUE_YIELD_MIN) return false;
       const price = e.latestAdjClose;
