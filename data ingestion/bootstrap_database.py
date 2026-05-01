@@ -45,7 +45,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # Default comprehensive ticker list - high-yield income ETFs
 DEFAULT_TICKERS = [
     # YieldMax ETFs
-    "ABNY", "AIYY", "AMDY", "AMZY", "APLY", "BABO", "BIGY", "BRKC", "CHPY", "CONY",
+    "ABNY", "AIYY", "AMDY", "AMZY", "APLY", "BABO", "BIGY", "BRKC", "CHPY", "CONY", "JPO",
     "CRCO", "CRSH", "CVNY", "DIPS", "DISO", "DRAY", "FBY", "FEAT", "FIAT", "FIVY",
     "GDXY", "GMEY", "GOOY", "GPTY", "HIYY", "HOOY", "JPMO", "LFGY", "MARO", "MRNY",
     "MSFO", "MSST", "MSTY", "NFLY", "NVDY", "NVIT", "OARK", "PLTY", "PYPY", "QDTY",
@@ -61,17 +61,19 @@ DEFAULT_TICKERS = [
     "AAPW", "AMDW", "ARMW", "AMZW", "AVGW", "BABW", "BRKW",
     "COIW", "COSW", "GDXW", "GLDW", "GOOW", "HOOW", "METW",
     "MSFW", "MSTW", "NFLW", "NVDW", "PLTW", "TSLW", "TSYW",
-    "UBEW", "UNHW", "TOPW",
+    "UBEW", "UNHW", "TOPW", "WEEK", "TPAY",
     
     # REX Shares ETFs
-    "FEPI", "AIPI", "CEPI", "COII", "MSII", "NVII", "TSII",
-    "HOII", "PLTI", "CWII", "LLII", "WMTI", "ULTI",
+    "FEPI", "AIPI", "CEPI", "COII", "MSII", "NVII", "TSII", "HOII"
+    "PLTI", "CWII", "WMTI", "ULTI", "LLII", "SSK",
     
     # Kurv ETFs
     "KYLD", "KQQQ", "KGLD", "KSLV", "AMZP", "AAPY", "GOOP", "MSFY", "NFLP", "TSLP",
+    "KCOP",
     
-    # First Trust / Global X / Other
-    "JEPI", "JEPQ", "XYLD", "QYLD", "RYLD", "SDIV",
+    # First Trust / Global X
+    "JEPI", "JEPQ", "XYLD", "QYLD", "RYLD", "SDIV", "KNG", "DIV", "BCCC", "EDGQ", "EGDX",
+    "SRET", "ALTY", "XRMI", "QRMI", "MLPD", "TYLG", "RYLG", "QYLG", "XYLG", "DJIA", "MLP",
     
     # Neos ETFs
     "SPYI", "QQQI", "IWMI", "NIHI", "IYRI", "IAUI", "BTCI", "NEHI",
@@ -79,30 +81,31 @@ DEFAULT_TICKERS = [
     "XSPI", "XQQI", "XBCI",
     
     # Amplify / Simplify
-    "YYY", "SVOL", "HIGH", "BUCK", "MAXI", "QDVO",
+    "YYY", "SVOL", "HIGH", "BUCK", "MAXI", "QDVO", "DIVO", "EHY", "BAGY", "SOLM", "ETTY",
+    "BITY", "SLJY", "XXV", "XV", "TLTP", "HCOW", "IDVO",
 
     # ProShares High Income ETFs
-    "ISPY", "IQQQ", "ITWO", "EETH","BITO",
+    "ISPY", "IQQQ", "ITWO", "EETH","BITO", "BETE",
 
     # Goldman Sachs ETFs (premium income)
     "GPIX", "GPIQ",
 
     # TappAlpha ETFs (daily covered call income)
-    "TDAQ", "TSPY", "TSYX", "TSYX", "TDAX",
+    "TDAQ", "TSPY", "TSYX", "TDAX",
 
     # Tuttle Capital ETFs
-    "MAGO", "MSTK", "BITK",
+    "MAGO", "MSTK", "BITK", "SPCI", "MEMY",
 
     # Westwood Holdings ETFs
     "MDST",
 
     # Calamos Investments ETFs
-    "CAIE",
+    "CAIE", "CAIQ",
 
     # GraniteShares YieldBOOST ETFs (high-yield weekly option income)
-    "AMYY", "AZYY", "BBYY", "XBTY", "COYY", "NUGY", "HMYY", "HOYY",
-    "IOYY", "MAAY", "FBYY", "MTYY", "NVYY", "PLYY", "QBY", "TQQY",
-    "RGYY", "RTYY", "SEMY", "YBST", "SMYY", "YSPY", "YBTY", "TSYY",
+    "AMYY", "AZYY", "BBYY", "XBTY", "COYY", "NUGY", "HMYY", "HOYY", "ANV", "HIPS",
+    "IOYY", "MAAY", "FBYY", "MTYY", "NVYY", "PLYY", "QBY", "TQQY", "TLA",
+    "RGYY", "RTYY", "SEMY", "YBST", "SMYY", "YSPY", "YBTY", "TSYY", "XBTY",
 
     # VistaShares Target 15™ ETFs (options income, high yield)
     "OMAH", "QUSA", "ACKY", "DRKY", "SIOO",
@@ -118,6 +121,34 @@ DEFAULT_TICKERS = [
 
     # Nicholas Wealth XFunds
     "FIAX", "GIAX", "BLOX",
+
+    # Mortgage REITs (High Yield)
+    "NLY", "AGNC", "MFA", "DX",
+
+    # iShares ETFs
+    "HYG", "TLTW", "BALI", "REM", "HDV", "USHY", "PFF",
+
+    # State Street ETFs
+    "JNK", "XLEI", "XLKI", "XLBI", "XLII", "XLVI", "XLFI", "XLSI", "XLRI", "XLUI", "XLCI",
+
+    # Invesco ETFs
+    "PBP", "SPHD", "KBWY", "GTOQ", "XSHD", "PGX", "BSJQ", "PEY",
+
+    # Other High Yield ETFs
+    "GLDI", "CWY", "ZVOL", "SLVO", "EGGS", "EGGY", "EGGQ", "KLIP", "KHPI", "SPUT", "ACEI",
+    "VNQ", "VYM", "VIG", "FDL", "ANGL", "EPD",
+
+    # Schwab Asset Management
+    "SCHD",
+
+    # Grayscale ETFs
+    "ETCO", "BTCC", "BPI",
+
+    # Bitwise ETFs
+    "IMST", "ICOI", "IGME", "IMRA",
+
+    # Cornerstone ETFs
+    "CLM", "CRF",
 ]
 
 
