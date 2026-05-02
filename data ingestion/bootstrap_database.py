@@ -50,7 +50,7 @@ DEFAULT_TICKERS = [
     "GDXY", "GMEY", "GOOY", "GPTY", "HIYY", "HOOY", "JPMO", "LFGY", "MARO", "MRNY",
     "MSFO", "MSST", "MSTY", "NFLY", "NVDY", "NVIT", "OARK", "PLTY", "PYPY", "QDTY",
     "RBLY", "RDTY", "RDYY", "RNTY", "SDTY", "SLTY", "SMCY", "SNOY", "SOXY", "TEST",
-    "TSLY", "TSMY", "ULTY", "WNTR", "XOMO", "XYZY", "YBIT", "YMAG", "YMAX", "YQQQ",
+    "TSLY", "TSMY", "ULTY", "WNTR", "XOMO", "XYZY", "YBIT", "YMAG", "YMAX",
     
     # Defiance ETFs
     "YBMN", "QLDY", "SPYT", "GLDY", "USOY", "QQQY", "IWMY", "WDTE",
